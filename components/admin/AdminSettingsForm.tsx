@@ -1,0 +1,153 @@
+'use client'
+
+import { useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import { useRouter } from 'next/navigation'
+import { Save, Loader2 } from 'lucide-react'
+
+interface Props {
+  settings: {
+    id: string
+    store_name: string
+    shipping_cost: number
+    free_shipping_threshold: number
+    contact_email: string
+    instagram_url: string
+    tiktok_url: string
+    address: string
+    low_stock_threshold: number
+  } | null
+}
+
+export function AdminSettingsForm({ settings }: Props) {
+  const [loading, setLoading] = useState(false)
+  const [message, setMessage] = useState<string | null>(null)
+  const router = useRouter()
+
+  const [form, setForm] = useState({
+    store_name: settings?.store_name ?? 'AracnidaStore',
+    shipping_cost: settings?.shipping_cost ?? 3000,
+    free_shipping_threshold: settings?.free_shipping_threshold ?? 50000,
+    contact_email: settings?.contact_email ?? '',
+    instagram_url: settings?.instagram_url ?? '',
+    tiktok_url: settings?.tiktok_url ?? '',
+    address: settings?.address ?? '',
+    low_stock_threshold: settings?.low_stock_threshold ?? 3,
+  })
+
+  function update(key: string, value: string | number) {
+    setForm((prev) => ({ ...prev, [key]: value }))
+  }
+
+  async function handleSave() {
+    setLoading(true)
+    setMessage(null)
+    const supabase = createClient()
+
+    if (settings?.id) {
+      await supabase.from('settings').update({ ...form, updated_at: new Date().toISOString() }).eq('id', settings.id)
+    } else {
+      await supabase.from('settings').insert(form)
+    }
+
+    setMessage('Configuración guardada correctamente')
+    setLoading(false)
+    router.refresh()
+    setTimeout(() => setMessage(null), 3000)
+  }
+
+  const inputClass = "w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-red-600/50"
+  const labelClass = "block text-sm font-medium text-white/60 mb-1.5"
+
+  return (
+    <div className="bg-[#111827] border border-white/5 rounded-xl p-6 space-y-6">
+      <section>
+        <h2 className="text-sm font-semibold text-white/50 uppercase tracking-wider mb-4">General</h2>
+        <div className="space-y-4">
+          <div>
+            <label className={labelClass}>Nombre de la tienda</label>
+            <input value={form.store_name} onChange={(e) => update('store_name', e.target.value)} className={inputClass} />
+          </div>
+          <div>
+            <label className={labelClass}>Email de contacto</label>
+            <input value={form.contact_email} onChange={(e) => update('contact_email', e.target.value)} type="email" className={inputClass} />
+          </div>
+          <div>
+            <label className={labelClass}>Dirección física</label>
+            <input value={form.address} onChange={(e) => update('address', e.target.value)} className={inputClass} placeholder="Santiago, Chile" />
+          </div>
+        </div>
+      </section>
+
+      <section className="border-t border-white/5 pt-6">
+        <h2 className="text-sm font-semibold text-white/50 uppercase tracking-wider mb-4">Envíos</h2>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className={labelClass}>Costo de envío (CLP)</label>
+            <input
+              value={form.shipping_cost}
+              onChange={(e) => update('shipping_cost', parseInt(e.target.value) || 0)}
+              type="number"
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label className={labelClass}>Envío gratis desde (CLP)</label>
+            <input
+              value={form.free_shipping_threshold}
+              onChange={(e) => update('free_shipping_threshold', parseInt(e.target.value) || 0)}
+              type="number"
+              className={inputClass}
+            />
+          </div>
+        </div>
+      </section>
+
+      <section className="border-t border-white/5 pt-6">
+        <h2 className="text-sm font-semibold text-white/50 uppercase tracking-wider mb-4">Alertas</h2>
+        <div>
+          <label className={labelClass}>Umbral de stock bajo (unidades)</label>
+          <input
+            value={form.low_stock_threshold}
+            onChange={(e) => update('low_stock_threshold', parseInt(e.target.value) || 3)}
+            type="number"
+            className={inputClass}
+          />
+          <p className="text-xs text-white/30 mt-1">
+            Recibirás alertas cuando el stock sea igual o menor a este valor
+          </p>
+        </div>
+      </section>
+
+      <section className="border-t border-white/5 pt-6">
+        <h2 className="text-sm font-semibold text-white/50 uppercase tracking-wider mb-4">Redes sociales</h2>
+        <div className="space-y-4">
+          <div>
+            <label className={labelClass}>Instagram URL</label>
+            <input value={form.instagram_url} onChange={(e) => update('instagram_url', e.target.value)} className={inputClass} placeholder="https://instagram.com/..." />
+          </div>
+          <div>
+            <label className={labelClass}>TikTok URL</label>
+            <input value={form.tiktok_url} onChange={(e) => update('tiktok_url', e.target.value)} className={inputClass} placeholder="https://tiktok.com/@..." />
+          </div>
+        </div>
+      </section>
+
+      {message && (
+        <div className="bg-green-900/20 border border-green-800/30 rounded-lg p-3 text-sm text-green-400">
+          {message}
+        </div>
+      )}
+
+      <button
+        onClick={handleSave}
+        disabled={loading}
+        className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-white text-sm disabled:opacity-60 transition-all"
+        style={{ background: 'linear-gradient(135deg, #c0392b, #a93226)' }}
+      >
+        {loading ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+        {loading ? 'Guardando...' : 'Guardar configuración'}
+      </button>
+    </div>
+  )
+}
