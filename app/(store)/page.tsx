@@ -181,16 +181,16 @@ export default async function HomePage() {
 
           {featured.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {featured.map((product, i) => (
-                <ScrollReveal key={product.id} delay={i * 80}>
+              {featured.map((product) => (
+                <div key={product.id}>
                   <ProductCard product={product} />
-                </ScrollReveal>
+                </div>
               ))}
             </div>
           ) : (
             <div className="text-center py-20" style={{ color: '#9b9b93' }}>
               <Package size={48} className="mx-auto mb-4 opacity-40" />
-              <p>Cargando productos...</p>
+              <p>Sin productos destacados</p>
             </div>
           )}
 

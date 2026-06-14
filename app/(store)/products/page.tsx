@@ -21,7 +21,16 @@ async function getProducts(params: SearchParams): Promise<Product[]> {
     .select('*, category:categories(id,name,slug)')
     .eq('active', true)
 
-  if (params.category) query = query.eq('category.slug', params.category)
+  // Filtrar por categoría: resolver slug → category_id
+  if (params.category) {
+    const { data: cat } = await supabase
+      .from('categories')
+      .select('id')
+      .eq('slug', params.category)
+      .single()
+    if (cat) query = query.eq('category_id', cat.id)
+  }
+
   if (params.size) query = query.eq('size', params.size)
   if (params.color) query = query.ilike('color', `%${params.color}%`)
   if (params.min) query = query.gte('price', parseInt(params.min))
@@ -31,7 +40,7 @@ async function getProducts(params: SearchParams): Promise<Product[]> {
   const sort = params.sort ?? 'newest'
   if (sort === 'price_asc') query = query.order('price', { ascending: true })
   else if (sort === 'price_desc') query = query.order('price', { ascending: false })
-  else query = query.order('created_at', { ascending: false })
+  else query = query.order('stock', { ascending: false }) // primero los que tienen stock
 
   const { data } = await query
   return data ?? []
