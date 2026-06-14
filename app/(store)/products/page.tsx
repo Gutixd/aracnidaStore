@@ -3,6 +3,13 @@ import { Product, Category } from '@/types'
 import { ProductCard } from '@/components/store/ProductCard'
 import { ProductFilters } from '@/components/store/ProductFilters'
 import { Package } from 'lucide-react'
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Catálogo de disfraces y máscaras de Spider-Man',
+  description: 'Explora todo el catálogo de disfraces y máscaras de Spider-Man en Chile: Miles Morales, Tom Holland, Tobey, Venom y más. Tallas 100 a 190 cm. Envíos a todo Chile.',
+  alternates: { canonical: '/products' },
+}
 
 interface SearchParams {
   category?: string
@@ -18,7 +25,7 @@ async function getProducts(params: SearchParams): Promise<Product[]> {
   const supabase = await createClient()
   let query = supabase
     .from('products')
-    .select('*, category:categories(id,name,slug)')
+    .select('*, category:categories(id,name,slug), variants:product_variants(*)')
     .eq('active', true)
 
   // Filtrar por categoría: resolver slug → category_id
@@ -31,7 +38,6 @@ async function getProducts(params: SearchParams): Promise<Product[]> {
     if (cat) query = query.eq('category_id', cat.id)
   }
 
-  if (params.size) query = query.eq('size', params.size)
   if (params.color) query = query.ilike('color', `%${params.color}%`)
   if (params.min) query = query.gte('price', parseInt(params.min))
   if (params.max) query = query.lte('price', parseInt(params.max))
@@ -43,7 +49,16 @@ async function getProducts(params: SearchParams): Promise<Product[]> {
   else query = query.order('stock', { ascending: false }) // primero los que tienen stock
 
   const { data } = await query
-  return data ?? []
+  let products = (data ?? []) as Product[]
+
+  // Filtro de talla: el producto debe tener una variante con esa talla y stock
+  if (params.size) {
+    products = products.filter((p) =>
+      (p.variants ?? []).some((v) => v.active && v.size === params.size)
+    )
+  }
+
+  return products
 }
 
 async function getCategories(): Promise<Category[]> {

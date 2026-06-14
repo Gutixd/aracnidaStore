@@ -31,9 +31,8 @@ export function AdminToggleProduct({ id, active, name }: Props) {
     <button
       onClick={toggle}
       disabled={loading}
-      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50 ${
-        currentState ? 'bg-green-600' : 'bg-white/10'
-      }`}
+      className="relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50"
+      style={{ background: currentState ? '#16a34a' : 'var(--gray-200)' }}
       title={currentState ? 'Desactivar producto' : 'Activar producto'}
     >
       <span

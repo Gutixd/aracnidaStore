@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { Trash2 } from 'lucide-react'
+import { Trash2, Check, X } from 'lucide-react'
 
 export function AdminDeleteExpense({ id }: { id: string }) {
   const [confirming, setConfirming] = useState(false)
@@ -18,21 +18,18 @@ export function AdminDeleteExpense({ id }: { id: string }) {
   if (confirming) {
     return (
       <div className="flex items-center gap-1">
-        <button onClick={handleDelete} className="text-xs text-red-400 hover:text-red-300 px-2 py-1 bg-red-900/10 rounded transition-colors">
-          ✓
+        <button onClick={handleDelete} className="p-1.5 rounded-lg" style={{ background: 'rgba(192,57,43,.1)', color: 'var(--red)' }} aria-label="Confirmar">
+          <Check size={14} />
         </button>
-        <button onClick={() => setConfirming(false)} className="text-xs text-white/30 hover:text-white/60 px-2 py-1 transition-colors">
-          ✕
+        <button onClick={() => setConfirming(false)} className="p-1.5 rounded-lg" style={{ color: 'var(--gray-400)' }} aria-label="Cancelar">
+          <X size={14} />
         </button>
       </div>
     )
   }
 
   return (
-    <button
-      onClick={() => setConfirming(true)}
-      className="text-white/20 hover:text-red-400 p-1.5 rounded-lg transition-colors"
-    >
+    <button onClick={() => setConfirming(true)} className="p-1.5 rounded-lg transition-colors" style={{ color: 'var(--gray-400)' }} aria-label="Eliminar">
       <Trash2 size={14} />
     </button>
   )

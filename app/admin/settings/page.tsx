@@ -13,8 +13,8 @@ export default async function AdminSettingsPage() {
   return (
     <div className="p-8">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-white">Configuración</h1>
-        <p className="text-white/40 text-sm mt-1">Ajustes generales de la tienda</p>
+        <h1 className="text-2xl font-black" style={{ color: 'var(--text)' }}>Configuración</h1>
+        <p className="text-sm mt-1" style={{ color: 'var(--gray-600)' }}>Ajustes generales de la tienda</p>
       </div>
 
       <div className="max-w-2xl">

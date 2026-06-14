@@ -16,24 +16,24 @@ export async function createOrder(
 
   const supabase = await createAdminClient()
 
-  // Verify stock before creating order
-  for (const { product, quantity } of cartItems) {
+  // Verificar stock de cada variante antes de crear el pedido
+  for (const { product, variant, quantity } of cartItems) {
     const { data: current } = await supabase
-      .from('products')
-      .select('stock, name')
-      .eq('id', product.id)
+      .from('product_variants')
+      .select('stock')
+      .eq('id', variant.id)
       .single()
 
-    if (!current) return { error: `Producto no encontrado: ${product.name}` }
+    if (!current) return { error: `Variante no encontrada: ${product.name} (${variant.size})` }
     if (current.stock < quantity) {
-      return { error: `Stock insuficiente para "${product.name}". Disponible: ${current.stock}` }
+      return { error: `Stock insuficiente para "${product.name}" talla ${variant.size}. Disponible: ${current.stock}` }
     }
   }
 
-  const subtotal = cartItems.reduce((sum, { product, quantity }) => sum + product.price * quantity, 0)
+  const subtotal = cartItems.reduce((sum, { variant, quantity }) => sum + variant.price * quantity, 0)
   const total = subtotal + shippingCost
 
-  // Create order
+  // Crear pedido
   const { data: order, error: orderError } = await supabase
     .from('orders')
     .insert({
@@ -60,53 +60,61 @@ export async function createOrder(
     return { error: 'Error al crear el pedido. Intenta nuevamente.' }
   }
 
-  // Create order items & update stock
-  for (const { product, quantity } of cartItems) {
+  // Items del pedido y descuento de stock por variante
+  for (const { product, variant, quantity } of cartItems) {
     await supabase.from('order_items').insert({
       order_id: order.id,
       product_id: product.id,
+      variant_id: variant.id,
       product_name: product.name,
       product_image: product.image_url,
-      size: product.size,
+      size: variant.size,
       color: product.color,
       quantity,
-      unit_price: product.price,
-      total_price: product.price * quantity,
+      unit_price: variant.price,
+      total_price: variant.price * quantity,
     })
 
-    const { data: current } = await supabase
-      .from('products')
+    // Descontar stock de la variante
+    const { data: currentVariant } = await supabase
+      .from('product_variants')
       .select('stock')
-      .eq('id', product.id)
+      .eq('id', variant.id)
       .single()
 
-    const previousStock = current?.stock ?? 0
+    const previousStock = currentVariant?.stock ?? 0
     const newStock = Math.max(0, previousStock - quantity)
 
-    await supabase
-      .from('products')
-      .update({ stock: newStock })
-      .eq('id', product.id)
+    await supabase.from('product_variants').update({ stock: newStock, updated_at: new Date().toISOString() }).eq('id', variant.id)
+
+    // Recalcular stock agregado del producto
+    const { data: allVariants } = await supabase
+      .from('product_variants')
+      .select('stock')
+      .eq('product_id', product.id)
+    const productStock = (allVariants ?? []).reduce((s, v) => s + v.stock, 0)
+    await supabase.from('products').update({ stock: productStock }).eq('id', product.id)
 
     await supabase.from('inventory_movements').insert({
       product_id: product.id,
+      variant_id: variant.id,
       type: 'sale',
       quantity,
-      reason: `Venta - Pedido #${order.id.slice(0, 8)}`,
+      reason: `Venta - Pedido #${order.id.slice(0, 8)} (Talla ${variant.size})`,
       previous_stock: previousStock,
       new_stock: newStock,
       created_by: 'system',
     })
 
-    // Notify low/out stock
-    if (newStock === 0) {
+    // Notificaciones de stock
+    if (productStock === 0) {
       await notifyOutOfStock(product.name)
-    } else if (newStock <= LOW_STOCK_THRESHOLD) {
-      await notifyLowStock(product.name, newStock)
+    } else if (productStock <= LOW_STOCK_THRESHOLD) {
+      await notifyLowStock(product.name, productStock)
     }
   }
 
-  // Fetch full order with items for Telegram notification
+  // Pedido completo para notificación Telegram
   const { data: fullOrder } = await supabase
     .from('orders')
     .select('*, items:order_items(*)')

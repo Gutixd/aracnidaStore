@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 
 export function Footer() {
   return (
@@ -9,14 +10,8 @@ export function Footer() {
           {/* Brand */}
           <div>
             <div className="flex items-center gap-2.5 mb-4">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center"
-                style={{ background: 'linear-gradient(135deg, #c0392b, #96281b)' }}>
-                <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5">
-                  <circle cx="12" cy="12" r="10" stroke="white" strokeWidth="1.2" opacity=".5"/>
-                  <path d="M12 2C12 2,7 6,7 12C7 18,12 22,12 22C12 22,17 18,17 12C17 6,12 2,12 2Z" fill="white" opacity=".2"/>
-                  <path d="M2 12H22" stroke="white" strokeWidth=".8" opacity=".4"/>
-                  <circle cx="12" cy="12" r="2.5" fill="white"/>
-                </svg>
+              <div className="w-10 h-10 rounded-xl overflow-hidden" style={{ background: '#fff' }}>
+                <Image src="/logo.jpeg" alt="AracnidaStore" width={40} height={40} className="object-cover" />
               </div>
               <span className="text-lg font-black text-white">
                 Aracnida<span style={{ color: '#e74c3c' }}>Store</span>
@@ -90,7 +85,7 @@ export function Footer() {
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs"
           style={{ borderTop: '1px solid rgba(255,255,255,.08)', color: 'rgba(255,255,255,.3)' }}>
           <span>© {new Date().getFullYear()} AracnidaStore. Todos los derechos reservados.</span>
-          <span>Hecho en Chile 🇨🇱 · Envíos a todo el país</span>
+          <span>Hecho en Santiago de Chile · Envíos a todo el país</span>
         </div>
       </div>
     </footer>

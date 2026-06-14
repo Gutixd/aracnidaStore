@@ -29,7 +29,7 @@ export interface Product {
   stock: number
   sku: string
   category_id: string
-  size: ProductSize
+  size: ProductSize | string
   color: string
   image_url: string
   active: boolean
@@ -38,6 +38,20 @@ export interface Product {
   updated_at: string
   category?: Category
   images?: ProductImage[]
+  variants?: ProductVariant[]
+}
+
+export interface ProductVariant {
+  id: string
+  product_id: string
+  size: string
+  stock: number
+  price: number
+  cost_price: number
+  sku: string
+  active: boolean
+  created_at?: string
+  updated_at?: string
 }
 
 export interface ProductImage {
@@ -114,6 +128,7 @@ export interface Expense {
 
 export interface CartItem {
   product: Product
+  variant: ProductVariant
   quantity: number
 }
 

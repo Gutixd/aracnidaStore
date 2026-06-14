@@ -48,10 +48,10 @@ export const ORDER_STATUS_LABELS: Record<string, string> = {
 }
 
 export const ORDER_STATUS_COLORS: Record<string, string> = {
-  pendiente: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
-  confirmado: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-  en_preparacion: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
-  en_reparto: 'bg-orange-500/10 text-orange-400 border-orange-500/20',
-  entregado: 'bg-green-500/10 text-green-400 border-green-500/20',
-  cancelado: 'bg-red-500/10 text-red-400 border-red-500/20',
+  pendiente: 'bg-yellow-50 text-yellow-700 border-yellow-200',
+  confirmado: 'bg-blue-50 text-blue-700 border-blue-200',
+  en_preparacion: 'bg-purple-50 text-purple-700 border-purple-200',
+  en_reparto: 'bg-orange-50 text-orange-700 border-orange-200',
+  entregado: 'bg-green-50 text-green-700 border-green-200',
+  cancelado: 'bg-red-50 text-red-700 border-red-200',
 }

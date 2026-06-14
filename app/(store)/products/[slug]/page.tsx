@@ -1,10 +1,11 @@
 import { createClient } from '@/lib/supabase/server'
-import { Product } from '@/types'
+import { Product, ProductVariant } from '@/types'
 import { notFound } from 'next/navigation'
-import { formatPrice } from '@/lib/utils'
-import { AddToCartButton } from '@/components/store/AddToCartButton'
+import { ProductPurchase } from '@/components/store/ProductPurchase'
 import { ProductCard } from '@/components/store/ProductCard'
+import { ScrollReveal } from '@/components/store/ScrollReveal'
 import Image from 'next/image'
+import Link from 'next/link'
 import { Shield, Truck, RotateCcw, Package } from 'lucide-react'
 import type { Metadata } from 'next'
 
@@ -12,7 +13,7 @@ async function getProduct(slug: string): Promise<Product | null> {
   const supabase = await createClient()
   const { data } = await supabase
     .from('products')
-    .select('*, category:categories(id,name,slug)')
+    .select('*, category:categories(id,name,slug), variants:product_variants(*)')
     .eq('slug', slug)
     .eq('active', true)
     .single()
@@ -23,7 +24,7 @@ async function getRelated(categoryId: string, productId: string): Promise<Produc
   const supabase = await createClient()
   const { data } = await supabase
     .from('products')
-    .select('*, category:categories(id,name,slug)')
+    .select('*, category:categories(id,name,slug), variants:product_variants(*)')
     .eq('category_id', categoryId)
     .eq('active', true)
     .neq('id', productId)
@@ -42,12 +43,22 @@ export async function generateMetadata({
   return {
     title: product.name,
     description: product.description,
+    alternates: { canonical: `/products/${product.slug}` },
     openGraph: {
       title: product.name,
       description: product.description,
-      images: product.image_url ? [product.image_url] : [],
+      type: 'website',
+      images: product.image_url ? [{ url: product.image_url }] : [],
     },
   }
+}
+
+function sortVariants(variants: ProductVariant[]): ProductVariant[] {
+  return [...variants].sort((a, b) => {
+    const na = parseInt(a.size), nb = parseInt(b.size)
+    if (!isNaN(na) && !isNaN(nb)) return na - nb
+    return a.size.localeCompare(b.size)
+  })
 }
 
 export default async function ProductPage({
@@ -59,131 +70,110 @@ export default async function ProductPage({
   const product = await getProduct(slug)
   if (!product) notFound()
 
+  const variants = sortVariants((product.variants ?? []).filter((v) => v.active))
   const related = await getRelated(product.category_id, product.id)
-  const isOutOfStock = product.stock === 0
-  const isLowStock = product.stock > 0 && product.stock <= 3
+
+  // JSON-LD para SEO de producto
+  const minPrice = variants.length ? Math.min(...variants.map((v) => v.price)) : product.price
+  const totalStock = variants.reduce((s, v) => s + v.stock, 0)
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.name,
+    description: product.description,
+    image: product.image_url,
+    sku: product.sku,
+    brand: { '@type': 'Brand', name: 'AracnidaStore' },
+    offers: {
+      '@type': 'Offer',
+      price: minPrice,
+      priceCurrency: 'CLP',
+      availability: totalStock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+    },
+  }
 
   return (
-    <div className="pt-24 pb-24 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
+    <div style={{ background: 'var(--gray-50)', minHeight: '100vh' }}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+
+      <div className="max-w-7xl mx-auto pt-28 pb-24 px-4 sm:px-6 lg:px-8">
         {/* Breadcrumb */}
-        <nav className="text-sm text-white/30 mb-8 flex items-center gap-2">
-          <a href="/" className="hover:text-white/60 transition-colors">Inicio</a>
+        <nav className="text-sm mb-8 flex items-center gap-2" style={{ color: 'var(--gray-400)' }} aria-label="Migas de pan">
+          <Link href="/" className="hover:underline">Inicio</Link>
           <span>/</span>
-          <a href="/products" className="hover:text-white/60 transition-colors">Catálogo</a>
+          <Link href="/products" className="hover:underline">Catálogo</Link>
           <span>/</span>
-          <span className="text-white/60">{product.name}</span>
+          <span style={{ color: 'var(--gray-600)' }}>{product.name}</span>
         </nav>
 
-        {/* Product detail */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-24">
-          {/* Image */}
-          <div className="relative aspect-square bg-[#0d1117] rounded-2xl overflow-hidden border border-white/5">
-            {product.image_url ? (
-              <Image
-                src={product.image_url}
-                alt={product.name}
-                fill
-                className="object-cover"
-                priority
-                sizes="(max-width: 1024px) 100vw, 50vw"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-white/10">
-                <Package size={80} />
-              </div>
-            )}
-
-            {product.featured && (
-              <div className="absolute top-4 left-4 bg-red-700 text-white text-xs font-bold px-3 py-1.5 rounded-full">
-                Destacado
-              </div>
-            )}
-          </div>
+          {/* Imagen */}
+          <ScrollReveal>
+            <div className="relative aspect-square rounded-3xl overflow-hidden card">
+              {product.image_url ? (
+                <Image src={product.image_url} alt={product.name} fill className="object-cover" priority sizes="(max-width: 1024px) 100vw, 50vw" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center" style={{ color: 'var(--gray-200)' }}>
+                  <Package size={80} />
+                </div>
+              )}
+              {product.featured && (
+                <div className="absolute top-4 left-4 text-xs font-bold px-3 py-1.5 rounded-full" style={{ background: 'var(--red)', color: '#fff' }}>
+                  Destacado
+                </div>
+              )}
+            </div>
+          </ScrollReveal>
 
           {/* Info */}
-          <div className="flex flex-col">
-            {/* Category */}
-            {product.category && (
-              <span className="text-sm text-red-500 font-medium mb-3 uppercase tracking-wider">
-                {product.category.name}
-              </span>
-            )}
+          <ScrollReveal delay={120}>
+            <div className="flex flex-col">
+              {product.category && (
+                <span className="text-sm font-bold mb-3 uppercase tracking-widest" style={{ color: 'var(--red)' }}>
+                  {product.category.name}
+                </span>
+              )}
+              <h1 className="text-3xl md:text-4xl font-black mb-5 leading-tight" style={{ color: 'var(--text)' }}>
+                {product.name}
+              </h1>
 
-            <h1 className="text-3xl md:text-4xl font-bold text-white mb-4 leading-tight">
-              {product.name}
-            </h1>
+              <p className="leading-relaxed mb-8" style={{ color: 'var(--gray-600)' }}>
+                {product.description}
+              </p>
 
-            {/* Price */}
-            <div className="flex items-baseline gap-3 mb-6">
-              <span className="text-4xl font-black text-white">
-                {formatPrice(product.price)}
-              </span>
-            </div>
+              {/* Compra con variantes */}
+              <ProductPurchase product={product} variants={variants} />
 
-            {/* Attributes */}
-            <div className="flex flex-wrap gap-3 mb-6">
-              <div className="bg-white/5 border border-white/10 rounded-lg px-4 py-2">
-                <span className="text-xs text-white/40 block mb-0.5">Talla</span>
-                <span className="text-sm font-semibold text-white">{product.size}</span>
-              </div>
-              <div className="bg-white/5 border border-white/10 rounded-lg px-4 py-2">
-                <span className="text-xs text-white/40 block mb-0.5">Color</span>
-                <span className="text-sm font-semibold text-white capitalize">{product.color}</span>
-              </div>
-              <div className="bg-white/5 border border-white/10 rounded-lg px-4 py-2">
-                <span className="text-xs text-white/40 block mb-0.5">SKU</span>
-                <span className="text-sm font-semibold text-white">{product.sku}</span>
-              </div>
-            </div>
-
-            {/* Stock */}
-            {isLowStock && (
-              <div className="bg-yellow-900/20 border border-yellow-800/30 rounded-lg px-4 py-3 mb-6 text-sm text-yellow-400">
-                ⚠️ Solo quedan {product.stock} unidades disponibles
-              </div>
-            )}
-            {isOutOfStock && (
-              <div className="bg-red-900/20 border border-red-800/30 rounded-lg px-4 py-3 mb-6 text-sm text-red-400">
-                ❌ Producto agotado temporalmente
-              </div>
-            )}
-
-            {/* Description */}
-            <p className="text-white/50 leading-relaxed mb-8">
-              {product.description}
-            </p>
-
-            {/* Add to cart */}
-            <div className="mb-8">
-              <AddToCartButton product={product} />
-            </div>
-
-            {/* Trust badges */}
-            <div className="border-t border-white/5 pt-6 grid grid-cols-3 gap-4">
-              {[
-                { icon: <Shield size={16} />, label: 'Calidad garantizada' },
-                { icon: <Truck size={16} />, label: 'Envío a todo Chile' },
-                { icon: <RotateCcw size={16} />, label: 'Cambios en 7 días' },
-              ].map((b) => (
-                <div key={b.label} className="flex flex-col items-center text-center gap-2">
-                  <div className="w-8 h-8 bg-red-900/10 rounded-lg flex items-center justify-center text-red-500">
-                    {b.icon}
+              {/* Trust badges */}
+              <div className="mt-10 pt-6 grid grid-cols-3 gap-4" style={{ borderTop: '1px solid var(--gray-100)' }}>
+                {[
+                  { icon: <Shield size={18} />, label: 'Calidad garantizada' },
+                  { icon: <Truck size={18} />, label: 'Envío a todo Chile' },
+                  { icon: <RotateCcw size={18} />, label: 'Cambios en 7 días' },
+                ].map((b) => (
+                  <div key={b.label} className="flex flex-col items-center text-center gap-2">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(192,57,43,.08)', color: 'var(--red)' }}>
+                      {b.icon}
+                    </div>
+                    <span className="text-xs" style={{ color: 'var(--gray-600)' }}>{b.label}</span>
                   </div>
-                  <span className="text-xs text-white/30">{b.label}</span>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
+          </ScrollReveal>
         </div>
 
-        {/* Related */}
+        {/* Relacionados */}
         {related.length > 0 && (
           <div>
-            <h2 className="text-2xl font-bold text-white mb-8">También te puede interesar</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {related.map((p) => (
-                <ProductCard key={p.id} product={p} />
+            <ScrollReveal>
+              <h2 className="text-2xl font-black mb-8" style={{ color: 'var(--text)' }}>También te puede interesar</h2>
+            </ScrollReveal>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              {related.map((p, i) => (
+                <ScrollReveal key={p.id} delay={i * 80}>
+                  <ProductCard product={p} />
+                </ScrollReveal>
               ))}
             </div>
           </div>

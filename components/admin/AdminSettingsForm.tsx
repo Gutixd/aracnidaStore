@@ -56,13 +56,16 @@ export function AdminSettingsForm({ settings }: Props) {
     setTimeout(() => setMessage(null), 3000)
   }
 
-  const inputClass = "w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-red-600/50"
-  const labelClass = "block text-sm font-medium text-white/60 mb-1.5"
+  const inputClass = "input-field"
+  const labelClass = "block text-sm font-semibold mb-1.5"
+  const labelStyle = { color: 'var(--gray-600)' }
+  const sectionTitle = "text-sm font-bold uppercase tracking-wider mb-4"
+  const sectionStyle = { color: 'var(--gray-400)' }
 
   return (
-    <div className="bg-[#111827] border border-white/5 rounded-xl p-6 space-y-6">
+    <div className="card p-6 space-y-6">
       <section>
-        <h2 className="text-sm font-semibold text-white/50 uppercase tracking-wider mb-4">General</h2>
+        <h2 className={sectionTitle} style={sectionStyle}>General</h2>
         <div className="space-y-4">
           <div>
             <label className={labelClass}>Nombre de la tienda</label>
@@ -79,8 +82,8 @@ export function AdminSettingsForm({ settings }: Props) {
         </div>
       </section>
 
-      <section className="border-t border-white/5 pt-6">
-        <h2 className="text-sm font-semibold text-white/50 uppercase tracking-wider mb-4">Envíos</h2>
+      <section className="pt-6" style={{ borderTop: '1px solid var(--gray-100)' }}>
+        <h2 className={sectionTitle} style={sectionStyle}>Envíos</h2>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className={labelClass}>Costo de envío (CLP)</label>
@@ -103,8 +106,8 @@ export function AdminSettingsForm({ settings }: Props) {
         </div>
       </section>
 
-      <section className="border-t border-white/5 pt-6">
-        <h2 className="text-sm font-semibold text-white/50 uppercase tracking-wider mb-4">Alertas</h2>
+      <section className="pt-6" style={{ borderTop: '1px solid var(--gray-100)' }}>
+        <h2 className={sectionTitle} style={sectionStyle}>Alertas</h2>
         <div>
           <label className={labelClass}>Umbral de stock bajo (unidades)</label>
           <input
@@ -113,14 +116,14 @@ export function AdminSettingsForm({ settings }: Props) {
             type="number"
             className={inputClass}
           />
-          <p className="text-xs text-white/30 mt-1">
+          <p className="text-xs mt-1" style={{ color: 'var(--gray-400)' }}>
             Recibirás alertas cuando el stock sea igual o menor a este valor
           </p>
         </div>
       </section>
 
-      <section className="border-t border-white/5 pt-6">
-        <h2 className="text-sm font-semibold text-white/50 uppercase tracking-wider mb-4">Redes sociales</h2>
+      <section className="pt-6" style={{ borderTop: '1px solid var(--gray-100)' }}>
+        <h2 className={sectionTitle} style={sectionStyle}>Redes sociales</h2>
         <div className="space-y-4">
           <div>
             <label className={labelClass}>Instagram URL</label>
@@ -134,17 +137,12 @@ export function AdminSettingsForm({ settings }: Props) {
       </section>
 
       {message && (
-        <div className="bg-green-900/20 border border-green-800/30 rounded-lg p-3 text-sm text-green-400">
+        <div className="rounded-xl p-3 text-sm" style={{ background: 'rgba(22,163,74,.1)', border: '1px solid rgba(22,163,74,.3)', color: '#15803d' }}>
           {message}
         </div>
       )}
 
-      <button
-        onClick={handleSave}
-        disabled={loading}
-        className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-white text-sm disabled:opacity-60 transition-all"
-        style={{ background: 'linear-gradient(135deg, #c0392b, #a93226)' }}
-      >
+      <button onClick={handleSave} disabled={loading} className="btn-primary text-sm">
         {loading ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
         {loading ? 'Guardando...' : 'Guardar configuración'}
       </button>

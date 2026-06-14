@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { Trash2, Loader2 } from 'lucide-react'
+import { Trash2, Loader2, Check } from 'lucide-react'
 
 interface Props { id: string; name: string }
 
@@ -25,14 +25,12 @@ export function AdminDeleteProduct({ id, name }: Props) {
         <button
           onClick={handleDelete}
           disabled={loading}
-          className="text-xs text-red-400 hover:text-red-300 bg-red-900/20 hover:bg-red-900/30 px-2.5 py-1.5 rounded-lg transition-all flex items-center gap-1"
+          className="text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-all flex items-center gap-1"
+          style={{ background: 'rgba(192,57,43,.1)', color: 'var(--red)' }}
         >
-          {loading ? <Loader2 size={12} className="animate-spin" /> : '✓'} Confirmar
+          {loading ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />} Confirmar
         </button>
-        <button
-          onClick={() => setConfirming(false)}
-          className="text-xs text-white/30 hover:text-white/60 px-2 py-1.5 rounded-lg transition-colors"
-        >
+        <button onClick={() => setConfirming(false)} className="text-xs px-2 py-1.5 rounded-lg transition-colors" style={{ color: 'var(--gray-400)' }}>
           Cancelar
         </button>
       </div>
@@ -42,7 +40,8 @@ export function AdminDeleteProduct({ id, name }: Props) {
   return (
     <button
       onClick={() => setConfirming(true)}
-      className="text-white/20 hover:text-red-400 p-1.5 rounded-lg hover:bg-red-900/10 transition-all"
+      className="p-1.5 rounded-lg transition-all"
+      style={{ color: 'var(--gray-400)' }}
       title={`Eliminar ${name}`}
     >
       <Trash2 size={14} />

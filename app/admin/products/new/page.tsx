@@ -8,8 +8,8 @@ export default async function NewProductPage() {
   return (
     <div className="p-8">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-white">Nuevo producto</h1>
-        <p className="text-white/40 text-sm mt-1">Agrega un producto al catálogo</p>
+        <h1 className="text-2xl font-black" style={{ color: 'var(--text)' }}>Nuevo producto</h1>
+        <p className="text-sm mt-1" style={{ color: 'var(--gray-600)' }}>Agrega un producto al catálogo</p>
       </div>
       <div className="max-w-2xl">
         <AdminProductForm product={null} categories={categories ?? []} />

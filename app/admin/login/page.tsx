@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { Loader2 } from 'lucide-react'
+import { Loader2, AlertTriangle } from 'lucide-react'
+import Image from 'next/image'
 
 export default function AdminLoginPage() {
   const [username, setUsername] = useState('')
@@ -55,16 +56,9 @@ export default function AdminLoginPage() {
       <div className="relative w-full max-w-sm animate-scale-in">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4 animate-float"
-            style={{ background: 'linear-gradient(135deg, #c0392b, #96281b)', boxShadow: '0 8px 32px rgba(192,57,43,.4)' }}>
-            <svg viewBox="0 0 32 32" fill="none" className="w-9 h-9">
-              <circle cx="16" cy="16" r="14" stroke="white" strokeWidth="1.5" opacity=".6"/>
-              <path d="M16 3C16 3,9 8,9 16C9 24,16 29,16 29C16 29,23 24,23 16C23 8,16 3,16 3Z" fill="white" opacity=".15"/>
-              <path d="M3 16L29 16" stroke="white" strokeWidth="1" opacity=".4"/>
-              <path d="M5 9Q16 13 27 9" stroke="white" strokeWidth=".8" fill="none" opacity=".3"/>
-              <path d="M5 23Q16 19 27 23" stroke="white" strokeWidth=".8" fill="none" opacity=".3"/>
-              <circle cx="16" cy="16" r="3" fill="white"/>
-            </svg>
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4 animate-float overflow-hidden"
+            style={{ background: '#fff', boxShadow: '0 8px 32px rgba(192,57,43,.4)' }}>
+            <Image src="/logo.jpeg" alt="AracnidaStore" width={64} height={64} className="object-cover" />
           </div>
           <h1 className="text-3xl font-black text-white tracking-tight">
             Aracnida<span style={{ color: '#c0392b' }}>Store</span>
@@ -120,7 +114,7 @@ export default function AdminLoginPage() {
             {error && (
               <div className="rounded-xl p-3 text-sm flex items-center gap-2"
                 style={{ background: 'rgba(192,57,43,.15)', border: '1px solid rgba(192,57,43,.3)', color: '#f87171' }}>
-                <span>⚠</span> {error}
+                <AlertTriangle size={14} /> {error}
               </div>
             )}
 

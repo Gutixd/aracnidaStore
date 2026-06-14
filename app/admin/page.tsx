@@ -55,17 +55,17 @@ export default async function AdminDashboard() {
     <div className="p-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-white">Dashboard</h1>
-        <p className="text-white/40 text-sm mt-1">Resumen general de AracnidaStore</p>
+        <h1 className="text-2xl font-black" style={{ color: 'var(--text)' }}>Dashboard</h1>
+        <p className="text-sm mt-1" style={{ color: 'var(--gray-600)' }}>Resumen general de AracnidaStore</p>
       </div>
 
       {/* Alerts */}
       {(data.outOfStockProducts.length > 0 || data.lowStockProducts.length > 0) && (
         <div className="mb-6 space-y-3">
           {data.outOfStockProducts.length > 0 && (
-            <div className="bg-red-900/10 border border-red-800/30 rounded-xl p-4 flex items-center gap-3">
-              <XCircle size={18} className="text-red-400 shrink-0" />
-              <p className="text-sm text-red-300">
+            <div className="rounded-xl p-4 flex items-center gap-3" style={{ background: 'rgba(192,57,43,.06)', border: '1px solid rgba(192,57,43,.2)' }}>
+              <XCircle size={18} className="shrink-0" style={{ color: 'var(--red)' }} />
+              <p className="text-sm" style={{ color: 'var(--gray-800)' }}>
                 <strong>{data.outOfStockProducts.length}</strong> producto(s) sin stock:{' '}
                 {data.outOfStockProducts.slice(0, 3).map((p) => p.name).join(', ')}
                 {data.outOfStockProducts.length > 3 && ` y ${data.outOfStockProducts.length - 3} más`}
@@ -73,9 +73,9 @@ export default async function AdminDashboard() {
             </div>
           )}
           {data.lowStockProducts.length > 0 && (
-            <div className="bg-yellow-900/10 border border-yellow-800/30 rounded-xl p-4 flex items-center gap-3">
-              <AlertTriangle size={18} className="text-yellow-400 shrink-0" />
-              <p className="text-sm text-yellow-300">
+            <div className="rounded-xl p-4 flex items-center gap-3" style={{ background: 'rgba(234,179,8,.08)', border: '1px solid rgba(234,179,8,.25)' }}>
+              <AlertTriangle size={18} className="shrink-0" style={{ color: '#b45309' }} />
+              <p className="text-sm" style={{ color: 'var(--gray-800)' }}>
                 <strong>{data.lowStockProducts.length}</strong> producto(s) con stock bajo
               </p>
             </div>

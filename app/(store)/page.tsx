@@ -2,14 +2,15 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Product } from '@/types'
 import { ProductCard } from '@/components/store/ProductCard'
-import { ShoppingBag, Shield, Truck, Star, ChevronRight, Package, Zap } from 'lucide-react'
+import Image from 'next/image'
+import { ShoppingBag, Shield, Truck, ChevronRight, Package, Zap, Shirt, VenetianMask, Gift } from 'lucide-react'
 import { ScrollReveal } from '@/components/store/ScrollReveal'
 
 async function getFeaturedProducts(): Promise<Product[]> {
   const supabase = await createClient()
   const { data } = await supabase
     .from('products')
-    .select('*, category:categories(id,name,slug)')
+    .select('*, category:categories(id,name,slug), variants:product_variants(*)')
     .eq('active', true)
     .eq('featured', true)
     .order('created_at', { ascending: false })
@@ -118,21 +119,21 @@ export default async function HomePage() {
                 href: '/products?category=disfraces',
                 label: 'Disfraces',
                 sub: 'Miles Morales, Tom Holland, Tobey, Venom',
-                emoji: '🕷️',
+                icon: <Shirt size={40} strokeWidth={1.5} />,
                 bg: 'linear-gradient(135deg, #1a2744 0%, #0f1e3d 100%)',
               },
               {
                 href: '/products?category=mascaras',
                 label: 'Máscaras',
                 sub: 'PRO ULTRA, Standard, Básica',
-                emoji: '🕸️',
+                icon: <VenetianMask size={40} strokeWidth={1.5} />,
                 bg: 'linear-gradient(135deg, #c0392b 0%, #96281b 100%)',
               },
               {
                 href: '/products?category=peluches',
                 label: 'Peluches',
-                sub: 'Spiderman original de colección',
-                emoji: '🧸',
+                sub: 'Spider-Man original de colección',
+                icon: <Gift size={40} strokeWidth={1.5} />,
                 bg: 'linear-gradient(135deg, #2c3e6b 0%, #1a2744 100%)',
               },
             ].map((cat, i) => (
@@ -142,7 +143,7 @@ export default async function HomePage() {
                     style={{ background: cat.bg, boxShadow: '0 8px 32px rgba(0,0,0,.15)' }}>
                     <div className="web-pattern opacity-[.03]" />
                     <div className="absolute inset-0 flex flex-col justify-end p-6">
-                      <div className="text-5xl mb-3">{cat.emoji}</div>
+                      <div className="mb-3 text-white/90">{cat.icon}</div>
                       <h3 className="text-xl font-black text-white">{cat.label}</h3>
                       <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,.55)' }}>{cat.sub}</p>
                     </div>
@@ -305,7 +306,9 @@ export default async function HomePage() {
               <div className="absolute inset-0 pointer-events-none"
                 style={{ background: 'radial-gradient(ellipse 70% 60% at 50% 100%, rgba(192,57,43,.2), transparent)' }} />
               <div className="relative z-10">
-                <div className="text-5xl mb-6 animate-float">🕷️</div>
+                <div className="w-20 h-20 mx-auto mb-6 rounded-2xl overflow-hidden animate-float" style={{ boxShadow: '0 12px 40px rgba(0,0,0,.3)' }}>
+                  <Image src="/logo.jpeg" alt="AracnidaStore" width={80} height={80} className="object-cover" />
+                </div>
                 <h2 className="text-3xl md:text-4xl font-black text-white mb-4">
                   ¿Listo para convertirte en el héroe?
                 </h2>

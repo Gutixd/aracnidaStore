@@ -2,7 +2,7 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { formatPrice, formatDate, ORDER_STATUS_LABELS, ORDER_STATUS_COLORS } from '@/lib/utils'
 import { Order } from '@/types'
 import { AdminOrderStatusChanger } from '@/components/admin/AdminOrderStatusChanger'
-import { ShoppingCart } from 'lucide-react'
+import { ShoppingCart, Truck, Store } from 'lucide-react'
 
 async function getOrders(): Promise<Order[]> {
   const supabase = await createAdminClient()
@@ -28,74 +28,60 @@ export default async function AdminOrdersPage() {
   return (
     <div className="p-8">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-white">Pedidos</h1>
-        <p className="text-white/40 text-sm mt-1">{orders.length} pedidos en total</p>
+        <h1 className="text-2xl font-black" style={{ color: 'var(--text)' }}>Pedidos</h1>
+        <p className="text-sm mt-1" style={{ color: 'var(--gray-600)' }}>{orders.length} pedidos en total</p>
       </div>
 
-      {/* Status summary */}
       <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 mb-8">
         {Object.entries(byStatus).map(([status, count]) => (
           <div key={status} className={`p-3 rounded-xl border text-center ${ORDER_STATUS_COLORS[status]}`}>
-            <p className="text-xl font-black">{count}</p>
-            <p className="text-xs mt-0.5 opacity-80">{ORDER_STATUS_LABELS[status]}</p>
+            <p className="text-xl font-black tabular-nums">{count}</p>
+            <p className="text-xs mt-0.5">{ORDER_STATUS_LABELS[status]}</p>
           </div>
         ))}
       </div>
 
-      {/* Orders list */}
       <div className="space-y-4">
         {orders.length === 0 && (
-          <div className="bg-[#111827] border border-white/5 rounded-xl p-16 text-center text-white/30">
-            <ShoppingCart size={40} className="mx-auto mb-4 opacity-30" />
+          <div className="card p-16 text-center" style={{ color: 'var(--gray-400)' }}>
+            <ShoppingCart size={40} className="mx-auto mb-4" />
             <p>Sin pedidos aún</p>
           </div>
         )}
         {orders.map((order) => (
-          <div key={order.id} className="bg-[#111827] border border-white/5 rounded-xl overflow-hidden hover:border-white/10 transition-colors">
-            {/* Header */}
-            <div className="p-5 flex flex-wrap items-center justify-between gap-4 border-b border-white/5">
+          <div key={order.id} className="card overflow-hidden">
+            <div className="p-5 flex flex-wrap items-center justify-between gap-4" style={{ borderBottom: '1px solid var(--gray-100)' }}>
               <div>
                 <div className="flex items-center gap-3 mb-1">
-                  <span className="font-mono text-xs text-white/30">
-                    #{order.id.slice(0, 8).toUpperCase()}
-                  </span>
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${ORDER_STATUS_COLORS[order.status]}`}>
+                  <span className="font-mono text-xs" style={{ color: 'var(--gray-400)' }}>#{order.id.slice(0, 8).toUpperCase()}</span>
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border ${ORDER_STATUS_COLORS[order.status]}`}>
                     {ORDER_STATUS_LABELS[order.status]}
                   </span>
-                  {order.delivery_method === 'delivery' ? (
-                    <span className="text-xs text-white/30 bg-white/5 px-2 py-0.5 rounded">🚚 Delivery</span>
-                  ) : (
-                    <span className="text-xs text-white/30 bg-white/5 px-2 py-0.5 rounded">🏪 Retiro</span>
-                  )}
+                  <span className="text-xs px-2 py-0.5 rounded inline-flex items-center gap-1" style={{ background: 'var(--gray-50)', color: 'var(--gray-600)' }}>
+                    {order.delivery_method === 'delivery' ? <><Truck size={12} /> Delivery</> : <><Store size={12} /> Retiro</>}
+                  </span>
                 </div>
-                <p className="text-white font-semibold">{order.customer_name}</p>
-                <div className="flex items-center gap-3 text-xs text-white/30 mt-0.5">
-                  <span>{order.customer_phone}</span>
-                  <span>·</span>
-                  <span>{order.customer_email}</span>
-                  <span>·</span>
+                <p className="font-bold" style={{ color: 'var(--text)' }}>{order.customer_name}</p>
+                <div className="flex items-center gap-3 text-xs mt-0.5" style={{ color: 'var(--gray-400)' }}>
+                  <span>{order.customer_phone}</span><span>·</span>
+                  <span>{order.customer_email}</span><span>·</span>
                   <span>{formatDate(order.created_at)}</span>
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-2xl font-black text-white">{formatPrice(order.total)}</p>
-                {order.shipping_cost > 0 && (
-                  <p className="text-xs text-white/30">+{formatPrice(order.shipping_cost)} envío</p>
-                )}
+                <p className="text-2xl font-black tabular-nums" style={{ color: 'var(--text)' }}>{formatPrice(order.total)}</p>
+                {order.shipping_cost > 0 && <p className="text-xs" style={{ color: 'var(--gray-400)' }}>+{formatPrice(order.shipping_cost)} envío</p>}
               </div>
             </div>
 
-            {/* Items */}
             <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <p className="text-xs text-white/40 uppercase tracking-wider mb-3">Productos</p>
+                <p className="text-xs uppercase tracking-wider mb-3 font-bold" style={{ color: 'var(--gray-400)' }}>Productos</p>
                 <div className="space-y-2">
                   {order.items?.map((item) => (
                     <div key={item.id} className="flex justify-between text-sm">
-                      <span className="text-white/70">
-                        {item.product_name} · {item.size} · {item.color} × {item.quantity}
-                      </span>
-                      <span className="text-white/50 shrink-0 ml-3">{formatPrice(item.total_price)}</span>
+                      <span style={{ color: 'var(--gray-800)' }}>{item.product_name} · Talla {item.size} × {item.quantity}</span>
+                      <span className="shrink-0 ml-3 tabular-nums" style={{ color: 'var(--gray-600)' }}>{formatPrice(item.total_price)}</span>
                     </div>
                   ))}
                 </div>
@@ -103,23 +89,20 @@ export default async function AdminOrdersPage() {
 
               {order.delivery_method === 'delivery' && (
                 <div>
-                  <p className="text-xs text-white/40 uppercase tracking-wider mb-3">Entrega</p>
-                  <div className="text-sm text-white/60 space-y-1">
+                  <p className="text-xs uppercase tracking-wider mb-3 font-bold" style={{ color: 'var(--gray-400)' }}>Entrega</p>
+                  <div className="text-sm space-y-1" style={{ color: 'var(--gray-600)' }}>
                     <p>{order.delivery_address}</p>
                     <p>{order.delivery_commune}</p>
-                    {order.delivery_reference && (
-                      <p className="text-white/30">Ref: {order.delivery_reference}</p>
-                    )}
+                    {order.delivery_reference && <p style={{ color: 'var(--gray-400)' }}>Ref: {order.delivery_reference}</p>}
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Notes + Status changer */}
             <div className="px-5 pb-5 flex flex-wrap items-end justify-between gap-4">
               {order.notes && (
-                <p className="text-xs text-white/30 bg-white/[0.02] rounded-lg px-3 py-2 border border-white/5">
-                  📝 {order.notes}
+                <p className="text-xs rounded-lg px-3 py-2" style={{ background: 'var(--gray-50)', color: 'var(--gray-600)', border: '1px solid var(--gray-100)' }}>
+                  Nota: {order.notes}
                 </p>
               )}
               <div className="ml-auto">

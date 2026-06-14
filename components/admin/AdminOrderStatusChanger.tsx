@@ -49,18 +49,15 @@ export function AdminOrderStatusChanger({ orderId, currentStatus }: Props) {
 
   return (
     <div className="flex items-center gap-2">
-      {loading && <Loader2 size={14} className="animate-spin text-white/30" />}
+      {loading && <Loader2 size={14} className="animate-spin" style={{ color: 'var(--gray-400)' }} />}
       <select
         value={status}
         onChange={(e) => handleChange(e.target.value)}
         disabled={loading}
-        className="bg-[#0d1117] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-red-600/50 disabled:opacity-50 cursor-pointer"
+        className="input-field text-sm cursor-pointer"
+        style={{ width: 'auto', paddingTop: '0.5rem', paddingBottom: '0.5rem' }}
       >
-        {STATUSES.map((s) => (
-          <option key={s} value={s} className="bg-[#0d1117]">
-            {ORDER_STATUS_LABELS[s]}
-          </option>
-        ))}
+        {STATUSES.map((s) => <option key={s} value={s}>{ORDER_STATUS_LABELS[s]}</option>)}
       </select>
     </div>
   )

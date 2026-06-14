@@ -2,13 +2,13 @@
 
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { CartItem, Product } from '@/types'
+import { CartItem, Product, ProductVariant } from '@/types'
 
 interface CartStore {
   items: CartItem[]
-  addItem: (product: Product, quantity?: number) => void
-  removeItem: (productId: string) => void
-  updateQuantity: (productId: string, quantity: number) => void
+  addItem: (product: Product, variant: ProductVariant, quantity?: number) => void
+  removeItem: (variantId: string) => void
+  updateQuantity: (variantId: string, quantity: number) => void
   clearCart: () => void
   getTotalItems: () => number
   getTotalPrice: () => number
@@ -19,35 +19,37 @@ export const useCart = create<CartStore>()(
     (set, get) => ({
       items: [],
 
-      addItem: (product, quantity = 1) => {
+      addItem: (product, variant, quantity = 1) => {
         const { items } = get()
-        const existing = items.find((i) => i.product.id === product.id)
+        const existing = items.find((i) => i.variant.id === variant.id)
 
         if (existing) {
           set({
             items: items.map((i) =>
-              i.product.id === product.id
-                ? { ...i, quantity: Math.min(i.quantity + quantity, product.stock) }
+              i.variant.id === variant.id
+                ? { ...i, quantity: Math.min(i.quantity + quantity, variant.stock) }
                 : i
             ),
           })
         } else {
-          set({ items: [...items, { product, quantity }] })
+          set({ items: [...items, { product, variant, quantity }] })
         }
       },
 
-      removeItem: (productId) => {
-        set({ items: get().items.filter((i) => i.product.id !== productId) })
+      removeItem: (variantId) => {
+        set({ items: get().items.filter((i) => i.variant.id !== variantId) })
       },
 
-      updateQuantity: (productId, quantity) => {
+      updateQuantity: (variantId, quantity) => {
         if (quantity <= 0) {
-          get().removeItem(productId)
+          get().removeItem(variantId)
           return
         }
         set({
           items: get().items.map((i) =>
-            i.product.id === productId ? { ...i, quantity } : i
+            i.variant.id === variantId
+              ? { ...i, quantity: Math.min(quantity, i.variant.stock) }
+              : i
           ),
         })
       },
@@ -57,8 +59,8 @@ export const useCart = create<CartStore>()(
       getTotalItems: () => get().items.reduce((sum, i) => sum + i.quantity, 0),
 
       getTotalPrice: () =>
-        get().items.reduce((sum, i) => sum + i.product.price * i.quantity, 0),
+        get().items.reduce((sum, i) => sum + i.variant.price * i.quantity, 0),
     }),
-    { name: 'aracnida-cart' }
+    { name: 'aracnida-cart-v2' }
   )
 )

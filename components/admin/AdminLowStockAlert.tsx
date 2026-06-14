@@ -14,39 +14,31 @@ export async function AdminLowStockAlert() {
     .limit(10)
 
   return (
-    <div className="bg-[#111827] border border-white/5 rounded-xl">
-      <div className="p-5 border-b border-white/5 flex items-center justify-between">
+    <div className="card">
+      <div className="p-5 flex items-center justify-between" style={{ borderBottom: '1px solid var(--gray-100)' }}>
         <div className="flex items-center gap-2">
-          <AlertTriangle size={16} className="text-yellow-500/60" />
-          <h2 className="text-sm font-semibold text-white">Stock crítico</h2>
+          <AlertTriangle size={16} style={{ color: '#b45309' }} />
+          <h2 className="text-sm font-bold" style={{ color: 'var(--text)' }}>Stock crítico</h2>
         </div>
-        <Link href="/admin/inventory" className="text-xs text-red-400 hover:text-red-300 transition-colors">
-          Gestionar →
-        </Link>
+        <Link href="/admin/inventory" className="text-xs font-semibold" style={{ color: 'var(--red)' }}>Gestionar</Link>
       </div>
-      <div className="divide-y divide-white/5">
+      <div>
         {products && products.length > 0 ? products.map((product) => (
-          <Link
-            key={product.id}
-            href={`/admin/products/${product.id}`}
-            className="flex items-center gap-3 p-4 hover:bg-white/[0.02] transition-colors"
-          >
-            <div className={`w-2 h-2 rounded-full shrink-0 ${product.stock === 0 ? 'bg-red-500' : 'bg-yellow-500'}`} />
+          <Link key={product.id} href={`/admin/products/${product.id}`} className="flex items-center gap-3 p-4" style={{ borderTop: '1px solid var(--gray-50)' }}>
+            <div className="w-2 h-2 rounded-full shrink-0" style={{ background: product.stock === 0 ? 'var(--red)' : '#eab308' }} />
             <div className="flex-1 min-w-0">
-              <p className="text-sm text-white/80 truncate">{product.name}</p>
-              <p className="text-xs text-white/30">{product.size} · {product.color}</p>
+              <p className="text-sm truncate font-medium" style={{ color: 'var(--text)' }}>{product.name}</p>
+              <p className="text-xs capitalize" style={{ color: 'var(--gray-400)' }}>{product.color}</p>
             </div>
             <div className="text-right">
-              <p className={`text-sm font-bold ${product.stock === 0 ? 'text-red-400' : 'text-yellow-400'}`}>
+              <p className="text-sm font-bold" style={{ color: product.stock === 0 ? 'var(--red)' : '#b45309' }}>
                 {product.stock === 0 ? 'Agotado' : `${product.stock} uds.`}
               </p>
-              <p className="text-xs text-white/30">{formatPrice(product.price)}</p>
+              <p className="text-xs tabular-nums" style={{ color: 'var(--gray-400)' }}>{formatPrice(product.price)}</p>
             </div>
           </Link>
         )) : (
-          <div className="p-8 text-center text-white/30 text-sm">
-            ✓ Todo el stock en niveles normales
-          </div>
+          <div className="p-8 text-center text-sm" style={{ color: 'var(--gray-400)' }}>Todo el stock en niveles normales</div>
         )}
       </div>
     </div>

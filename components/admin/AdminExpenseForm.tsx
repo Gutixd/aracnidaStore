@@ -40,37 +40,32 @@ export function AdminExpenseForm() {
     router.refresh()
   }
 
-  const inputClass = "w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-red-600/50"
+  const labelCls = "block text-xs font-semibold mb-1"
+  const labelStyle = { color: 'var(--gray-600)' }
 
   return (
     <form onSubmit={onSubmit} className="space-y-3">
       <div>
-        <label className="block text-xs text-white/50 mb-1">Descripción *</label>
-        <input value={form.title} onChange={(e) => update('title', e.target.value)} className={inputClass} placeholder="Ej: Compra 5 trajes..." />
+        <label className={labelCls} style={labelStyle}>Descripción *</label>
+        <input value={form.title} onChange={(e) => update('title', e.target.value)} className="input-field" placeholder="Ej: Compra 5 trajes..." />
       </div>
       <div>
-        <label className="block text-xs text-white/50 mb-1">Monto (CLP) *</label>
-        <input value={form.amount} onChange={(e) => update('amount', e.target.value)} type="number" className={inputClass} placeholder="25000" />
+        <label className={labelCls} style={labelStyle}>Monto (CLP) *</label>
+        <input value={form.amount} onChange={(e) => update('amount', e.target.value)} type="number" className="input-field" placeholder="25000" />
       </div>
       <div>
-        <label className="block text-xs text-white/50 mb-1">Categoría</label>
-        <select value={form.category} onChange={(e) => update('category', e.target.value)} className={`${inputClass} bg-[#0d1117]`}>
-          {CATEGORIES.map((c) => (
-            <option key={c.value} value={c.value} className="bg-[#0d1117]">{c.label}</option>
-          ))}
+        <label className={labelCls} style={labelStyle}>Categoría</label>
+        <select value={form.category} onChange={(e) => update('category', e.target.value)} className="input-field">
+          {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
         </select>
       </div>
       <div>
-        <label className="block text-xs text-white/50 mb-1">Nota (opcional)</label>
-        <input value={form.note} onChange={(e) => update('note', e.target.value)} className={inputClass} placeholder="Proveedor, detalle..." />
+        <label className={labelCls} style={labelStyle}>Nota (opcional)</label>
+        <input value={form.note} onChange={(e) => update('note', e.target.value)} className="input-field" placeholder="Proveedor, detalle..." />
       </div>
-      {error && <p className="text-red-400 text-xs">{error}</p>}
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl font-bold text-white text-sm disabled:opacity-60 transition-all"
-        style={{ background: success ? 'linear-gradient(135deg, #16a34a, #15803d)' : 'linear-gradient(135deg, #c0392b, #a93226)' }}
-      >
+      {error && <p className="text-xs" style={{ color: 'var(--red)' }}>{error}</p>}
+      <button type="submit" disabled={loading} className="btn-primary w-full justify-center py-2.5 text-sm"
+        style={success ? { background: '#16a34a' } : undefined}>
         {loading ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
         {success ? '¡Registrado!' : 'Registrar gasto'}
       </button>

@@ -25,12 +25,7 @@ export default function CheckoutPage() {
   const shippingCost = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST
   const total = subtotal + shippingCost
 
-  const {
-    register,
-    handleSubmit,
-    watch,
-    formState: { errors },
-  } = useForm<CheckoutFormData>({
+  const { register, handleSubmit, watch, formState: { errors } } = useForm<CheckoutFormData>({
     resolver: zodResolver(checkoutSchema),
     defaultValues: { delivery_method: 'delivery' },
   })
@@ -39,14 +34,11 @@ export default function CheckoutPage() {
 
   if (items.length === 0) {
     return (
-      <div className="pt-24 pb-24 px-4 min-h-screen flex items-center justify-center">
+      <div style={{ background: 'var(--gray-50)', minHeight: '100vh' }} className="flex items-center justify-center px-4">
         <div className="text-center">
-          <ShoppingBag size={48} className="mx-auto mb-4 text-white/20" />
-          <h1 className="text-2xl font-bold text-white mb-4">No hay productos en el carrito</h1>
-          <Link href="/products" className="inline-flex items-center gap-2 font-bold px-8 py-4 rounded-xl text-white"
-            style={{ background: 'linear-gradient(135deg, #c0392b, #a93226)' }}>
-            Ver catálogo
-          </Link>
+          <ShoppingBag size={48} className="mx-auto mb-4" style={{ color: 'var(--gray-200)' }} />
+          <h1 className="text-2xl font-black mb-4" style={{ color: 'var(--text)' }}>No hay productos en el carrito</h1>
+          <Link href="/products" className="btn-primary px-8 py-4">Ver catálogo</Link>
         </div>
       </div>
     )
@@ -70,73 +62,69 @@ export default function CheckoutPage() {
     }
   }
 
-  const inputClass = "w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white placeholder:text-white/30 focus:outline-none focus:border-red-600/50 transition-all text-sm"
-  const labelClass = "block text-sm font-medium text-white/60 mb-1.5"
+  const labelClass = "block text-sm font-semibold mb-1.5"
+  const labelStyle = { color: 'var(--gray-600)' }
 
   return (
-    <div className="pt-24 pb-24 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-5xl mx-auto">
+    <div style={{ background: 'var(--gray-50)', minHeight: '100vh' }}>
+      <div className="max-w-5xl mx-auto pt-28 pb-24 px-4 sm:px-6 lg:px-8">
         <div className="mb-10">
-          <h1 className="text-3xl font-bold text-white">Finalizar compra</h1>
-          <p className="text-white/40 mt-1">Completa tus datos para realizar el pedido</p>
+          <h1 className="text-3xl font-black" style={{ color: 'var(--text)' }}>Finalizar compra</h1>
+          <p className="mt-1" style={{ color: 'var(--gray-600)' }}>Completa tus datos para realizar el pedido</p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
             {/* Form */}
             <div className="lg:col-span-3 space-y-6">
-              {/* Contact */}
-              <div className="bg-[#111827] border border-white/5 rounded-xl p-6">
-                <h2 className="text-lg font-semibold text-white mb-5">Datos de contacto</h2>
+              {/* Contacto */}
+              <div className="card p-6">
+                <h2 className="text-lg font-bold mb-5" style={{ color: 'var(--text)' }}>Datos de contacto</h2>
                 <div className="space-y-4">
                   <div>
-                    <label className={labelClass}>Nombre completo *</label>
-                    <input {...register('customer_name')} placeholder="Tu nombre completo" className={inputClass} />
-                    {errors.customer_name && <p className="text-red-400 text-xs mt-1">{errors.customer_name.message}</p>}
+                    <label className={labelClass} style={labelStyle}>Nombre completo *</label>
+                    <input {...register('customer_name')} placeholder="Tu nombre completo" className="input-field" autoComplete="name" />
+                    {errors.customer_name && <p className="text-xs mt-1" style={{ color: 'var(--red)' }}>{errors.customer_name.message}</p>}
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className={labelClass}>Email *</label>
-                      <input {...register('customer_email')} type="email" placeholder="tu@email.com" className={inputClass} />
-                      {errors.customer_email && <p className="text-red-400 text-xs mt-1">{errors.customer_email.message}</p>}
+                      <label className={labelClass} style={labelStyle}>Email *</label>
+                      <input {...register('customer_email')} type="email" placeholder="tu@email.com" className="input-field" autoComplete="email" />
+                      {errors.customer_email && <p className="text-xs mt-1" style={{ color: 'var(--red)' }}>{errors.customer_email.message}</p>}
                     </div>
                     <div>
-                      <label className={labelClass}>Teléfono *</label>
-                      <input {...register('customer_phone')} placeholder="+56 9 1234 5678" className={inputClass} />
-                      {errors.customer_phone && <p className="text-red-400 text-xs mt-1">{errors.customer_phone.message}</p>}
+                      <label className={labelClass} style={labelStyle}>Teléfono *</label>
+                      <input {...register('customer_phone')} type="tel" placeholder="+56 9 1234 5678" className="input-field" autoComplete="tel" />
+                      {errors.customer_phone && <p className="text-xs mt-1" style={{ color: 'var(--red)' }}>{errors.customer_phone.message}</p>}
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Delivery method */}
-              <div className="bg-[#111827] border border-white/5 rounded-xl p-6">
-                <h2 className="text-lg font-semibold text-white mb-5">Método de entrega</h2>
+              {/* Entrega */}
+              <div className="card p-6">
+                <h2 className="text-lg font-bold mb-5" style={{ color: 'var(--text)' }}>Método de entrega</h2>
                 <div className="grid grid-cols-2 gap-3 mb-5">
-                  <label className={`relative flex flex-col gap-2 p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                    deliveryMethod === 'delivery'
-                      ? 'border-red-600 bg-red-900/10'
-                      : 'border-white/10 bg-white/[0.02] hover:border-white/20'
-                  }`}>
+                  <label className="relative flex flex-col gap-2 p-4 rounded-xl cursor-pointer transition-all"
+                    style={deliveryMethod === 'delivery'
+                      ? { border: '2px solid var(--red)', background: 'rgba(192,57,43,.06)' }
+                      : { border: '2px solid var(--gray-200)', background: '#fff' }}>
                     <input type="radio" value="delivery" {...register('delivery_method')} className="sr-only" />
-                    <MapPin size={20} className={deliveryMethod === 'delivery' ? 'text-red-400' : 'text-white/30'} />
+                    <MapPin size={20} style={{ color: deliveryMethod === 'delivery' ? 'var(--red)' : 'var(--gray-400)' }} />
                     <div>
-                      <p className="font-semibold text-white text-sm">Delivery</p>
-                      <p className="text-xs text-white/40">
-                        {shippingCost === 0 ? 'Gratis' : formatPrice(SHIPPING_COST)}
-                      </p>
+                      <p className="font-bold text-sm" style={{ color: 'var(--text)' }}>Delivery</p>
+                      <p className="text-xs" style={{ color: 'var(--gray-600)' }}>{shippingCost === 0 ? 'Gratis' : formatPrice(SHIPPING_COST)}</p>
                     </div>
                   </label>
-                  <label className={`relative flex flex-col gap-2 p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                    deliveryMethod === 'retiro'
-                      ? 'border-red-600 bg-red-900/10'
-                      : 'border-white/10 bg-white/[0.02] hover:border-white/20'
-                  }`}>
+                  <label className="relative flex flex-col gap-2 p-4 rounded-xl cursor-pointer transition-all"
+                    style={deliveryMethod === 'retiro'
+                      ? { border: '2px solid var(--red)', background: 'rgba(192,57,43,.06)' }
+                      : { border: '2px solid var(--gray-200)', background: '#fff' }}>
                     <input type="radio" value="retiro" {...register('delivery_method')} className="sr-only" />
-                    <Store size={20} className={deliveryMethod === 'retiro' ? 'text-red-400' : 'text-white/30'} />
+                    <Store size={20} style={{ color: deliveryMethod === 'retiro' ? 'var(--red)' : 'var(--gray-400)' }} />
                     <div>
-                      <p className="font-semibold text-white text-sm">Retiro en tienda</p>
-                      <p className="text-xs text-white/40">Gratis</p>
+                      <p className="font-bold text-sm" style={{ color: 'var(--text)' }}>Retiro en tienda</p>
+                      <p className="text-xs" style={{ color: 'var(--gray-600)' }}>Gratis</p>
                     </div>
                   </label>
                 </div>
@@ -144,101 +132,78 @@ export default function CheckoutPage() {
                 {deliveryMethod === 'delivery' && (
                   <div className="space-y-4">
                     <div>
-                      <label className={labelClass}>Dirección *</label>
-                      <input {...register('delivery_address')} placeholder="Calle, número, depto" className={inputClass} />
-                      {errors.delivery_address && <p className="text-red-400 text-xs mt-1">{errors.delivery_address.message}</p>}
+                      <label className={labelClass} style={labelStyle}>Dirección *</label>
+                      <input {...register('delivery_address')} placeholder="Calle, número, depto" className="input-field" autoComplete="street-address" />
+                      {errors.delivery_address && <p className="text-xs mt-1" style={{ color: 'var(--red)' }}>{errors.delivery_address.message}</p>}
                     </div>
                     <div>
-                      <label className={labelClass}>Comuna / Ciudad *</label>
-                      <input {...register('delivery_commune')} placeholder="Santiago, Providencia, etc." className={inputClass} />
-                      {errors.delivery_commune && <p className="text-red-400 text-xs mt-1">{errors.delivery_commune.message}</p>}
+                      <label className={labelClass} style={labelStyle}>Comuna / Ciudad *</label>
+                      <input {...register('delivery_commune')} placeholder="Santiago, Providencia, etc." className="input-field" />
+                      {errors.delivery_commune && <p className="text-xs mt-1" style={{ color: 'var(--red)' }}>{errors.delivery_commune.message}</p>}
                     </div>
                     <div>
-                      <label className={labelClass}>Referencia de entrega</label>
-                      <input {...register('delivery_reference')} placeholder="Casa azul, edificio frente al banco..." className={inputClass} />
+                      <label className={labelClass} style={labelStyle}>Referencia de entrega</label>
+                      <input {...register('delivery_reference')} placeholder="Casa azul, edificio frente al banco..." className="input-field" />
                     </div>
                   </div>
                 )}
               </div>
 
-              {/* Notes */}
-              <div className="bg-[#111827] border border-white/5 rounded-xl p-6">
-                <h2 className="text-lg font-semibold text-white mb-5">Notas del pedido</h2>
-                <textarea
-                  {...register('notes')}
-                  placeholder="Instrucciones especiales, tallas alternativas, etc."
-                  rows={3}
-                  className={`${inputClass} resize-none`}
-                />
+              {/* Notas */}
+              <div className="card p-6">
+                <h2 className="text-lg font-bold mb-5" style={{ color: 'var(--text)' }}>Notas del pedido</h2>
+                <textarea {...register('notes')} placeholder="Instrucciones especiales, etc." rows={3} className="input-field resize-none" />
               </div>
             </div>
 
-            {/* Order summary */}
+            {/* Resumen */}
             <div className="lg:col-span-2">
-              <div className="bg-[#111827] border border-white/5 rounded-xl p-6 sticky top-24">
-                <h2 className="text-lg font-semibold text-white mb-5">Tu pedido</h2>
-
-                {/* Items */}
+              <div className="card p-6 sticky top-24">
+                <h2 className="text-lg font-bold mb-5" style={{ color: 'var(--text)' }}>Tu pedido</h2>
                 <div className="space-y-3 mb-5">
-                  {items.map(({ product, quantity }) => (
-                    <div key={product.id} className="flex items-center gap-3">
-                      <div className="w-12 h-12 bg-[#0d1117] rounded-lg overflow-hidden relative shrink-0">
-                        {product.image_url && (
-                          <Image src={product.image_url} alt={product.name} fill className="object-cover" />
-                        )}
+                  {items.map(({ product, variant, quantity }) => (
+                    <div key={variant.id} className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-lg overflow-hidden relative shrink-0" style={{ background: 'var(--gray-50)' }}>
+                        {product.image_url && <Image src={product.image_url} alt={product.name} fill className="object-cover" />}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm text-white/80 truncate">{product.name}</p>
-                        <p className="text-xs text-white/30">{product.size} · x{quantity}</p>
+                        <p className="text-sm truncate" style={{ color: 'var(--text)' }}>{product.name}</p>
+                        <p className="text-xs" style={{ color: 'var(--gray-400)' }}>Talla {variant.size} · x{quantity}</p>
                       </div>
-                      <span className="text-sm font-semibold text-white shrink-0">
-                        {formatPrice(product.price * quantity)}
+                      <span className="text-sm font-bold shrink-0 tabular-nums" style={{ color: 'var(--text)' }}>
+                        {formatPrice(variant.price * quantity)}
                       </span>
                     </div>
                   ))}
                 </div>
 
-                {/* Totals */}
-                <div className="border-t border-white/5 pt-4 space-y-2 mb-6">
+                <div className="pt-4 space-y-2 mb-6" style={{ borderTop: '1px solid var(--gray-100)' }}>
                   <div className="flex justify-between text-sm">
-                    <span className="text-white/50">Subtotal</span>
-                    <span className="text-white">{formatPrice(subtotal)}</span>
+                    <span style={{ color: 'var(--gray-600)' }}>Subtotal</span>
+                    <span className="font-semibold tabular-nums" style={{ color: 'var(--text)' }}>{formatPrice(subtotal)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-white/50">Envío</span>
-                    <span className={shippingCost === 0 ? 'text-green-400' : 'text-white'}>
+                    <span style={{ color: 'var(--gray-600)' }}>Envío</span>
+                    <span className="font-semibold tabular-nums" style={{ color: shippingCost === 0 ? '#15803d' : 'var(--text)' }}>
                       {shippingCost === 0 ? 'Gratis' : formatPrice(shippingCost)}
                     </span>
                   </div>
-                  <div className="flex justify-between border-t border-white/5 pt-3 mt-2">
-                    <span className="font-bold text-white">Total</span>
-                    <span className="font-black text-white text-xl">{formatPrice(total)}</span>
+                  <div className="flex justify-between pt-3 mt-2" style={{ borderTop: '1px solid var(--gray-100)' }}>
+                    <span className="font-bold" style={{ color: 'var(--text)' }}>Total</span>
+                    <span className="font-black text-xl tabular-nums" style={{ color: 'var(--red)' }}>{formatPrice(total)}</span>
                   </div>
                 </div>
 
                 {error && (
-                  <div className="bg-red-900/20 border border-red-800/30 rounded-lg p-3 mb-4 text-sm text-red-400">
+                  <div className="rounded-xl p-3 mb-4 text-sm" style={{ background: 'rgba(192,57,43,.1)', border: '1px solid rgba(192,57,43,.3)', color: 'var(--red)' }}>
                     {error}
                   </div>
                 )}
 
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full flex items-center justify-center gap-2 py-4 rounded-xl font-bold text-white disabled:opacity-60 transition-all"
-                  style={{ background: 'linear-gradient(135deg, #c0392b, #a93226)' }}
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 size={18} className="animate-spin" />
-                      Procesando pedido...
-                    </>
-                  ) : (
-                    'Confirmar pedido'
-                  )}
+                <button type="submit" disabled={loading} className="btn-primary w-full justify-center py-4">
+                  {loading ? <><Loader2 size={18} className="animate-spin" />Procesando...</> : 'Confirmar pedido'}
                 </button>
-
-                <p className="text-xs text-white/20 text-center mt-4">
+                <p className="text-xs text-center mt-4" style={{ color: 'var(--gray-400)' }}>
                   Al confirmar aceptas nuestros términos de servicio
                 </p>
               </div>

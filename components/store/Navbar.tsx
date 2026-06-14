@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { useCart } from '@/store/cart'
 import { ShoppingCart, Menu, X } from 'lucide-react'
 import { useState, useEffect } from 'react'
@@ -34,14 +35,9 @@ export function Navbar() {
 
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center transition-transform group-hover:scale-110"
-              style={{ background: 'linear-gradient(135deg, #c0392b, #96281b)' }}>
-              <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5">
-                <circle cx="12" cy="12" r="10" stroke="white" strokeWidth="1.2" opacity=".5"/>
-                <path d="M12 2C12 2,7 6,7 12C7 18,12 22,12 22C12 22,17 18,17 12C17 6,12 2,12 2Z" fill="white" opacity=".2"/>
-                <path d="M2 12H22" stroke="white" strokeWidth=".8" opacity=".4"/>
-                <circle cx="12" cy="12" r="2.5" fill="white"/>
-              </svg>
+            <div className="w-10 h-10 rounded-xl overflow-hidden transition-transform group-hover:scale-110"
+              style={{ background: '#fff', boxShadow: scrolled ? 'var(--shadow-sm)' : '0 2px 12px rgba(0,0,0,.25)' }}>
+              <Image src="/logo.jpeg" alt="AracnidaStore" width={40} height={40} className="object-cover" priority />
             </div>
             <span className="text-lg font-black tracking-tight" style={{ color: scrolled ? '#1a1a18' : '#fff' }}>
               Aracnida<span style={{ color: '#c0392b' }}>Store</span>
