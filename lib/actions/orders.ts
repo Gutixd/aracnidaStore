@@ -127,3 +127,92 @@ export async function createOrder(
 
   return { orderId: order.id }
 }
+
+// Recalcula el stock agregado de un producto como suma de sus variantes
+async function recalcProductStock(
+  supabase: Awaited<ReturnType<typeof createAdminClient>>,
+  productId: string
+) {
+  const { data: allVariants } = await supabase
+    .from('product_variants')
+    .select('stock')
+    .eq('product_id', productId)
+  const productStock = (allVariants ?? []).reduce((s, v) => s + v.stock, 0)
+  await supabase.from('products').update({ stock: productStock }).eq('id', productId)
+  return productStock
+}
+
+/**
+ * Cambia el estado de un pedido y ajusta el stock automáticamente:
+ * - Al pasar a "cancelado": devuelve al stock las unidades del pedido (movimiento "return").
+ * - Al sacar de "cancelado" (reactivar): vuelve a descontar el stock (movimiento "sale").
+ * Es idempotente: el stock solo se mueve cuando cambia el "cancelado" real del pedido.
+ */
+export async function updateOrderStatus(orderId: string, newStatus: string) {
+  const supabase = await createAdminClient()
+
+  const { data: order } = await supabase
+    .from('orders')
+    .select('id, status')
+    .eq('id', orderId)
+    .single()
+
+  if (!order) return { error: 'Pedido no encontrado' }
+  if (order.status === newStatus) return { ok: true }
+
+  const wasCancelled = order.status === 'cancelado'
+  const willBeCancelled = newStatus === 'cancelado'
+
+  // Actualizar estado
+  const { error: updErr } = await supabase
+    .from('orders')
+    .update({ status: newStatus, updated_at: new Date().toISOString() })
+    .eq('id', orderId)
+  if (updErr) return { error: 'No se pudo actualizar el estado del pedido' }
+
+  // Ajuste de stock solo si cruza la frontera de "cancelado"
+  if (willBeCancelled !== wasCancelled) {
+    const { data: items } = await supabase
+      .from('order_items')
+      .select('product_id, variant_id, product_name, size, quantity')
+      .eq('order_id', orderId)
+
+    for (const item of items ?? []) {
+      if (!item.variant_id) continue
+
+      const { data: currentVariant } = await supabase
+        .from('product_variants')
+        .select('stock')
+        .eq('id', item.variant_id)
+        .single()
+
+      const previousStock = currentVariant?.stock ?? 0
+      // cancelar => devolver (sumar); reactivar => descontar (restar)
+      const newStock = willBeCancelled
+        ? previousStock + item.quantity
+        : Math.max(0, previousStock - item.quantity)
+
+      await supabase
+        .from('product_variants')
+        .update({ stock: newStock, updated_at: new Date().toISOString() })
+        .eq('id', item.variant_id)
+
+      await recalcProductStock(supabase, item.product_id)
+
+      await supabase.from('inventory_movements').insert({
+        product_id: item.product_id,
+        variant_id: item.variant_id,
+        type: willBeCancelled ? 'return' : 'sale',
+        quantity: item.quantity,
+        reason: willBeCancelled
+          ? `Devolución por cancelación - Pedido #${orderId.slice(0, 8)} (Talla ${item.size})`
+          : `Reactivación de pedido #${orderId.slice(0, 8)} (Talla ${item.size})`,
+        previous_stock: previousStock,
+        new_stock: newStock,
+        created_by: 'admin',
+      })
+    }
+  }
+
+  return { ok: true }
+}

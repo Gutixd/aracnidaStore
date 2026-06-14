@@ -1,9 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { ORDER_STATUS_LABELS } from '@/lib/utils'
+import { updateOrderStatus } from '@/lib/actions/orders'
 import { Loader2 } from 'lucide-react'
 
 const STATUSES = [
@@ -29,11 +29,13 @@ export function AdminOrderStatusChanger({ orderId, currentStatus }: Props) {
     if (newStatus === status) return
     setLoading(true)
 
-    const supabase = createClient()
-    await supabase
-      .from('orders')
-      .update({ status: newStatus, updated_at: new Date().toISOString() })
-      .eq('id', orderId)
+    // Cambia estado + ajusta stock (devuelve/descuenta) en el servidor
+    const res = await updateOrderStatus(orderId, newStatus)
+    if (res?.error) {
+      setLoading(false)
+      alert(res.error)
+      return
+    }
 
     // Notify Telegram via API route
     await fetch('/api/notify-order-status', {

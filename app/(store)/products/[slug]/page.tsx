@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Product, ProductVariant } from '@/types'
 import { notFound } from 'next/navigation'
 import { ProductPurchase } from '@/components/store/ProductPurchase'
+import { SizeGuide } from '@/components/store/SizeGuide'
 import { ProductCard } from '@/components/store/ProductCard'
 import { ScrollReveal } from '@/components/store/ScrollReveal'
 import Image from 'next/image'
@@ -143,6 +144,9 @@ export default async function ProductPage({
 
               {/* Compra con variantes */}
               <ProductPurchase product={product} variants={variants} />
+
+              {/* Guía de tallas — solo para productos con tallas numéricas (disfraces) */}
+              {variants.some((v) => !isNaN(parseInt(v.size))) && <SizeGuide />}
 
               {/* Trust badges */}
               <div className="mt-10 pt-6 grid grid-cols-3 gap-4" style={{ borderTop: '1px solid var(--gray-100)' }}>
