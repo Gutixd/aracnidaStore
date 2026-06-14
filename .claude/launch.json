@@ -5,7 +5,8 @@
       "name": "aracnida-store",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
-      "port": 3000
+      "port": 3002,
+      "cwd": "C:\\Users\\chini\\OneDrive\\Desktop\\AracnidaStore\\aracnida-store"
     }
   ]
 }

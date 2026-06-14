@@ -2,9 +2,8 @@
 
 import Link from 'next/link'
 import { useCart } from '@/store/cart'
-import { ShoppingCart, Menu, X, Search } from 'lucide-react'
+import { ShoppingCart, Menu, X } from 'lucide-react'
 import { useState, useEffect } from 'react'
-import { cn } from '@/lib/utils'
 
 export function Navbar() {
   const { getTotalItems } = useCart()
@@ -13,82 +12,93 @@ export function Navbar() {
   const totalItems = getTotalItems()
 
   useEffect(() => {
-    const handler = () => setScrolled(window.scrollY > 20)
+    const handler = () => setScrolled(window.scrollY > 40)
     window.addEventListener('scroll', handler)
     return () => window.removeEventListener('scroll', handler)
   }, [])
 
   return (
     <header
-      className={cn(
-        'fixed top-0 left-0 right-0 z-50 transition-all duration-300',
-        scrolled
-          ? 'bg-[#0a0a0a]/95 backdrop-blur-md border-b border-white/5 shadow-xl'
-          : 'bg-transparent'
-      )}
+      className="fixed top-0 left-0 right-0 z-50 transition-all duration-400"
+      style={scrolled ? {
+        background: 'rgba(255,255,255,0.95)',
+        backdropFilter: 'blur(20px)',
+        boxShadow: '0 2px 20px rgba(0,0,0,.08)',
+        borderBottom: '1px solid rgba(0,0,0,.06)',
+      } : {
+        background: 'transparent',
+      }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
+
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 relative">
-              <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-                <circle cx="16" cy="16" r="15" stroke="#c0392b" strokeWidth="1.5" />
-                <path d="M16 2 C16 2, 8 8, 8 16 C8 24, 16 30, 16 30 C16 30, 24 24, 24 16 C24 8, 16 2, 16 2Z" fill="#c0392b" opacity="0.2"/>
-                <path d="M2 16 L30 16" stroke="#c0392b" strokeWidth="1" opacity="0.5"/>
-                <path d="M4 8 Q16 12 28 8" stroke="#c0392b" strokeWidth="1" opacity="0.4" fill="none"/>
-                <path d="M4 24 Q16 20 28 24" stroke="#c0392b" strokeWidth="1" opacity="0.4" fill="none"/>
-                <circle cx="16" cy="16" r="3" fill="#c0392b"/>
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center transition-transform group-hover:scale-110"
+              style={{ background: 'linear-gradient(135deg, #c0392b, #96281b)' }}>
+              <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5">
+                <circle cx="12" cy="12" r="10" stroke="white" strokeWidth="1.2" opacity=".5"/>
+                <path d="M12 2C12 2,7 6,7 12C7 18,12 22,12 22C12 22,17 18,17 12C17 6,12 2,12 2Z" fill="white" opacity=".2"/>
+                <path d="M2 12H22" stroke="white" strokeWidth=".8" opacity=".4"/>
+                <circle cx="12" cy="12" r="2.5" fill="white"/>
               </svg>
             </div>
-            <span className="text-lg font-bold tracking-tight">
-              <span className="text-white">Aracnida</span>
-              <span className="text-red-600">Store</span>
+            <span className="text-lg font-black tracking-tight" style={{ color: scrolled ? '#1a1a18' : '#fff' }}>
+              Aracnida<span style={{ color: '#c0392b' }}>Store</span>
             </span>
           </Link>
 
-          {/* Nav links - desktop */}
-          <nav className="hidden md:flex items-center gap-8">
-            <Link href="/products" className="text-sm text-white/60 hover:text-white transition-colors">
-              Catálogo
-            </Link>
-            <Link href="/products?category=trajes" className="text-sm text-white/60 hover:text-white transition-colors">
-              Trajes
-            </Link>
-            <Link href="/products?category=mascaras" className="text-sm text-white/60 hover:text-white transition-colors">
-              Máscaras
-            </Link>
-            <Link href="/#faq" className="text-sm text-white/60 hover:text-white transition-colors">
-              FAQ
-            </Link>
+          {/* Nav links desktop */}
+          <nav className="hidden md:flex items-center gap-1">
+            {[
+              { href: '/products', label: 'Catálogo' },
+              { href: '/products?category=disfraces', label: 'Disfraces' },
+              { href: '/products?category=mascaras', label: 'Máscaras' },
+              { href: '/products?category=peluches', label: 'Peluches' },
+            ].map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
+                style={{ color: scrolled ? '#5a5a54' : 'rgba(255,255,255,.75)' }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = scrolled ? '#f7f7f5' : 'rgba(255,255,255,.1)'
+                  e.currentTarget.style.color = scrolled ? '#1a1a18' : '#fff'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent'
+                  e.currentTarget.style.color = scrolled ? '#5a5a54' : 'rgba(255,255,255,.75)'
+                }}
+              >
+                {link.label}
+              </Link>
+            ))}
           </nav>
 
           {/* Actions */}
-          <div className="flex items-center gap-3">
-            <Link
-              href="/products"
-              className="hidden sm:flex w-9 h-9 items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-white/60 hover:text-white"
-            >
-              <Search size={16} />
-            </Link>
+          <div className="flex items-center gap-2">
             <Link
               href="/cart"
-              className="flex items-center gap-2 relative w-9 h-9 items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-white/60 hover:text-white"
+              className="relative flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-sm transition-all"
+              style={{ background: '#c0392b', color: '#fff' }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = '#e74c3c'; e.currentTarget.style.transform = 'translateY(-1px)' }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = '#c0392b'; e.currentTarget.style.transform = 'none' }}
             >
-              <ShoppingCart size={16} />
+              <ShoppingCart size={15} />
+              <span className="hidden sm:inline">Carrito</span>
               {totalItems > 0 && (
-                <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-600 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-white text-red-600 text-xs font-black rounded-full flex items-center justify-center shadow">
                   {totalItems > 9 ? '9+' : totalItems}
                 </span>
               )}
             </Link>
 
-            {/* Mobile menu */}
             <button
-              className="md:hidden w-9 h-9 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+              className="md:hidden w-9 h-9 flex items-center justify-center rounded-lg transition-all"
+              style={{ background: scrolled ? '#f7f7f5' : 'rgba(255,255,255,.1)', color: scrolled ? '#1a1a18' : '#fff' }}
               onClick={() => setMenuOpen(!menuOpen)}
             >
-              {menuOpen ? <X size={16} /> : <Menu size={16} />}
+              {menuOpen ? <X size={18} /> : <Menu size={18} />}
             </button>
           </div>
         </div>
@@ -96,19 +106,26 @@ export function Navbar() {
 
       {/* Mobile menu */}
       {menuOpen && (
-        <div className="md:hidden bg-[#0d1117] border-t border-white/5 px-4 py-4 space-y-3">
-          <Link href="/products" className="block py-2 text-white/70 hover:text-white transition-colors" onClick={() => setMenuOpen(false)}>
-            Catálogo completo
-          </Link>
-          <Link href="/products?category=trajes" className="block py-2 text-white/70 hover:text-white transition-colors" onClick={() => setMenuOpen(false)}>
-            Trajes
-          </Link>
-          <Link href="/products?category=mascaras" className="block py-2 text-white/70 hover:text-white transition-colors" onClick={() => setMenuOpen(false)}>
-            Máscaras
-          </Link>
-          <Link href="/#faq" className="block py-2 text-white/70 hover:text-white transition-colors" onClick={() => setMenuOpen(false)}>
-            Preguntas frecuentes
-          </Link>
+        <div className="md:hidden px-4 py-4 space-y-1 animate-fade-in"
+          style={{ background: '#fff', borderTop: '1px solid #efefec', boxShadow: '0 8px 24px rgba(0,0,0,.1)' }}>
+          {[
+            { href: '/products', label: 'Todo el catálogo' },
+            { href: '/products?category=disfraces', label: 'Disfraces' },
+            { href: '/products?category=mascaras', label: 'Máscaras' },
+            { href: '/products?category=peluches', label: 'Peluches' },
+          ].map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="block px-4 py-3 rounded-xl text-sm font-medium transition-all"
+              style={{ color: '#5a5a54' }}
+              onClick={() => setMenuOpen(false)}
+              onMouseEnter={(e) => { e.currentTarget.style.background = '#f7f7f5'; e.currentTarget.style.color = '#1a1a18' }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#5a5a54' }}
+            >
+              {link.label}
+            </Link>
+          ))}
         </div>
       )}
     </header>

@@ -21,24 +21,12 @@ async function getProducts(params: SearchParams): Promise<Product[]> {
     .select('*, category:categories(id,name,slug)')
     .eq('active', true)
 
-  if (params.category) {
-    query = query.eq('category.slug', params.category)
-  }
-  if (params.size) {
-    query = query.eq('size', params.size)
-  }
-  if (params.color) {
-    query = query.ilike('color', `%${params.color}%`)
-  }
-  if (params.min) {
-    query = query.gte('price', parseInt(params.min))
-  }
-  if (params.max) {
-    query = query.lte('price', parseInt(params.max))
-  }
-  if (params.search) {
-    query = query.ilike('name', `%${params.search}%`)
-  }
+  if (params.category) query = query.eq('category.slug', params.category)
+  if (params.size) query = query.eq('size', params.size)
+  if (params.color) query = query.ilike('color', `%${params.color}%`)
+  if (params.min) query = query.gte('price', parseInt(params.min))
+  if (params.max) query = query.lte('price', parseInt(params.max))
+  if (params.search) query = query.ilike('name', `%${params.search}%`)
 
   const sort = params.sort ?? 'newest'
   if (sort === 'price_asc') query = query.order('price', { ascending: true })
@@ -61,40 +49,51 @@ export default async function ProductsPage({
   searchParams: Promise<SearchParams>
 }) {
   const params = await searchParams
-  const [products, categories] = await Promise.all([
-    getProducts(params),
-    getCategories(),
-  ])
+  const [products, categories] = await Promise.all([getProducts(params), getCategories()])
+
+  const inStock = products.filter(p => p.stock > 0).length
+  const categoryLabel = params.category
+    ? categories.find(c => c.slug === params.category)?.name
+    : 'Todos'
 
   return (
-    <div className="pt-24 pb-24 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-10">
-          <p className="text-sm text-red-500 font-medium mb-2 tracking-wider uppercase">Tienda</p>
-          <h1 className="text-3xl md:text-4xl font-bold text-white">Catálogo completo</h1>
-          <p className="text-white/40 mt-2">{products.length} productos disponibles</p>
+    <div style={{ background: 'var(--gray-50)', minHeight: '100vh' }}>
+      {/* Page header */}
+      <div style={{ background: 'linear-gradient(135deg, #1a2744 0%, #0f1e3d 100%)' }} className="pt-28 pb-14 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+        <div className="web-pattern" />
+        <div className="max-w-7xl mx-auto relative z-10">
+          <div className="section-tag" style={{ background: 'rgba(255,255,255,.1)', color: 'rgba(255,255,255,.7)', border: 'none' }}>
+            Catálogo
+          </div>
+          <h1 className="text-3xl md:text-4xl font-black text-white mt-2">
+            {categoryLabel ?? 'Todo el catálogo'}
+          </h1>
+          <p className="mt-2 text-sm" style={{ color: 'rgba(255,255,255,.45)' }}>
+            {inStock} productos disponibles · {products.length - inStock} sin stock
+          </p>
         </div>
+      </div>
 
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* Sidebar filters */}
+          {/* Sidebar */}
           <aside className="w-full lg:w-64 shrink-0">
             <ProductFilters categories={categories} currentParams={params as Record<string, string | undefined>} />
           </aside>
 
-          {/* Products grid */}
+          {/* Grid */}
           <div className="flex-1">
             {products.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
                 {products.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}
               </div>
             ) : (
-              <div className="text-center py-24 text-white/30">
-                <Package size={48} className="mx-auto mb-4 opacity-30" />
-                <p className="text-lg font-medium mb-2">Sin productos</p>
-                <p className="text-sm">Prueba ajustando los filtros de búsqueda</p>
+              <div className="text-center py-24 card">
+                <Package size={48} className="mx-auto mb-4" style={{ color: '#ddddd8' }} />
+                <p className="text-lg font-semibold mb-2" style={{ color: '#1a1a18' }}>Sin resultados</p>
+                <p className="text-sm" style={{ color: '#9b9b93' }}>Prueba ajustando los filtros</p>
               </div>
             )}
           </div>
