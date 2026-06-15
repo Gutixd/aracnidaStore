@@ -264,6 +264,10 @@ body {
 }
 .reveal.visible { opacity: 1; transform: translateY(0); }
 
+/* Ocultar scrollbar (franja de galería horizontal) */
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
 /* Barra de progreso de filtros (carga indeterminada) */
 .filter-progress {
   position: absolute;

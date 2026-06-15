@@ -24,8 +24,8 @@ const ROWS: Row[] = [
   { talla: '190', altura: '180–190 cm', largo: '176 cm', pecho: '108–116 cm', cintura: '96–104 cm', cadera: '110–118 cm' },
 ]
 
-export function SizeGuide() {
-  const [open, setOpen] = useState(false)
+export function SizeGuide({ defaultOpen = false }: { defaultOpen?: boolean }) {
+  const [open, setOpen] = useState(defaultOpen)
 
   return (
     <div className="mt-6 rounded-2xl overflow-hidden" style={{ border: '1px solid var(--gray-100)' }}>

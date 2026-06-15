@@ -48,6 +48,7 @@ export function Footer() {
                 { href: '/products', label: 'Todo el catálogo' },
                 { href: '/products?category=disfraces', label: 'Disfraces' },
                 { href: '/products?category=mascaras', label: 'Máscaras' },
+                { href: '/products?category=accesorios', label: 'Accesorios' },
                 { href: '/products?category=peluches', label: 'Peluches' },
               ].map((link) => (
                 <li key={link.href}>
@@ -66,6 +67,8 @@ export function Footer() {
             <h4 className="text-sm font-bold text-white mb-4 uppercase tracking-wider">Información</h4>
             <ul className="space-y-2.5 text-sm">
               {[
+                { href: '/sobre-nosotros', label: 'Sobre nosotros' },
+                { href: '/guia-de-tallas', label: 'Guía de tallas' },
                 { href: '/#faq', label: 'Preguntas frecuentes' },
                 { href: '/cart', label: 'Mi carrito' },
               ].map((link) => (
