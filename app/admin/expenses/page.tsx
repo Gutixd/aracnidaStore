@@ -40,7 +40,7 @@ export default async function AdminExpensesPage() {
   }, {} as Record<string, number>)
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-6 lg:p-8">
       <div className="mb-8">
         <h1 className="text-2xl font-black" style={{ color: 'var(--text)' }}>Gastos y finanzas</h1>
         <p className="text-sm mt-1" style={{ color: 'var(--gray-600)' }}>Control de costos y utilidad neta</p>

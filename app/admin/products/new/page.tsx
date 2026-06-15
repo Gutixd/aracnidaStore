@@ -6,7 +6,7 @@ export default async function NewProductPage() {
   const { data: categories } = await supabase.from('categories').select('*')
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-6 lg:p-8">
       <div className="mb-8">
         <h1 className="text-2xl font-black" style={{ color: 'var(--text)' }}>Nuevo producto</h1>
         <p className="text-sm mt-1" style={{ color: 'var(--gray-600)' }}>Agrega un producto al catálogo</p>

@@ -56,7 +56,7 @@ export default async function AdminAnalyticsPage() {
   const maxSale = Math.max(...data.salesByDate.map((d) => d.total), 1)
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-6 lg:p-8">
       <div className="mb-8">
         <h1 className="text-2xl font-black" style={{ color: 'var(--text)' }}>Analytics</h1>
         <p className="text-sm mt-1" style={{ color: 'var(--gray-600)' }}>Métricas y rendimiento de la tienda</p>

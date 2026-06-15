@@ -21,7 +21,7 @@ export default async function AdminProductsPage() {
   const thStyle = { color: 'var(--gray-400)' }
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-6 lg:p-8">
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-black" style={{ color: 'var(--text)' }}>Productos</h1>

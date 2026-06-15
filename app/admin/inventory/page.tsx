@@ -23,7 +23,7 @@ export default async function AdminInventoryPage() {
   const typeColor: Record<string, string> = { increase: '#15803d', decrease: 'var(--red)', adjust: 'var(--blue)', sale: '#7c3aed', return: '#b45309' }
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-6 lg:p-8">
       <div className="mb-8">
         <h1 className="text-2xl font-black" style={{ color: 'var(--text)' }}>Inventario</h1>
         <p className="text-sm mt-1" style={{ color: 'var(--gray-600)' }}>Control de stock y movimientos</p>

@@ -52,7 +52,7 @@ export default async function AdminDashboard() {
   const data = await getDashboardData()
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-6 lg:p-8">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-black" style={{ color: 'var(--text)' }}>Dashboard</h1>

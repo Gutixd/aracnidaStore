@@ -26,7 +26,7 @@ export default async function AdminOrdersPage() {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-6 lg:p-8">
       <div className="mb-8">
         <h1 className="text-2xl font-black" style={{ color: 'var(--text)' }}>Pedidos</h1>
         <p className="text-sm mt-1" style={{ color: 'var(--gray-600)' }}>{orders.length} pedidos en total</p>
