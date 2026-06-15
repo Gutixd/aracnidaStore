@@ -264,6 +264,21 @@ body {
 }
 .reveal.visible { opacity: 1; transform: translateY(0); }
 
+/* Barra de progreso de filtros (carga indeterminada) */
+.filter-progress {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 40%;
+  background: #c0392b;
+  border-radius: 9999px;
+  animation: filter-progress-slide 1s ease-in-out infinite;
+}
+@keyframes filter-progress-slide {
+  0%   { transform: translateX(-120%); }
+  100% { transform: translateX(320%); }
+}
+
 /* Accesibilidad: respetar preferencia de movimiento reducido */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
