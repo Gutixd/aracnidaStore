@@ -25,6 +25,7 @@ export function HeroVideo() {
       <video
         ref={videoRef}
         src="/video-hero.mp4"
+        autoPlay
         muted
         loop
         playsInline
@@ -33,11 +34,11 @@ export function HeroVideo() {
         style={{ zIndex: 0 }}
       />
 
-      {/* Overlay oscuro para legibilidad */}
+      {/* Overlay oscuro para legibilidad del texto */}
       <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 1,
-        background: 'linear-gradient(135deg, rgba(10,20,50,.82) 0%, rgba(10,20,50,.6) 55%, rgba(10,20,50,.75) 100%)' }} />
+        background: 'linear-gradient(135deg, rgba(5,10,25,.65) 0%, rgba(5,10,25,.35) 55%, rgba(5,10,25,.5) 100%)' }} />
       <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 1,
-        background: 'radial-gradient(ellipse 60% 50% at 75% 50%, rgba(192,57,43,.2) 0%, transparent 65%)' }} />
+        background: 'radial-gradient(ellipse 60% 50% at 75% 50%, rgba(192,57,43,.15) 0%, transparent 65%)' }} />
 
       {/* Web pattern */}
       <div className="web-pattern" style={{ zIndex: 2 }} />
