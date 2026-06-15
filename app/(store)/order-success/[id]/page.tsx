@@ -10,10 +10,26 @@ async function getOrder(id: string) {
   return data
 }
 
-export default async function OrderSuccessPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function OrderSuccessPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>
+  searchParams: Promise<{ pago?: string }>
+}) {
   const { id } = await params
+  const { pago } = await searchParams
   const order = await getOrder(id)
   if (!order) notFound()
+
+  const paymentBanner =
+    order.payment_status === 'pagado' || pago === 'ok'
+      ? { bg: 'rgba(22,163,74,.1)', border: 'rgba(22,163,74,.25)', color: '#15803d', text: 'Pago confirmado. ¡Ya estamos preparando tu pedido!' }
+      : pago === 'pendiente' || order.payment_status === 'pendiente'
+        ? { bg: 'rgba(234,179,8,.1)', border: 'rgba(234,179,8,.3)', color: '#a16207', text: 'Tu pago está en proceso. Te avisaremos cuando se acredite.' }
+        : pago === 'error' || order.payment_status === 'rechazado'
+          ? { bg: 'rgba(192,57,43,.1)', border: 'rgba(192,57,43,.3)', color: '#c0392b', text: 'El pago no se completó. Puedes reintentar el pago desde el carrito o contactarnos.' }
+          : null
 
   const statusSteps = [
     { key: 'pendiente', label: 'Pedido recibido', icon: <Clock size={16} /> },
@@ -43,6 +59,13 @@ export default async function OrderSuccessPage({ params }: { params: Promise<{ i
             <span className="text-sm font-mono font-bold" style={{ color: 'var(--text)' }}>{order.id.slice(0, 8).toUpperCase()}</span>
           </div>
         </div>
+
+        {paymentBanner && (
+          <div className="rounded-2xl p-4 mb-6 text-sm font-semibold text-center"
+            style={{ background: paymentBanner.bg, border: `1px solid ${paymentBanner.border}`, color: paymentBanner.color }}>
+            {paymentBanner.text}
+          </div>
+        )}
 
         <div className="card p-6 mb-6">
           <h2 className={sectionTitle} style={sectionStyle}>Estado del pedido</h2>

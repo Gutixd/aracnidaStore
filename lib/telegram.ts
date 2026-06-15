@@ -80,6 +80,25 @@ ${order.notes ? `📝 <b>Notas:</b> ${order.notes}` : ''}
   await sendMessage(text)
 }
 
+export async function notifyPaymentApproved(
+  order: Order,
+  amount: number
+): Promise<void> {
+  const text = `
+💚 <b>PAGO APROBADO</b>
+📋 <b>Pedido:</b> #${order.id.slice(0, 8).toUpperCase()}
+👤 <b>Cliente:</b> ${order.customer_name}
+📞 <b>Teléfono:</b> ${order.customer_phone}
+💵 <b>Monto:</b> ${formatPrice(amount)}
+📦 <b>Método:</b> ${order.delivery_method === 'delivery' ? '🏠 Delivery' : '🏪 Retiro en tienda'}
+🕐 <b>Fecha:</b> ${formatDate(new Date().toISOString())}
+
+✅ El pedido ya está pagado, puedes prepararlo.
+`.trim()
+
+  await sendMessage(text)
+}
+
 export async function notifyOrderStatusChange(
   order: Order,
   newStatus: string

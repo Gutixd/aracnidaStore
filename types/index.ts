@@ -83,7 +83,11 @@ export interface Order {
   delivery_commune: string
   delivery_reference: string
   status: OrderStatus
-  payment_status: 'pendiente' | 'pagado'
+  payment_status: 'pendiente' | 'pagado' | 'rechazado' | 'reembolsado'
+  payment_provider?: string | null
+  payment_id?: string | null
+  payment_method?: string | null
+  mp_preference_id?: string | null
   notes: string
   created_at: string
   updated_at: string

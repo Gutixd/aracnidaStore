@@ -82,7 +82,11 @@ CREATE TABLE orders (
   delivery_commune TEXT DEFAULT '',
   delivery_reference TEXT DEFAULT '',
   status TEXT NOT NULL CHECK (status IN ('pendiente','confirmado','en_preparacion','en_reparto','entregado','cancelado')) DEFAULT 'pendiente',
-  payment_status TEXT NOT NULL CHECK (payment_status IN ('pendiente','pagado')) DEFAULT 'pendiente',
+  payment_status TEXT NOT NULL CHECK (payment_status IN ('pendiente','pagado','rechazado','reembolsado')) DEFAULT 'pendiente',
+  payment_provider TEXT DEFAULT 'mercadopago',
+  payment_id TEXT,
+  payment_method TEXT,
+  mp_preference_id TEXT,
   notes TEXT DEFAULT '',
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()

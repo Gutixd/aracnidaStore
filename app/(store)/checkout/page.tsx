@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { checkoutSchema, CheckoutFormData } from '@/lib/validations'
 import { createOrder } from '@/lib/actions/orders'
+import { createMercadoPagoPreference } from '@/lib/actions/payment'
 import { formatPrice } from '@/lib/utils'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -55,6 +56,15 @@ export default function CheckoutPage() {
         return
       }
       clearCart()
+
+      // Iniciar pago en línea con Mercado Pago
+      const payment = await createMercadoPagoPreference(result.orderId!)
+      if (payment.url) {
+        window.location.href = payment.url
+        return
+      }
+
+      // Si el pago en línea no está disponible, mostramos el pedido igualmente
       router.push(`/order-success/${result.orderId}`)
     } catch {
       setError('Error inesperado. Por favor intenta nuevamente.')
@@ -201,10 +211,10 @@ export default function CheckoutPage() {
                 )}
 
                 <button type="submit" disabled={loading} className="btn-primary w-full justify-center py-4">
-                  {loading ? <><Loader2 size={18} className="animate-spin" />Procesando...</> : 'Confirmar pedido'}
+                  {loading ? <><Loader2 size={18} className="animate-spin" />Redirigiendo al pago...</> : 'Pagar con Mercado Pago'}
                 </button>
-                <p className="text-xs text-center mt-4" style={{ color: 'var(--gray-400)' }}>
-                  Al confirmar aceptas nuestros términos de servicio
+                <p className="text-xs text-center mt-4 flex items-center justify-center gap-1.5" style={{ color: 'var(--gray-400)' }}>
+                  Pago seguro · tarjetas, débito y transferencia
                 </p>
               </div>
             </div>
