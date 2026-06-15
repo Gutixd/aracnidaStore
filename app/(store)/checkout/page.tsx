@@ -11,10 +11,29 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { ShoppingBag, Loader2, MapPin, Store } from 'lucide-react'
+import { ShoppingBag, Loader2, MapPin, ChevronDown } from 'lucide-react'
 
 const SHIPPING_COST = 3000
 const FREE_SHIPPING_THRESHOLD = 50000
+
+const REGIONES_CHILE = [
+  'Región de Arica y Parinacota',
+  'Región de Tarapacá',
+  'Región de Antofagasta',
+  'Región de Atacama',
+  'Región de Coquimbo',
+  'Región de Valparaíso',
+  'Región Metropolitana de Santiago',
+  'Región del Libertador General Bernardo O\'Higgins',
+  'Región del Maule',
+  'Región del Ñuble',
+  'Región del Biobío',
+  'Región de La Araucanía',
+  'Región de Los Ríos',
+  'Región de Los Lagos',
+  'Región de Aysén del General Carlos Ibáñez del Campo',
+  'Región de Magallanes y de la Antártica Chilena',
+]
 
 export default function CheckoutPage() {
   const { items, getTotalPrice, clearCart } = useCart()
@@ -26,12 +45,10 @@ export default function CheckoutPage() {
   const shippingCost = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST
   const total = subtotal + shippingCost
 
-  const { register, handleSubmit, watch, formState: { errors } } = useForm<CheckoutFormData>({
+  const { register, handleSubmit, formState: { errors } } = useForm<CheckoutFormData>({
     resolver: zodResolver(checkoutSchema),
     defaultValues: { delivery_method: 'delivery' },
   })
-
-  const deliveryMethod = watch('delivery_method')
 
   if (items.length === 0) {
     return (
@@ -57,14 +74,12 @@ export default function CheckoutPage() {
       }
       clearCart()
 
-      // Iniciar pago en línea con Mercado Pago
       const payment = await createMercadoPagoPreference(result.orderId!)
       if (payment.url) {
         window.location.href = payment.url
         return
       }
 
-      // Si el pago en línea no está disponible, mostramos el pedido igualmente
       router.push(`/order-success/${result.orderId}`)
     } catch {
       setError('Error inesperado. Por favor intenta nuevamente.')
@@ -113,50 +128,44 @@ export default function CheckoutPage() {
 
               {/* Entrega */}
               <div className="card p-6">
-                <h2 className="text-lg font-bold mb-5" style={{ color: 'var(--text)' }}>Método de entrega</h2>
-                <div className="grid grid-cols-2 gap-3 mb-5">
-                  <label className="relative flex flex-col gap-2 p-4 rounded-xl cursor-pointer transition-all"
-                    style={deliveryMethod === 'delivery'
-                      ? { border: '2px solid var(--red)', background: 'rgba(192,57,43,.06)' }
-                      : { border: '2px solid var(--gray-200)', background: '#fff' }}>
-                    <input type="radio" value="delivery" {...register('delivery_method')} className="sr-only" />
-                    <MapPin size={20} style={{ color: deliveryMethod === 'delivery' ? 'var(--red)' : 'var(--gray-400)' }} />
-                    <div>
-                      <p className="font-bold text-sm" style={{ color: 'var(--text)' }}>Delivery</p>
-                      <p className="text-xs" style={{ color: 'var(--gray-600)' }}>{shippingCost === 0 ? 'Gratis' : formatPrice(SHIPPING_COST)}</p>
-                    </div>
-                  </label>
-                  <label className="relative flex flex-col gap-2 p-4 rounded-xl cursor-pointer transition-all"
-                    style={deliveryMethod === 'retiro'
-                      ? { border: '2px solid var(--red)', background: 'rgba(192,57,43,.06)' }
-                      : { border: '2px solid var(--gray-200)', background: '#fff' }}>
-                    <input type="radio" value="retiro" {...register('delivery_method')} className="sr-only" />
-                    <Store size={20} style={{ color: deliveryMethod === 'retiro' ? 'var(--red)' : 'var(--gray-400)' }} />
-                    <div>
-                      <p className="font-bold text-sm" style={{ color: 'var(--text)' }}>Retiro en tienda</p>
-                      <p className="text-xs" style={{ color: 'var(--gray-600)' }}>Gratis</p>
-                    </div>
-                  </label>
+                <h2 className="text-lg font-bold mb-2" style={{ color: 'var(--text)' }}>Dirección de entrega</h2>
+                <div className="flex items-center gap-2 mb-5 text-sm" style={{ color: 'var(--gray-600)' }}>
+                  <MapPin size={14} style={{ color: 'var(--red)' }} />
+                  Envío a domicilio · {shippingCost === 0 ? 'Gratis' : formatPrice(SHIPPING_COST)} · Todo Chile
                 </div>
 
-                {deliveryMethod === 'delivery' && (
-                  <div className="space-y-4">
-                    <div>
-                      <label className={labelClass} style={labelStyle}>Dirección *</label>
-                      <input {...register('delivery_address')} placeholder="Calle, número, depto" className="input-field" autoComplete="street-address" />
-                      {errors.delivery_address && <p className="text-xs mt-1" style={{ color: 'var(--red)' }}>{errors.delivery_address.message}</p>}
-                    </div>
-                    <div>
-                      <label className={labelClass} style={labelStyle}>Comuna / Ciudad *</label>
-                      <input {...register('delivery_commune')} placeholder="Santiago, Providencia, etc." className="input-field" />
-                      {errors.delivery_commune && <p className="text-xs mt-1" style={{ color: 'var(--red)' }}>{errors.delivery_commune.message}</p>}
-                    </div>
-                    <div>
-                      <label className={labelClass} style={labelStyle}>Referencia de entrega</label>
-                      <input {...register('delivery_reference')} placeholder="Casa azul, edificio frente al banco..." className="input-field" />
-                    </div>
+                <div className="space-y-4">
+                  <div>
+                    <label className={labelClass} style={labelStyle}>Dirección *</label>
+                    <input {...register('delivery_address')} placeholder="Calle, número, depto/casa" className="input-field" autoComplete="street-address" />
+                    {errors.delivery_address && <p className="text-xs mt-1" style={{ color: 'var(--red)' }}>{errors.delivery_address.message}</p>}
                   </div>
-                )}
+
+                  <div>
+                    <label className={labelClass} style={labelStyle}>Región *</label>
+                    <div className="relative">
+                      <select {...register('delivery_region')} className="input-field appearance-none pr-10" defaultValue="">
+                        <option value="" disabled>Selecciona tu región</option>
+                        {REGIONES_CHILE.map((r) => (
+                          <option key={r} value={r}>{r}</option>
+                        ))}
+                      </select>
+                      <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'var(--gray-400)' }} />
+                    </div>
+                    {errors.delivery_region && <p className="text-xs mt-1" style={{ color: 'var(--red)' }}>{errors.delivery_region.message}</p>}
+                  </div>
+
+                  <div>
+                    <label className={labelClass} style={labelStyle}>Comuna *</label>
+                    <input {...register('delivery_commune')} placeholder="Ej: Maipú, Providencia, Viña del Mar..." className="input-field" />
+                    {errors.delivery_commune && <p className="text-xs mt-1" style={{ color: 'var(--red)' }}>{errors.delivery_commune.message}</p>}
+                  </div>
+
+                  <div>
+                    <label className={labelClass} style={labelStyle}>Referencia de entrega</label>
+                    <input {...register('delivery_reference')} placeholder="Casa azul, edificio frente al banco..." className="input-field" />
+                  </div>
+                </div>
               </div>
 
               {/* Notas */}
@@ -164,6 +173,13 @@ export default function CheckoutPage() {
                 <h2 className="text-lg font-bold mb-5" style={{ color: 'var(--text)' }}>Notas del pedido</h2>
                 <textarea {...register('notes')} placeholder="Instrucciones especiales, etc." rows={3} className="input-field resize-none" />
               </div>
+
+              <p className="text-xs" style={{ color: 'var(--gray-400)' }}>
+                Al realizar tu compra aceptas nuestros{' '}
+                <Link href="/terminos" className="underline hover:opacity-75">Términos y Condiciones</Link>
+                {' '}y{' '}
+                <Link href="/privacidad" className="underline hover:opacity-75">Política de Privacidad</Link>.
+              </p>
             </div>
 
             {/* Resumen */}
@@ -213,7 +229,7 @@ export default function CheckoutPage() {
                 <button type="submit" disabled={loading} className="btn-primary w-full justify-center py-4">
                   {loading ? <><Loader2 size={18} className="animate-spin" />Redirigiendo al pago...</> : 'Pagar con Mercado Pago'}
                 </button>
-                <p className="text-xs text-center mt-4 flex items-center justify-center gap-1.5" style={{ color: 'var(--gray-400)' }}>
+                <p className="text-xs text-center mt-4" style={{ color: 'var(--gray-400)' }}>
                   Pago seguro · tarjetas, débito y transferencia
                 </p>
               </div>

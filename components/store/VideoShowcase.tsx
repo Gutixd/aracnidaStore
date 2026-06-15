@@ -43,7 +43,6 @@ export function VideoShowcase() {
         loop
         playsInline
         preload="metadata"
-        poster="/products/disfraz-miles-morales.jpg"
         className="absolute inset-0 w-full h-full object-cover"
       />
 

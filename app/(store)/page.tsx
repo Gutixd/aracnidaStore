@@ -2,17 +2,17 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Product } from '@/types'
 import { ProductCard } from '@/components/store/ProductCard'
-import Image from 'next/image'
-import { ShoppingBag, Shield, Truck, ChevronRight, Package, Zap, Star, MapPin, RotateCcw } from 'lucide-react'
+import { Shield, Truck, Package, Zap, Star, MapPin, RotateCcw } from 'lucide-react'
 import { ScrollReveal } from '@/components/store/ScrollReveal'
 import { VideoShowcase } from '@/components/store/VideoShowcase'
+import { HeroVideo } from '@/components/store/HeroVideo'
 
 const FAQS = [
   { q: '¿Cuánto demoran los envíos?', a: 'Los pedidos se despachan en 24-48 horas hábiles. Entrega en 1-3 días en la Región Metropolitana y 3-5 días en regiones. También puedes retirar en Metro Plaza de Maipú.' },
   { q: '¿Qué tallas tienen disponibles?', a: 'Disfraces desde talla 100 hasta 190 cm (niños y adultos). Las máscaras son talla única con ajuste elástico. Revisa nuestra guía de tallas para elegir correctamente.' },
   { q: '¿Cuáles son los materiales?', a: 'Lycra/Spandex 95% + 5% Elastano. Tela de alta elasticidad, transpirable y resistente al uso frecuente, con estampado de alta fidelidad.' },
   { q: '¿Hacen cambios o devoluciones?', a: 'Aceptamos cambios dentro de 7 días, siempre que el producto esté sin usar. El cliente cubre el envío de cambio.' },
-  { q: '¿Cómo hago seguimiento de mi pedido?', a: 'Al confirmar tu compra recibirás un número de orden y te contactamos para coordinar el pago y la entrega.' },
+  { q: '¿Cómo hago seguimiento de mi pedido?', a: 'Al confirmar tu compra recibirás un número de orden. Puedes escribirnos por Instagram para cualquier consulta sobre el estado de tu envío.' },
 ]
 
 async function getFeaturedProducts(): Promise<Product[]> {
@@ -27,12 +27,6 @@ async function getFeaturedProducts(): Promise<Product[]> {
   return data ?? []
 }
 
-const HERO_SHOWCASE = [
-  { src: '/products/disfraz-miles-morales.jpg', alt: 'Disfraz Spider-Man Miles Morales', href: '/products/disfraz-miles-morales' },
-  { src: '/products/disfraz-tom-holland.jpg', alt: 'Disfraz Spider-Man Tom Holland', href: '/products/disfraz-tom-holland' },
-  { src: '/products/disfraz-venom.jpg', alt: 'Disfraz Spider-Man Venom', href: '/products/disfraz-venom' },
-  { src: '/products/mascara-miles-morales-pro.jpg', alt: 'Máscara Miles Morales PRO ULTRA', href: '/products/mascara-miles-morales-pro' },
-]
 
 const GALLERY = [
   '/products/disfraz-miles-morales.jpg',
@@ -62,90 +56,10 @@ export default async function HomePage() {
     <div className="overflow-x-hidden">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
 
-      {/* ===== HERO ===== */}
-      <section className="hero-bg relative min-h-screen flex items-center overflow-hidden">
-        <div className="web-pattern" />
+      {/* ===== HERO con video de fondo ===== */}
+      <HeroVideo />
 
-        {/* Floating spider circles */}
-        <div className="absolute top-1/4 right-[6%] w-72 h-72 rounded-full opacity-10 animate-spin-slow pointer-events-none"
-          style={{ border: '1px solid rgba(192,57,43,.5)', borderStyle: 'dashed' }} />
-        <div className="absolute bottom-1/4 left-[6%] w-48 h-48 rounded-full opacity-10 pointer-events-none"
-          style={{ border: '1px solid rgba(255,255,255,.3)', borderStyle: 'dashed' }} />
-
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-20 w-full">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center">
-
-            {/* ---- Texto ---- */}
-            <div className="text-center lg:text-left">
-              <div className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-semibold mb-8 animate-fade-in"
-                style={{ background: 'rgba(192,57,43,.15)', color: '#f87171', border: '1px solid rgba(192,57,43,.3)' }}>
-                <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
-                Nuevos modelos · Envíos a todo Chile
-              </div>
-
-              <h1 className="text-5xl sm:text-6xl md:text-7xl font-black tracking-tight mb-6 leading-none animate-fade-up">
-                <span className="text-white block">Viste la</span>
-                <span className="block mt-1"
-                  style={{
-                    background: 'linear-gradient(135deg, #e74c3c 0%, #c0392b 50%, #f87171 100%)',
-                    WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-                  }}>
-                  leyenda.
-                </span>
-              </h1>
-
-              <p className="text-lg md:text-xl text-white/50 max-w-lg mx-auto lg:mx-0 mb-10 leading-relaxed animate-fade-up delay-200">
-                Disfraces y máscaras de Spider-Man de calidad premium en Santiago.
-                Materiales de primera y diseños de alta fidelidad.
-              </p>
-
-              <div className="flex flex-col sm:flex-row items-center lg:items-start justify-center lg:justify-start gap-4 animate-fade-up delay-300">
-                <Link href="/products" className="btn-primary text-base px-8 py-4">
-                  <ShoppingBag size={18} />
-                  Ver catálogo completo
-                </Link>
-                <Link href="#featured" className="flex items-center gap-2 text-sm font-semibold transition-all" style={{ color: 'rgba(255,255,255,.5)' }}>
-                  Ver destacados <ChevronRight size={16} />
-                </Link>
-              </div>
-
-              {/* Stats row */}
-              <div className="mt-14 grid grid-cols-3 gap-6 max-w-md mx-auto lg:mx-0 animate-fade-up delay-500">
-                {[
-                  { value: '14+', label: 'Modelos' },
-                  { value: '48h', label: 'Despacho' },
-                  { value: '★ 5.0', label: 'Reseñas' },
-                ].map((s) => (
-                  <div key={s.label} className="text-center lg:text-left">
-                    <p className="text-2xl font-black text-white">{s.value}</p>
-                    <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,.35)' }}>{s.label}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* ---- Showcase de fotos ---- */}
-            <div className="relative animate-fade-up delay-300">
-              <div className="grid grid-cols-2 gap-4">
-                {HERO_SHOWCASE.map((item, i) => (
-                  <Link key={item.src} href={item.href}
-                    className={`group relative block rounded-3xl overflow-hidden aspect-[3/4] ${i % 2 === 1 ? 'mt-8' : ''}`}
-                    style={{ boxShadow: '0 20px 50px rgba(0,0,0,.45)', border: '1px solid rgba(255,255,255,.08)' }}>
-                    <Image src={item.src} alt={item.alt} fill sizes="(max-width:1024px) 45vw, 22vw"
-                      className="object-cover transition-transform duration-500 group-hover:scale-105" priority={i < 2} />
-                    <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(15,30,61,.55), transparent 55%)' }} />
-                  </Link>
-                ))}
-              </div>
-              {/* Glow detrás */}
-              <div className="absolute -inset-6 -z-10 pointer-events-none"
-                style={{ background: 'radial-gradient(circle at 60% 40%, rgba(192,57,43,.25), transparent 70%)' }} />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ===== VIDEO ===== */}
+      {/* ===== VIDEO SHOWCASE ===== */}
       <VideoShowcase />
 
       {/* ===== TRUST BAR ===== */}

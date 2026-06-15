@@ -46,6 +46,7 @@ export async function createOrder(
       total,
       delivery_method: formData.delivery_method,
       delivery_address: formData.delivery_address ?? '',
+      delivery_region: formData.delivery_region ?? '',
       delivery_commune: formData.delivery_commune ?? '',
       delivery_reference: formData.delivery_reference ?? '',
       status: 'pendiente',

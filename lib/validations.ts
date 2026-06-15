@@ -4,19 +4,17 @@ export const checkoutSchema = z.object({
   customer_name: z.string().min(2, 'Nombre requerido'),
   customer_email: z.string().email('Email inválido'),
   customer_phone: z.string().min(8, 'Teléfono inválido'),
-  delivery_method: z.enum(['delivery', 'retiro']),
+  delivery_method: z.enum(['delivery']),
   delivery_address: z.string().optional(),
+  delivery_region: z.string().optional(),
   delivery_commune: z.string().optional(),
   delivery_reference: z.string().optional(),
   notes: z.string().optional(),
 }).refine(
   (data) => {
-    if (data.delivery_method === 'delivery') {
-      return !!data.delivery_address && !!data.delivery_commune
-    }
-    return true
+    return !!data.delivery_address && !!data.delivery_region && !!data.delivery_commune
   },
-  { message: 'Dirección y comuna son requeridas para delivery', path: ['delivery_address'] }
+  { message: 'Dirección, región y comuna son requeridas', path: ['delivery_address'] }
 )
 
 export type CheckoutFormData = z.infer<typeof checkoutSchema>

@@ -80,6 +80,7 @@ export interface Order {
   total: number
   delivery_method: DeliveryMethod
   delivery_address: string
+  delivery_region?: string | null
   delivery_commune: string
   delivery_reference: string
   status: OrderStatus
