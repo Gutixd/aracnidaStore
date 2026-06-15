@@ -1,6 +1,13 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Geist } from 'next/font/google'
 import './globals.css'
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: '#0f1e3d',
+}
 
 const geist = Geist({ subsets: ['latin'], variable: '--font-geist-sans' })
 
@@ -61,7 +68,7 @@ const jsonLd = {
   logo: `${SITE_URL}/logo.jpeg`,
   priceRange: '$$',
   currenciesAccepted: 'CLP',
-  paymentAccepted: 'Efectivo, Transferencia',
+  paymentAccepted: 'Mercado Pago, Tarjetas de crédito y débito, Transferencia, Efectivo',
   areaServed: { '@type': 'Country', name: 'Chile' },
   address: {
     '@type': 'PostalAddress',

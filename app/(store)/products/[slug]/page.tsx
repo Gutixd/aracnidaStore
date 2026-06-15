@@ -110,9 +110,9 @@ export default async function ProductPage({
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-24">
           {/* Imagen */}
           <ScrollReveal>
-            <div className="relative aspect-square rounded-3xl overflow-hidden card">
+            <div className="relative aspect-square rounded-3xl overflow-hidden card" style={{ background: '#fff' }}>
               {product.image_url ? (
-                <Image src={product.image_url} alt={product.name} fill className="object-cover" priority sizes="(max-width: 1024px) 100vw, 50vw" />
+                <Image src={product.image_url} alt={`${product.name} - disfraz/máscara Spider-Man en Chile`} fill className="object-contain p-2" priority sizes="(max-width: 1024px) 100vw, 50vw" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center" style={{ color: 'var(--gray-200)' }}>
                   <Package size={80} />

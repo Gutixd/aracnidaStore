@@ -61,13 +61,13 @@ export function ProductCard({ product }: ProductCardProps) {
         </div>
 
         {/* Imagen */}
-        <div className="relative aspect-[4/5] overflow-hidden" style={{ background: 'var(--gray-50)' }}>
+        <div className="relative aspect-square overflow-hidden" style={{ background: '#fff' }}>
           {product.image_url ? (
             <Image
               src={product.image_url}
-              alt={product.name}
+              alt={`${product.name} - Spider-Man Chile`}
               fill
-              className={`object-cover transition-transform duration-500 group-hover:scale-105 ${isOutOfStock ? 'opacity-50 grayscale' : ''}`}
+              className={`object-contain transition-transform duration-500 group-hover:scale-105 ${isOutOfStock ? 'opacity-50 grayscale' : ''}`}
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
             />
           ) : (

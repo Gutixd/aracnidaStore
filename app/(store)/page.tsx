@@ -5,6 +5,7 @@ import { ProductCard } from '@/components/store/ProductCard'
 import Image from 'next/image'
 import { ShoppingBag, Shield, Truck, ChevronRight, Package, Zap, Star, MapPin, RotateCcw } from 'lucide-react'
 import { ScrollReveal } from '@/components/store/ScrollReveal'
+import { VideoShowcase } from '@/components/store/VideoShowcase'
 
 const FAQS = [
   { q: '¿Cuánto demoran los envíos?', a: 'Los pedidos se despachan en 24-48 horas hábiles. Entrega en 1-3 días en la Región Metropolitana y 3-5 días en regiones. También puedes retirar en Metro Plaza de Maipú.' },
@@ -144,6 +145,9 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* ===== VIDEO ===== */}
+      <VideoShowcase />
+
       {/* ===== TRUST BAR ===== */}
       <section style={{ background: '#fff', borderBottom: '1px solid var(--gray-100)' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -220,7 +224,7 @@ export default async function HomePage() {
           </ScrollReveal>
 
           {featured.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
               {featured.map((product) => (
                 <div key={product.id}><ProductCard product={product} /></div>
               ))}
