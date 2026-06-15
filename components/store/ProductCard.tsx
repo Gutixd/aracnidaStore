@@ -48,13 +48,13 @@ export function ProductCard({ product }: ProductCardProps) {
           )}
           {isLowStock && (
             <span className="text-xs font-bold px-2.5 py-1 rounded-full"
-              style={{ background: 'rgba(234,179,8,.12)', color: '#92400e', border: '1px solid rgba(234,179,8,.3)' }}>
-              Últimas {totalStock}
+              style={{ background: '#d97706', color: '#fff', boxShadow: '0 2px 6px rgba(217,119,6,.35)' }}>
+              ¡Últimas {totalStock}!
             </span>
           )}
           {isOutOfStock && (
-            <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
-              style={{ background: 'var(--gray-50)', color: 'var(--gray-400)', border: '1px solid var(--gray-100)' }}>
+            <span className="text-xs font-bold px-2.5 py-1 rounded-full"
+              style={{ background: '#6b7280', color: '#fff' }}>
               Agotado
             </span>
           )}

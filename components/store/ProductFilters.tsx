@@ -3,7 +3,7 @@
 import { Category } from '@/types'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react'
-import { Search, X, Loader2 } from 'lucide-react'
+import { Search, X, Loader2, SlidersHorizontal, ChevronDown } from 'lucide-react'
 
 interface ProductFiltersProps {
   categories: Category[]
@@ -60,14 +60,38 @@ export function ProductFilters({ categories, currentParams }: ProductFiltersProp
     navigate(new URLSearchParams())
   }
   const hasFilters = Object.values(currentParams).some(Boolean)
+  const activeCount = Object.entries(currentParams).filter(
+    ([k, v]) => v && !(k === 'sort' && v === 'newest')
+  ).length
+
+  // Panel colapsable en celular (abierto siempre en desktop)
+  const [open, setOpen] = useState(false)
 
   const filterLabel = 'text-sm font-semibold uppercase tracking-widest mb-3 block'
   const filterStyle = { color: '#9b9b93', fontSize: '11px' }
 
   return (
-    <div className="space-y-6 lg:sticky lg:top-24">
+    <div className="space-y-3 lg:sticky lg:top-24">
+      {/* Botón de filtros (solo celular) */}
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="lg:hidden w-full card flex items-center justify-between px-5 py-3.5"
+        aria-expanded={open}
+      >
+        <span className="flex items-center gap-2 text-sm font-bold" style={{ color: '#1a1a18' }}>
+          <SlidersHorizontal size={16} style={{ color: '#c0392b' }} />
+          Filtros
+          {activeCount > 0 && (
+            <span className="ml-1 text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: '#c0392b', color: '#fff' }}>
+              {activeCount}
+            </span>
+          )}
+        </span>
+        <ChevronDown size={18} className="transition-transform" style={{ color: '#9b9b93', transform: open ? 'rotate(180deg)' : 'none' }} />
+      </button>
+
       <div
-        className="card p-5 space-y-6 relative transition-opacity duration-200"
+        className={`${open ? 'block' : 'hidden'} lg:block card p-5 space-y-6 relative transition-opacity duration-200`}
         style={{ opacity: isPending ? 0.6 : 1 }}
         aria-busy={isPending}
       >
@@ -81,8 +105,8 @@ export function ProductFilters({ categories, currentParams }: ProductFiltersProp
           </span>
         )}
 
-        {/* Header */}
-        <div className="flex items-center justify-between">
+        {/* Header (solo desktop, en celular ya está el botón) */}
+        <div className="hidden lg:flex items-center justify-between">
           <span className="text-sm font-bold" style={{ color: '#1a1a18' }}>Filtros</span>
           {isPending && <Loader2 size={14} className="animate-spin" style={{ color: '#c0392b' }} />}
         </div>
