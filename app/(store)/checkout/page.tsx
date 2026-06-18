@@ -13,27 +13,37 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { ShoppingBag, Loader2, MapPin, ChevronDown, Truck, Calendar, Banknote, Copy, Check, Clock, AlertCircle } from 'lucide-react'
 
-const SHIPPING_COST = 3000
 const FREE_SHIPPING_THRESHOLD = 50000
 
-const REGIONES_CHILE = [
-  'Región de Arica y Parinacota',
-  'Región de Tarapacá',
-  'Región de Antofagasta',
-  'Región de Atacama',
-  'Región de Coquimbo',
-  'Región de Valparaíso',
-  'Región Metropolitana de Santiago',
-  "Región del Libertador General Bernardo O'Higgins",
-  'Región del Maule',
-  'Región del Ñuble',
-  'Región del Biobío',
-  'Región de La Araucanía',
-  'Región de Los Ríos',
-  'Región de Los Lagos',
-  'Región de Aysén del General Carlos Ibáñez del Campo',
-  'Región de Magallanes y de la Antártica Chilena',
-]
+// Zonas de envío Blue Express desde Santiago
+const SHIPPING_ZONES: Record<string, { cost: number; zone: number; label: string; freeShipping: boolean }> = {
+  'Región Metropolitana de Santiago':                          { zone: 1, cost: 3990,  label: 'Zona 1 · Metropolitana',   freeShipping: true },
+  'Región de Valparaíso':                                      { zone: 2, cost: 5490,  label: 'Zona 2 · Centro',          freeShipping: true },
+  "Región del Libertador General Bernardo O'Higgins":          { zone: 2, cost: 5490,  label: 'Zona 2 · Centro',          freeShipping: true },
+  'Región del Maule':                                          { zone: 2, cost: 5490,  label: 'Zona 2 · Centro',          freeShipping: true },
+  'Región del Ñuble':                                          { zone: 2, cost: 5490,  label: 'Zona 2 · Centro',          freeShipping: true },
+  'Región de Coquimbo':                                        { zone: 3, cost: 6490,  label: 'Zona 3 · Norte/Sur medio', freeShipping: false },
+  'Región del Biobío':                                         { zone: 3, cost: 6490,  label: 'Zona 3 · Norte/Sur medio', freeShipping: false },
+  'Región de La Araucanía':                                    { zone: 3, cost: 6490,  label: 'Zona 3 · Norte/Sur medio', freeShipping: false },
+  'Región de Arica y Parinacota':                              { zone: 4, cost: 7990,  label: 'Zona 4 · Extremos',        freeShipping: false },
+  'Región de Tarapacá':                                        { zone: 4, cost: 7990,  label: 'Zona 4 · Extremos',        freeShipping: false },
+  'Región de Antofagasta':                                     { zone: 4, cost: 7990,  label: 'Zona 4 · Extremos',        freeShipping: false },
+  'Región de Atacama':                                         { zone: 4, cost: 7990,  label: 'Zona 4 · Extremos',        freeShipping: false },
+  'Región de Los Ríos':                                        { zone: 4, cost: 7990,  label: 'Zona 4 · Extremos',        freeShipping: false },
+  'Región de Los Lagos':                                       { zone: 4, cost: 7990,  label: 'Zona 4 · Extremos',        freeShipping: false },
+  'Región de Aysén del General Carlos Ibáñez del Campo':       { zone: 4, cost: 7990,  label: 'Zona 4 · Extremos',        freeShipping: false },
+  'Región de Magallanes y de la Antártica Chilena':            { zone: 4, cost: 7990,  label: 'Zona 4 · Extremos',        freeShipping: false },
+}
+
+const REGIONES_CHILE = Object.keys(SHIPPING_ZONES)
+
+function getShippingInfo(region: string | undefined, subtotal: number) {
+  if (!region) return { cost: 3990, label: '', freeShipping: false }
+  const zone = SHIPPING_ZONES[region]
+  if (!zone) return { cost: 3990, label: '', freeShipping: false }
+  const free = zone.freeShipping && subtotal >= FREE_SHIPPING_THRESHOLD
+  return { cost: free ? 0 : zone.cost, label: zone.label, freeShipping: zone.freeShipping, zone: zone.zone }
+}
 
 const TRANSFER_INFO = {
   banco: 'Banco Estado',
@@ -81,13 +91,15 @@ export default function CheckoutPage() {
   const paymentMethod = watch('payment_method')
   const pickupSlot = watch('pickup_slot')
   const pickupTime = watch('pickup_time')
+  const deliveryRegion = watch('delivery_region')
 
   // Registrar pickup_time para que react-hook-form lo incluya en la data
   register('pickup_time')
 
   const subtotal = getTotalPrice()
   const isRetiro = deliveryMethod === 'retiro'
-  const shippingCost = isRetiro ? 0 : (subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST)
+  const shippingInfo = getShippingInfo(deliveryRegion, subtotal)
+  const shippingCost = isRetiro ? 0 : shippingInfo.cost
   const total = subtotal + shippingCost
 
   function copyToClipboard(text: string, key: string) {
@@ -201,7 +213,7 @@ export default function CheckoutPage() {
                       <div>
                         <p className="font-bold text-sm" style={{ color: 'var(--text)' }}>Envío a domicilio</p>
                         <p className="text-xs" style={{ color: 'var(--gray-400)' }}>
-                          {subtotal >= FREE_SHIPPING_THRESHOLD ? 'Gratis' : formatPrice(SHIPPING_COST)} · Todo Chile
+                          {deliveryRegion ? (shippingCost === 0 ? 'Gratis' : formatPrice(shippingInfo.cost)) : 'Desde $3.990'} · Todo Chile
                         </p>
                       </div>
                     </div>
@@ -254,6 +266,20 @@ export default function CheckoutPage() {
                         <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'var(--gray-400)' }} />
                       </div>
                       {errors.delivery_region && <p className="text-xs mt-1" style={{ color: 'var(--red)' }}>{errors.delivery_region.message}</p>}
+                      {/* Banner dinámico de zona */}
+                      {deliveryRegion && shippingInfo.label && (
+                        <div className="mt-2 flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold"
+                          style={{ background: shippingInfo.freeShipping ? 'rgba(21,128,61,.07)' : 'rgba(192,57,43,.06)', border: `1px solid ${shippingInfo.freeShipping ? 'rgba(21,128,61,.2)' : 'rgba(192,57,43,.15)'}` }}>
+                          <span style={{ color: 'var(--gray-600)' }}>{shippingInfo.label}</span>
+                          <span style={{ color: shippingCost === 0 ? '#15803d' : 'var(--red)', fontWeight: 800 }}>
+                            {shippingCost === 0
+                              ? '¡Envío gratis!'
+                              : shippingInfo.freeShipping
+                                ? `${formatPrice(shippingInfo.cost)} · gratis sobre ${formatPrice(FREE_SHIPPING_THRESHOLD)}`
+                                : `${formatPrice(shippingInfo.cost)} · sin envío gratis`}
+                          </span>
+                        </div>
+                      )}
                     </div>
                     <div>
                       <label className={labelClass} style={labelStyle}>Comuna *</label>
@@ -473,9 +499,11 @@ export default function CheckoutPage() {
                     <span className="font-semibold tabular-nums" style={{ color: 'var(--text)' }}>{formatPrice(subtotal)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span style={{ color: 'var(--gray-600)' }}>{isRetiro ? 'Retiro' : 'Envío'}</span>
+                    <span style={{ color: 'var(--gray-600)' }}>
+                      {isRetiro ? 'Retiro' : deliveryRegion && shippingInfo.label ? `Envío (${shippingInfo.label.split('·')[0].trim()})` : 'Envío'}
+                    </span>
                     <span className="font-semibold tabular-nums" style={{ color: shippingCost === 0 ? '#15803d' : 'var(--text)' }}>
-                      {shippingCost === 0 ? 'Gratis' : formatPrice(shippingCost)}
+                      {isRetiro || shippingCost === 0 ? 'Gratis' : deliveryRegion ? formatPrice(shippingCost) : '—'}
                     </span>
                   </div>
                   <div className="flex justify-between pt-3 mt-2" style={{ borderTop: '1px solid var(--gray-100)' }}>
