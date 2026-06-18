@@ -4,17 +4,34 @@ export const checkoutSchema = z.object({
   customer_name: z.string().min(2, 'Nombre requerido'),
   customer_email: z.string().email('Email inválido'),
   customer_phone: z.string().min(8, 'Teléfono inválido'),
-  delivery_method: z.enum(['delivery']),
+  delivery_method: z.enum(['delivery', 'retiro']),
   delivery_address: z.string().optional(),
   delivery_region: z.string().optional(),
   delivery_commune: z.string().optional(),
   delivery_reference: z.string().optional(),
+  pickup_slot: z.enum(['martes', 'sabado']).optional(),
+  payment_method: z.enum(['transferencia', 'efectivo']).optional(),
   notes: z.string().optional(),
 }).refine(
   (data) => {
-    return !!data.delivery_address && !!data.delivery_region && !!data.delivery_commune
+    if (data.delivery_method === 'delivery') {
+      return !!data.delivery_address && !!data.delivery_region && !!data.delivery_commune
+    }
+    return true
   },
   { message: 'Dirección, región y comuna son requeridas', path: ['delivery_address'] }
+).refine(
+  (data) => {
+    if (data.delivery_method === 'retiro') return !!data.pickup_slot
+    return true
+  },
+  { message: 'Selecciona un día de retiro', path: ['pickup_slot'] }
+).refine(
+  (data) => {
+    if (data.delivery_method === 'retiro') return !!data.payment_method
+    return true
+  },
+  { message: 'Selecciona método de pago', path: ['payment_method'] }
 )
 
 export type CheckoutFormData = z.infer<typeof checkoutSchema>
