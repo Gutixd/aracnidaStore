@@ -89,6 +89,7 @@ export interface Order {
   payment_id?: string | null
   payment_method?: string | null
   pickup_slot?: string | null
+  pickup_time?: string | null
   mp_preference_id?: string | null
   notes: string
   created_at: string

@@ -48,12 +48,14 @@ const PICKUP_SLOTS = [
     label: 'Martes',
     hours: '13:00 – 16:00',
     desc: 'Confirmación con 24 hrs de anticipación',
+    times: ['13:00', '13:30', '14:00', '14:30', '15:00', '15:30'],
   },
   {
     id: 'sabado' as const,
     label: 'Sábado',
     hours: '11:00 – 15:00',
     desc: 'Confirmación con 24 hrs de anticipación',
+    times: ['11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30'],
   },
 ]
 
@@ -78,6 +80,10 @@ export default function CheckoutPage() {
   const deliveryMethod = watch('delivery_method')
   const paymentMethod = watch('payment_method')
   const pickupSlot = watch('pickup_slot')
+  const pickupTime = watch('pickup_time')
+
+  // Registrar pickup_time para que react-hook-form lo incluya en la data
+  register('pickup_time')
 
   const subtotal = getTotalPrice()
   const isRetiro = deliveryMethod === 'retiro'
@@ -292,6 +298,10 @@ export default function CheckoutPage() {
                               type="radio"
                               value={slot.id}
                               {...register('pickup_slot')}
+                              onChange={() => {
+                                setValue('pickup_slot', slot.id)
+                                setValue('pickup_time', '')
+                              }}
                               className="sr-only"
                             />
                             <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
@@ -309,6 +319,41 @@ export default function CheckoutPage() {
                         ))}
                       </div>
                       {errors.pickup_slot && <p className="text-xs mt-1" style={{ color: 'var(--red)' }}>{errors.pickup_slot.message}</p>}
+
+                      {/* Selector de hora — aparece cuando se elige día */}
+                      {pickupSlot && (() => {
+                        const slotData = PICKUP_SLOTS.find((s) => s.id === pickupSlot)!
+                        return (
+                          <div className="mt-4">
+                            <label className="block text-sm font-semibold mb-3" style={{ color: 'var(--gray-600)' }}>
+                              Hora de retiro el {slotData.label} *
+                            </label>
+                            <div className="flex flex-wrap gap-2">
+                              {slotData.times.map((t) => (
+                                <button
+                                  key={t}
+                                  type="button"
+                                  onClick={() => setValue('pickup_time', t, { shouldValidate: true })}
+                                  className="px-4 py-2 rounded-xl text-sm font-bold transition-all"
+                                  style={
+                                    pickupTime === t
+                                      ? { background: 'var(--red)', color: '#fff', border: '2px solid var(--red)', boxShadow: '0 4px 14px rgba(192,57,43,.3)' }
+                                      : { background: '#fff', color: 'var(--text)', border: '2px solid var(--gray-200)' }
+                                  }
+                                >
+                                  <Clock size={12} className="inline mr-1.5" />{t}
+                                </button>
+                              ))}
+                            </div>
+                            {errors.pickup_time && <p className="text-xs mt-1" style={{ color: 'var(--red)' }}>{errors.pickup_time.message}</p>}
+                            {pickupTime && (
+                              <p className="text-xs mt-2 font-semibold" style={{ color: '#15803d' }}>
+                                ✓ Retiro el {slotData.label} a las {pickupTime} · Coordinar con 24 hrs de anticipación
+                              </p>
+                            )}
+                          </div>
+                        )
+                      })()}
                     </div>
 
                     {/* Método de pago */}
@@ -445,7 +490,8 @@ export default function CheckoutPage() {
                     style={{ background: 'rgba(192,57,43,.05)', border: '1px solid rgba(192,57,43,.15)' }}>
                     <p className="font-bold mb-1" style={{ color: 'var(--text)' }}>Retiro en Plaza de Maipú</p>
                     <p style={{ color: 'var(--gray-600)' }}>
-                      {pickupSlot === 'martes' ? 'Martes de 13:00 a 16:00' : pickupSlot === 'sabado' ? 'Sábado de 11:00 a 15:00' : 'Elige el día de retiro'}
+                      {pickupSlot === 'martes' ? 'Martes' : pickupSlot === 'sabado' ? 'Sábado' : 'Elige el día'}
+                      {pickupTime ? ` · ${pickupTime} hrs` : ' · Elige la hora'}
                     </p>
                   </div>
                 )}

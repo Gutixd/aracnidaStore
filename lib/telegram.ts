@@ -70,8 +70,11 @@ ${items}
 🚚 <b>Envío:</b> ${formatPrice(order.shipping_cost)}
 💵 <b>TOTAL:</b> ${formatPrice(order.total)}
 
-📦 <b>Método:</b> ${order.delivery_method === 'delivery' ? '🏠 Delivery' : '🏪 Retiro en tienda'}
-${order.delivery_method === 'delivery' ? `📍 <b>Dirección:</b> ${order.delivery_address}, ${order.delivery_commune}\n📌 <b>Referencia:</b> ${order.delivery_reference}` : ''}
+📦 <b>Método:</b> ${order.delivery_method === 'delivery' ? '🏠 Delivery a domicilio' : '📍 Retiro en Plaza de Maipú'}
+${order.delivery_method === 'delivery'
+  ? `📍 <b>Dirección:</b> ${order.delivery_address}, ${order.delivery_commune}, ${order.delivery_region ?? ''}\n📌 <b>Referencia:</b> ${order.delivery_reference}`
+  : `📅 <b>Día:</b> ${order.pickup_slot === 'martes' ? 'Martes' : 'Sábado'}\n🕐 <b>Hora:</b> ${order.pickup_time ?? '—'}\n💳 <b>Pago:</b> ${order.payment_method === 'transferencia' ? '🏦 Transferencia bancaria' : '💵 Efectivo'}`
+}
 ${order.notes ? `📝 <b>Notas:</b> ${order.notes}` : ''}
 
 🕐 <b>Fecha:</b> ${formatDate(order.created_at)}

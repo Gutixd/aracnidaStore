@@ -10,6 +10,7 @@ export const checkoutSchema = z.object({
   delivery_commune: z.string().optional(),
   delivery_reference: z.string().optional(),
   pickup_slot: z.enum(['martes', 'sabado']).optional(),
+  pickup_time: z.string().optional(),
   payment_method: z.enum(['transferencia', 'efectivo']).optional(),
   notes: z.string().optional(),
 }).refine(
@@ -26,6 +27,12 @@ export const checkoutSchema = z.object({
     return true
   },
   { message: 'Selecciona un día de retiro', path: ['pickup_slot'] }
+).refine(
+  (data) => {
+    if (data.delivery_method === 'retiro') return !!data.pickup_time
+    return true
+  },
+  { message: 'Selecciona una hora de retiro', path: ['pickup_time'] }
 ).refine(
   (data) => {
     if (data.delivery_method === 'retiro') return !!data.payment_method

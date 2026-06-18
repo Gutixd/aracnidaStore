@@ -50,6 +50,7 @@ export async function createOrder(
       delivery_commune: formData.delivery_method === 'retiro' ? 'Maipú' : (formData.delivery_commune ?? ''),
       delivery_reference: formData.delivery_reference ?? '',
       pickup_slot: formData.pickup_slot ?? null,
+      pickup_time: formData.pickup_time ?? null,
       payment_method: formData.payment_method ?? null,
       status: 'pendiente',
       payment_status: 'pendiente',
