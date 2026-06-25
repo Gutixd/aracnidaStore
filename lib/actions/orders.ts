@@ -125,7 +125,9 @@ export async function createOrder(
     .eq('id', order.id)
     .single()
 
-  if (fullOrder) {
+  // Para retiro (efectivo/transferencia) notificamos de inmediato porque no hay pago online.
+  // Para delivery, esperamos la confirmación de MercadoPago en el webhook.
+  if (fullOrder && formData.delivery_method === 'retiro') {
     await notifyNewOrder(fullOrder)
   }
 

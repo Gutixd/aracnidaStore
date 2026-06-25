@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
 import { getPaymentClient } from '@/lib/mercadopago'
-import { notifyPaymentApproved } from '@/lib/telegram'
+import { notifyNewOrder } from '@/lib/telegram'
 
 /**
  * Webhook de Mercado Pago. Recibe la notificación de un pago, consulta su estado
@@ -67,7 +67,13 @@ export async function POST(req: NextRequest) {
       .eq('id', orderId)
 
     if (status === 'approved' && !alreadyPaid) {
-      await notifyPaymentApproved(order, Number(payment.transaction_amount ?? order.total))
+      // Re-fetch con items actualizados por si acaso
+      const { data: fullOrder } = await supabase
+        .from('orders')
+        .select('*, items:order_items(*)')
+        .eq('id', orderId)
+        .single()
+      if (fullOrder) await notifyNewOrder(fullOrder)
     }
 
     return NextResponse.json({ ok: true })
