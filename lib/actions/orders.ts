@@ -1,36 +1,53 @@
 'use server'
 
-import { createAdminClient } from '@/lib/supabase/server'
+import { createAdminClient, createClient } from '@/lib/supabase/server'
 import { notifyNewOrder, notifyLowStock, notifyOutOfStock } from '@/lib/telegram'
 import { CheckoutFormData } from '@/lib/validations'
 import { CartItem } from '@/types'
+import { calcShippingCost } from '@/lib/shipping'
 
 const LOW_STOCK_THRESHOLD = 3
+const MAX_QTY_PER_ITEM = 20
 
 export async function createOrder(
   formData: CheckoutFormData,
-  cartItems: CartItem[],
-  shippingCost: number
+  cartItems: CartItem[]
 ) {
   if (!cartItems.length) return { error: 'El carrito está vacío' }
+  if (cartItems.length > 50) return { error: 'Demasiados productos en el carrito' }
 
   const supabase = await createAdminClient()
 
-  // Verificar stock de cada variante antes de crear el pedido
-  for (const { product, variant, quantity } of cartItems) {
+  // Validar stock y recalcular el precio de cada variante DESDE LA BASE DE DATOS.
+  // Nunca se confía en el precio que llega desde el navegador (evita manipulación).
+  const pricedItems: { item: CartItem; price: number }[] = []
+
+  for (const cartItem of cartItems) {
+    const { product, variant, quantity } = cartItem
+
+    if (!Number.isInteger(quantity) || quantity < 1 || quantity > MAX_QTY_PER_ITEM) {
+      return { error: `Cantidad inválida para "${product.name}"` }
+    }
+
     const { data: current } = await supabase
       .from('product_variants')
-      .select('stock')
+      .select('stock, price, active')
       .eq('id', variant.id)
       .single()
 
-    if (!current) return { error: `Variante no encontrada: ${product.name} (${variant.size})` }
+    if (!current || current.active === false) {
+      return { error: `Producto no disponible: ${product.name} (${variant.size})` }
+    }
     if (current.stock < quantity) {
       return { error: `Stock insuficiente para "${product.name}" talla ${variant.size}. Disponible: ${current.stock}` }
     }
+
+    pricedItems.push({ item: cartItem, price: Number(current.price) })
   }
 
-  const subtotal = cartItems.reduce((sum, { variant, quantity }) => sum + variant.price * quantity, 0)
+  const subtotal = pricedItems.reduce((sum, { item, price }) => sum + price * item.quantity, 0)
+  // El costo de envío se calcula en el servidor según la región y el método.
+  const shippingCost = calcShippingCost(formData.delivery_method, formData.delivery_region, subtotal)
   const total = subtotal + shippingCost
 
   // Crear pedido
@@ -65,7 +82,7 @@ export async function createOrder(
   }
 
   // Items del pedido y descuento de stock por variante
-  for (const { product, variant, quantity } of cartItems) {
+  for (const { item: { product, variant, quantity }, price } of pricedItems) {
     await supabase.from('order_items').insert({
       order_id: order.id,
       product_id: product.id,
@@ -75,8 +92,8 @@ export async function createOrder(
       size: variant.size,
       color: product.color,
       quantity,
-      unit_price: variant.price,
-      total_price: variant.price * quantity,
+      unit_price: price,
+      total_price: price * quantity,
     })
 
     // Descontar stock de la variante
@@ -155,6 +172,11 @@ async function recalcProductStock(
  * Es idempotente: el stock solo se mueve cuando cambia el "cancelado" real del pedido.
  */
 export async function updateOrderStatus(orderId: string, newStatus: string) {
+  // Solo administradores autenticados pueden cambiar el estado de un pedido.
+  const auth = await createClient()
+  const { data: { user } } = await auth.auth.getUser()
+  if (!user) return { error: 'No autorizado' }
+
   const supabase = await createAdminClient()
 
   const { data: order } = await supabase

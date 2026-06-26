@@ -1,7 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server'
+import crypto from 'crypto'
 import { createAdminClient } from '@/lib/supabase/server'
 import { getPaymentClient } from '@/lib/mercadopago'
 import { notifyNewOrder } from '@/lib/telegram'
+
+const WEBHOOK_SECRET = process.env.MP_WEBHOOK_SECRET
+
+/**
+ * Valida la firma HMAC que envía Mercado Pago en el header `x-signature`.
+ * Si no hay secreto configurado, se omite la validación (no rompe lo existente).
+ * Ver: https://www.mercadopago.cl/developers/es/docs/your-integrations/notifications/webhooks
+ */
+function isValidSignature(req: NextRequest, dataId: string | null): boolean {
+  if (!WEBHOOK_SECRET) return true // sin secreto configurado, no validamos
+  const signature = req.headers.get('x-signature')
+  const requestId = req.headers.get('x-request-id')
+  if (!signature || !dataId) return false
+
+  const parts = Object.fromEntries(
+    signature.split(',').map((p) => p.split('=').map((s) => s.trim()) as [string, string])
+  )
+  const ts = parts['ts']
+  const v1 = parts['v1']
+  if (!ts || !v1) return false
+
+  const manifest = `id:${dataId.toLowerCase()};request-id:${requestId};ts:${ts};`
+  const hmac = crypto.createHmac('sha256', WEBHOOK_SECRET).update(manifest).digest('hex')
+  try {
+    return crypto.timingSafeEqual(Buffer.from(hmac), Buffer.from(v1))
+  } catch {
+    return false
+  }
+}
 
 /**
  * Webhook de Mercado Pago. Recibe la notificación de un pago, consulta su estado
@@ -12,6 +42,12 @@ export async function POST(req: NextRequest) {
     const url = new URL(req.url)
     let paymentId = url.searchParams.get('data.id') || url.searchParams.get('id')
     const type = url.searchParams.get('type') || url.searchParams.get('topic')
+
+    // Validar firma antes de procesar (si hay secreto configurado)
+    if (!isValidSignature(req, paymentId)) {
+      console.warn('[MercadoPago Webhook] Firma inválida')
+      return NextResponse.json({ error: 'Firma inválida' }, { status: 401 })
+    }
 
     // Algunas notificaciones llegan en el body
     if (!paymentId) {

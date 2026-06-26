@@ -12,38 +12,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ShoppingBag, Loader2, MapPin, ChevronDown, Truck, Calendar, Banknote, Copy, Check, Clock, AlertCircle } from 'lucide-react'
-
-const FREE_SHIPPING_THRESHOLD = 50000
-
-// Zonas de envío Blue Express desde Santiago
-const SHIPPING_ZONES: Record<string, { cost: number; zone: number; label: string; freeShipping: boolean }> = {
-  'Región Metropolitana de Santiago':                          { zone: 1, cost: 3990,  label: 'Zona 1 · Metropolitana',   freeShipping: true },
-  'Región de Valparaíso':                                      { zone: 2, cost: 5490,  label: 'Zona 2 · Centro',          freeShipping: true },
-  "Región del Libertador General Bernardo O'Higgins":          { zone: 2, cost: 5490,  label: 'Zona 2 · Centro',          freeShipping: true },
-  'Región del Maule':                                          { zone: 2, cost: 5490,  label: 'Zona 2 · Centro',          freeShipping: true },
-  'Región del Ñuble':                                          { zone: 2, cost: 5490,  label: 'Zona 2 · Centro',          freeShipping: true },
-  'Región de Coquimbo':                                        { zone: 3, cost: 6490,  label: 'Zona 3 · Norte/Sur medio', freeShipping: false },
-  'Región del Biobío':                                         { zone: 3, cost: 6490,  label: 'Zona 3 · Norte/Sur medio', freeShipping: false },
-  'Región de La Araucanía':                                    { zone: 3, cost: 6490,  label: 'Zona 3 · Norte/Sur medio', freeShipping: false },
-  'Región de Arica y Parinacota':                              { zone: 4, cost: 7990,  label: 'Zona 4 · Extremos',        freeShipping: false },
-  'Región de Tarapacá':                                        { zone: 4, cost: 7990,  label: 'Zona 4 · Extremos',        freeShipping: false },
-  'Región de Antofagasta':                                     { zone: 4, cost: 7990,  label: 'Zona 4 · Extremos',        freeShipping: false },
-  'Región de Atacama':                                         { zone: 4, cost: 7990,  label: 'Zona 4 · Extremos',        freeShipping: false },
-  'Región de Los Ríos':                                        { zone: 4, cost: 7990,  label: 'Zona 4 · Extremos',        freeShipping: false },
-  'Región de Los Lagos':                                       { zone: 4, cost: 7990,  label: 'Zona 4 · Extremos',        freeShipping: false },
-  'Región de Aysén del General Carlos Ibáñez del Campo':       { zone: 4, cost: 7990,  label: 'Zona 4 · Extremos',        freeShipping: false },
-  'Región de Magallanes y de la Antártica Chilena':            { zone: 4, cost: 7990,  label: 'Zona 4 · Extremos',        freeShipping: false },
-}
-
-const REGIONES_CHILE = Object.keys(SHIPPING_ZONES)
-
-function getShippingInfo(region: string | undefined, subtotal: number) {
-  if (!region) return { cost: 3990, label: '', freeShipping: false }
-  const zone = SHIPPING_ZONES[region]
-  if (!zone) return { cost: 3990, label: '', freeShipping: false }
-  const free = zone.freeShipping && subtotal >= FREE_SHIPPING_THRESHOLD
-  return { cost: free ? 0 : zone.cost, label: zone.label, freeShipping: zone.freeShipping, zone: zone.zone }
-}
+import { REGIONES_CHILE, getShippingInfo, FREE_SHIPPING_THRESHOLD } from '@/lib/shipping'
 
 const TRANSFER_INFO = {
   banco: 'Banco Estado',
@@ -124,7 +93,7 @@ export default function CheckoutPage() {
     setLoading(true)
     setError(null)
     try {
-      const result = await createOrder(data, items, shippingCost)
+      const result = await createOrder(data, items)
       if (result.error) {
         setError(result.error)
         setLoading(false)
