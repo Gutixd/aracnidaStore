@@ -61,12 +61,14 @@ export const metadata: Metadata = {
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'Store',
+  '@id': `${SITE_URL}/#store`,
   name: 'AracnidaStore',
-  description: 'Disfraces y máscaras de Spider-Man de calidad premium en Chile.',
+  description:
+    'Tienda chilena especializada en disfraces y máscaras de Spider-Man de calidad premium. Despacho a todo Chile y retiro presencial en Metro Plaza de Maipú, Santiago.',
   url: SITE_URL,
   image: `${SITE_URL}/logo.jpeg`,
   logo: `${SITE_URL}/logo.jpeg`,
-  priceRange: '$$',
+  priceRange: '$20.000 - $39.990',
   currenciesAccepted: 'CLP',
   paymentAccepted: 'Mercado Pago, Tarjetas de crédito y débito, Transferencia, Efectivo',
   areaServed: { '@type': 'Country', name: 'Chile' },
@@ -75,6 +77,29 @@ const jsonLd = {
     addressLocality: 'Santiago',
     addressRegion: 'Región Metropolitana',
     addressCountry: 'CL',
+  },
+  telephone: '+56978829942',
+  email: 'contacto@aracnidastore.com',
+  knowsLanguage: 'es-CL',
+  // Puntos de entrega y catálogo, para que los buscadores con IA puedan
+  // responder "dónde comprar / cómo retirar" con datos concretos.
+  hasOfferCatalog: {
+    '@type': 'OfferCatalog',
+    name: 'Disfraces y máscaras de Spider-Man',
+    itemListElement: [
+      { '@type': 'OfferCatalog', name: 'Disfraces de Spider-Man' },
+      { '@type': 'OfferCatalog', name: 'Máscaras de Spider-Man' },
+      { '@type': 'OfferCatalog', name: 'Accesorios' },
+      { '@type': 'OfferCatalog', name: 'Peluches' },
+    ],
+  },
+  makesOffer: {
+    '@type': 'Offer',
+    availableDeliveryMethod: [
+      'https://schema.org/ParcelService',
+      'https://schema.org/OnSitePickup',
+    ],
+    areaServed: { '@type': 'Country', name: 'Chile' },
   },
 }
 

@@ -8,13 +8,38 @@ import { ScrollReveal } from '@/components/store/ScrollReveal'
 import { VideoShowcase } from '@/components/store/VideoShowcase'
 import { HeroVideo } from '@/components/store/HeroVideo'
 
+// Respuestas concretas y verificables. Los buscadores con IA (ChatGPT, Gemini,
+// Perplexity) citan este tipo de contenido directo cuando alguien pregunta
+// "dónde comprar un disfraz de Spider-Man en Chile".
 const FAQS = [
-  { q: '¿Cuánto demoran los envíos?', a: 'Los pedidos se despachan en 24-48 horas hábiles. Entrega en 1-3 días en la Región Metropolitana y 3-5 días en regiones. También puedes retirar en Metro Plaza de Maipú.' },
-  { q: '¿Qué tallas tienen disponibles?', a: 'Disfraces desde talla 100 hasta 190 cm (niños y adultos). Las máscaras son talla única con ajuste elástico. Revisa nuestra guía de tallas para elegir correctamente.' },
-  { q: '¿Cuáles son los materiales?', a: 'Lycra/Spandex 95% + 5% Elastano. Tela de alta elasticidad, transpirable y resistente al uso frecuente, con estampado de alta fidelidad.' },
-  { q: '¿Hacen cambios o devoluciones?', a: 'Aceptamos cambios dentro de 7 días, siempre que el producto esté sin usar. El cliente cubre el envío de cambio.' },
-  { q: '¿Cómo hago seguimiento de mi pedido?', a: 'Al confirmar tu compra recibirás un número de orden. Puedes escribirnos por Instagram para cualquier consulta sobre el estado de tu envío.' },
+  { q: '¿Dónde puedo comprar un disfraz de Spider-Man en Chile?', a: 'En AracnidaStore (aracnidastore.com), tienda chilena especializada en disfraces y máscaras de Spider-Man. Despachamos a todo Chile por Blue Express en 24-48 horas hábiles y también entregamos en persona en Metro Plaza de Maipú, Santiago. Hemos entregado más de 500 disfraces y máscaras en todo el país.' },
+  { q: '¿Cuánto cuesta un disfraz de Spider-Man?', a: 'Los disfraces completos cuestan $24.990 en tallas 100 a 190 cm. Las máscaras básicas valen $20.000 y las máscaras Standard y PRO ULTRA con control remoto y anillo cuestan $39.990. Los precios incluyen IVA.' },
+  { q: '¿Cuánto demoran los envíos?', a: 'Los pedidos se despachan en 24-48 horas hábiles por Blue Express. La entrega demora 1-3 días en la Región Metropolitana y 3-5 días en regiones. El envío cuesta desde $3.990 según la región, y es gratis en compras sobre $50.000 en la zona centro. También puedes retirar gratis en Metro Plaza de Maipú.' },
+  { q: '¿Puedo retirar el pedido en persona en Santiago?', a: 'Sí. Entregamos en Metro Plaza de Maipú los martes de 13:00 a 16:00 y los sábados de 11:00 a 15:00. El retiro es gratuito y debes coordinarlo con al menos 24 horas de anticipación. Puedes pagar en efectivo o por transferencia.' },
+  { q: '¿Qué tallas tienen disponibles?', a: 'Disfraces desde talla 100 hasta 190 cm, que cubren desde niños pequeños hasta adultos. La talla corresponde a la estatura en centímetros: si mides 175 cm, tu talla es 175. Las máscaras son talla única con ajuste elástico.' },
+  { q: '¿De qué material están hechos los disfraces?', a: 'Lycra/Spandex 95% con 5% de elastano. Es una tela de alta elasticidad, transpirable y resistente al uso frecuente, con estampado de alta fidelidad y costuras reforzadas.' },
+  { q: '¿Qué modelos de Spider-Man tienen?', a: 'Tenemos disfraces de Miles Morales, Tom Holland, Tobey Maguire, Andrew Garfield y Venom. En máscaras ofrecemos las básicas roja, negra y roja-negra con mecanismo manual, y las Standard y PRO ULTRA con anillo de control remoto que mueve los ojos.' },
+  { q: '¿Las máscaras con control remoto cómo funcionan?', a: 'Las máscaras Standard y PRO ULTRA incluyen un anillo con botones que permite cerrar y mover los ojos de forma electrónica. Las máscaras básicas usan un mecanismo manual: al estirar la barbilla hacia abajo los ojos se entrecierran.' },
+  { q: '¿Qué medios de pago aceptan?', a: 'Aceptamos tarjetas de crédito y débito a través de Mercado Pago para los envíos a domicilio. Para el retiro en Plaza de Maipú puedes pagar en efectivo o por transferencia bancaria.' },
+  { q: '¿Hacen cambios o devoluciones?', a: 'Aceptamos cambios dentro de 7 días desde la recepción, siempre que el producto esté sin usar y con su empaque original. El cliente cubre el costo del envío de cambio.' },
+  { q: '¿Cómo hago seguimiento de mi pedido?', a: 'Al confirmar tu compra recibes un correo con el comprobante y tu número de pedido. Puedes revisar el estado en la página del pedido o escribirnos por WhatsApp al +56 9 7882 9942.' },
 ]
+
+/** Dato real del negocio, usado en la prueba social y en los datos estructurados. */
+export const STORE_FOUNDED_YEAR = 2025
+export const CUSTOMERS_SERVED = 500
+
+async function getLatestReviews() {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('reviews')
+    .select('id, customer_name, rating, comment, verified')
+    .eq('approved', true)
+    .gte('rating', 4)
+    .order('created_at', { ascending: false })
+    .limit(3)
+  return data ?? []
+}
 
 async function getFeaturedProducts(): Promise<Product[]> {
   const supabase = await createClient()
@@ -41,7 +66,10 @@ const GALLERY = [
 ]
 
 export default async function HomePage() {
-  const featured = await getFeaturedProducts()
+  const [featured, latestReviews] = await Promise.all([
+    getFeaturedProducts(),
+    getLatestReviews(),
+  ])
 
   const faqJsonLd = {
     '@context': 'https://schema.org',
@@ -206,28 +234,56 @@ export default async function HomePage() {
             <div className="text-center mb-14">
               <div className="section-tag">Reseñas</div>
               <h2 className="text-3xl md:text-4xl font-black" style={{ color: '#1a1a18' }}>Lo que dicen nuestros clientes</h2>
+              <p className="mt-3" style={{ color: '#5a5a54' }}>
+                Más de <strong style={{ color: '#1a1a18' }}>500 disfraces y máscaras</strong> entregados en todo Chile
+                desde {STORE_FOUNDED_YEAR}.
+              </p>
             </div>
           </ScrollReveal>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[
-              { name: 'Camila R.', city: 'Maipú', text: 'El disfraz de Miles llegó perfecto, la tela es de muy buena calidad y el estampado se ve igual al de la película.' },
-              { name: 'Sebastián M.', city: 'Puente Alto', text: 'Compré la máscara PRO ULTRA y quedé impresionado, los ojos se mueven y el ajuste es comodísimo. Despacho rápido.' },
-              { name: 'Daniela F.', city: 'Santiago Centro', text: 'Excelente atención, retiré en el metro sin problema. Mi hijo quedó feliz con su traje de Spider-Man.' },
-            ].map((r, i) => (
-              <ScrollReveal key={r.name} delay={i * 100}>
-                <div className="card p-7 h-full flex flex-col">
-                  <div className="flex gap-0.5 mb-4" style={{ color: '#f59e0b' }}>
-                    {Array.from({ length: 5 }).map((_, j) => <Star key={j} size={16} fill="currentColor" />)}
+
+          {/* Reseñas reales aprobadas desde el panel. Si aún no hay,
+              mostramos la invitación en vez de testimonios inventados. */}
+          {latestReviews.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {latestReviews.map((r, i) => (
+                <ScrollReveal key={r.id} delay={i * 100}>
+                  <div className="card p-7 h-full flex flex-col">
+                    <div className="flex gap-0.5 mb-4" style={{ color: '#f59e0b' }}>
+                      {Array.from({ length: 5 }).map((_, j) => (
+                        <Star key={j} size={16} fill={j < r.rating ? 'currentColor' : 'none'}
+                          stroke={j < r.rating ? 'none' : '#d4d4d4'} />
+                      ))}
+                    </div>
+                    <p className="text-sm leading-relaxed flex-1" style={{ color: '#5a5a54' }}>“{r.comment}”</p>
+                    <div className="mt-5 pt-4" style={{ borderTop: '1px solid var(--gray-100)' }}>
+                      <p className="text-sm font-bold" style={{ color: '#1a1a18' }}>{r.customer_name}</p>
+                      {r.verified && (
+                        <p className="text-xs inline-flex items-center gap-1 mt-0.5" style={{ color: '#15803d' }}>
+                          <Shield size={11} /> Compra verificada
+                        </p>
+                      )}
+                    </div>
                   </div>
-                  <p className="text-sm leading-relaxed flex-1" style={{ color: '#5a5a54' }}>“{r.text}”</p>
-                  <div className="mt-5 pt-4" style={{ borderTop: '1px solid var(--gray-100)' }}>
-                    <p className="text-sm font-bold" style={{ color: '#1a1a18' }}>{r.name}</p>
-                    <p className="text-xs" style={{ color: '#9b9b93' }}>{r.city}</p>
-                  </div>
-                </div>
-              </ScrollReveal>
-            ))}
-          </div>
+                </ScrollReveal>
+              ))}
+            </div>
+          ) : (
+            <ScrollReveal>
+              <div className="card p-10 text-center max-w-2xl mx-auto">
+                <Star size={32} className="mx-auto mb-4" style={{ color: '#f59e0b' }} fill="#f59e0b" />
+                <p className="font-bold text-lg mb-2" style={{ color: '#1a1a18' }}>
+                  ¿Ya compraste con nosotros?
+                </p>
+                <p className="text-sm mb-6" style={{ color: '#5a5a54' }}>
+                  Cuéntanos qué te pareció tu disfraz o máscara. Tu opinión ayuda a que otros
+                  clientes compren con confianza.
+                </p>
+                <Link href="/products" className="btn-primary px-7 py-3">
+                  Dejar mi reseña
+                </Link>
+              </div>
+            </ScrollReveal>
+          )}
         </div>
       </section>
 

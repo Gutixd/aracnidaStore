@@ -8,7 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 import {
   LayoutDashboard, Package, ShoppingCart, Archive,
   DollarSign, BarChart2, Settings, LogOut, ExternalLink,
-  Menu, X,
+  Menu, X, MessageSquare,
 } from 'lucide-react'
 
 interface NavItem {
@@ -16,7 +16,7 @@ interface NavItem {
   label: string
   icon: React.ReactNode
   exact?: boolean
-  badgeKey?: 'pending' | 'lowStock'
+  badgeKey?: 'pending' | 'lowStock' | 'pendingReviews'
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -24,6 +24,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/admin/orders', label: 'Pedidos', icon: <ShoppingCart size={18} />, badgeKey: 'pending' },
   { href: '/admin/products', label: 'Productos', icon: <Package size={18} /> },
   { href: '/admin/inventory', label: 'Inventario', icon: <Archive size={18} />, badgeKey: 'lowStock' },
+  { href: '/admin/reviews', label: 'Reseñas', icon: <MessageSquare size={18} />, badgeKey: 'pendingReviews' },
   { href: '/admin/expenses', label: 'Gastos', icon: <DollarSign size={18} /> },
   { href: '/admin/analytics', label: 'Analytics', icon: <BarChart2 size={18} /> },
   { href: '/admin/settings', label: 'Configuración', icon: <Settings size={18} /> },
@@ -33,7 +34,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
   const [open, setOpen] = useState(false)
-  const [badges, setBadges] = useState<{ pending: number; lowStock: number }>({ pending: 0, lowStock: 0 })
+  const [badges, setBadges] = useState<{ pending: number; lowStock: number; pendingReviews: number }>(
+    { pending: 0, lowStock: 0, pendingReviews: 0 }
+  )
 
   // Cerrar el drawer al navegar
   useEffect(() => { setOpen(false) }, [pathname])
@@ -43,11 +46,18 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     let active = true
     async function load() {
       const supabase = createClient()
-      const [{ count: pending }, { data: products }] = await Promise.all([
+      const [{ count: pending }, { data: products }, { count: pendingReviews }] = await Promise.all([
         supabase.from('orders').select('id', { count: 'exact', head: true }).eq('status', 'pendiente'),
         supabase.from('products').select('stock').eq('active', true).lte('stock', 3),
+        supabase.from('reviews').select('id', { count: 'exact', head: true }).eq('approved', false),
       ])
-      if (active) setBadges({ pending: pending ?? 0, lowStock: products?.length ?? 0 })
+      if (active) {
+        setBadges({
+          pending: pending ?? 0,
+          lowStock: products?.length ?? 0,
+          pendingReviews: pendingReviews ?? 0,
+        })
+      }
     }
     load()
   }, [pathname])

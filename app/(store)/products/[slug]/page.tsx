@@ -9,6 +9,8 @@ import { ScrollReveal } from '@/components/store/ScrollReveal'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Shield, Truck, RotateCcw, Package, Star, CheckCircle2, Clock, MapPin, Store } from 'lucide-react'
+import { ProductReviews } from '@/components/store/ProductReviews'
+import { getReviewSummary, getProductReviews } from '@/lib/actions/reviews'
 import { PICKUP_PLACE, PICKUP_SLOTS, PICKUP_LEAD_HOURS } from '@/lib/pickup'
 import { MIN_SHIPPING_COST } from '@/lib/shipping'
 import { formatPrice } from '@/lib/utils'
@@ -86,9 +88,11 @@ export default async function ProductPage({
   if (!product) notFound()
 
   const variants = sortVariants((product.variants ?? []).filter((v) => v.active))
-  const [related, galleryImages] = await Promise.all([
+  const [related, galleryImages, reviewSummary, reviews] = await Promise.all([
     getRelated(product.category_id, product.id),
     getGalleryImages(product.id),
+    getReviewSummary(product.id),
+    getProductReviews(product.id),
   ])
 
   const minPrice = variants.length ? Math.min(...variants.map((v) => v.price)) : product.price
@@ -107,7 +111,33 @@ export default async function ProductPage({
       price: minPrice,
       priceCurrency: 'CLP',
       availability: totalStock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+      itemCondition: 'https://schema.org/NewCondition',
+      seller: { '@type': 'Organization', name: 'AracnidaStore' },
     },
+    // La calificación solo se declara si existen reseñas reales aprobadas.
+    // Declarar un rating inventado es una violación de las políticas de Google
+    // y expone el sitio a una penalización manual.
+    ...(reviewSummary.count > 0 && {
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue: reviewSummary.average,
+        reviewCount: reviewSummary.count,
+        bestRating: 5,
+        worstRating: 1,
+      },
+      review: reviews.slice(0, 10).map((r) => ({
+        '@type': 'Review',
+        author: { '@type': 'Person', name: r.customer_name },
+        datePublished: r.created_at.slice(0, 10),
+        reviewBody: r.comment,
+        reviewRating: {
+          '@type': 'Rating',
+          ratingValue: r.rating,
+          bestRating: 5,
+          worstRating: 1,
+        },
+      })),
+    }),
   }
 
   const isMask = product.category?.slug === 'mascaras'
@@ -245,15 +275,36 @@ export default async function ProductPage({
                 </h1>
               </div>
 
-              {/* Stars / social proof */}
-              <div className="flex items-center gap-3">
-                <div className="flex gap-0.5">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Star key={i} size={15} fill="#f59e0b" stroke="none" />
-                  ))}
-                </div>
-                <span className="text-sm font-semibold" style={{ color: 'var(--gray-600)' }}>5.0</span>
-                <span className="text-sm" style={{ color: 'var(--gray-400)' }}>· Calidad verificada</span>
+              {/* Calificación real: solo se muestra si existen reseñas aprobadas.
+                  Antes había un "5.0" fijo escrito a mano sin datos detrás. */}
+              <div className="flex items-center gap-3 flex-wrap">
+                {reviewSummary.count > 0 ? (
+                  <>
+                    <div className="flex gap-0.5">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <Star
+                          key={i}
+                          size={15}
+                          fill={i < Math.round(reviewSummary.average) ? '#f59e0b' : 'none'}
+                          stroke={i < Math.round(reviewSummary.average) ? 'none' : '#d4d4d4'}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-sm font-semibold" style={{ color: 'var(--gray-600)' }}>
+                      {reviewSummary.average.toFixed(1)}
+                    </span>
+                    <a href="#resenas" className="text-sm underline" style={{ color: 'var(--gray-400)' }}>
+                      {reviewSummary.count} {reviewSummary.count === 1 ? 'reseña' : 'reseñas'}
+                    </a>
+                  </>
+                ) : (
+                  <a href="#resenas" className="text-sm" style={{ color: 'var(--gray-400)' }}>
+                    Sé el primero en dejar una reseña
+                  </a>
+                )}
+                <span className="text-sm" style={{ color: 'var(--gray-400)' }}>
+                  · <strong style={{ color: 'var(--gray-600)' }}>+500 clientes</strong> en todo Chile
+                </span>
               </div>
 
               {/* Description */}
@@ -380,6 +431,17 @@ export default async function ProductPage({
             </div>
           </ScrollReveal>
         )}
+
+        {/* ── Reseñas de clientes ── */}
+        <ScrollReveal delay={60}>
+          <ProductReviews
+            productId={product.id}
+            productName={product.name}
+            reviews={reviews}
+            average={reviewSummary.average}
+            count={reviewSummary.count}
+          />
+        </ScrollReveal>
 
         {/* ── Related products ── */}
         {related.length > 0 && (

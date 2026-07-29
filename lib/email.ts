@@ -1,6 +1,7 @@
 import { Resend } from 'resend'
 import { Order } from '@/types'
 import { PICKUP_PLACE, PICKUP_SLOT_LABELS, formatPickupDate } from '@/lib/pickup'
+import { createAdminClient } from '@/lib/supabase/server'
 
 const API_KEY = process.env.RESEND_API_KEY
 // Debe ser un dominio verificado en Resend. Mientras no lo esté, se puede usar
@@ -27,7 +28,7 @@ function esc(s: string) {
   return String(s).replace(/[<>&]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' })[c]!)
 }
 
-function buildHtml(order: Order): string {
+function buildHtml(order: Order, reviewSlug?: string | null): string {
   const shortId = order.id.slice(0, 8).toUpperCase()
   const isRetiro = order.delivery_method === 'retiro'
 
@@ -76,6 +77,26 @@ function buildHtml(order: Order): string {
         </p>
       </div>`
       : ''
+
+  // Invitación a dejar reseña. Enlaza al producto comprado con el número de
+  // pedido, para que la reseña quede marcada como compra verificada.
+  const reviewUrl = reviewSlug
+    ? `${STORE_URL}/products/${reviewSlug}#resenas`
+    : `${STORE_URL}/products`
+  const reviewBlock = `
+      <div style="margin:24px 0 8px;padding:18px;background:#fffbeb;border:1px solid #fde68a;border-radius:12px;text-align:center;">
+        <p style="margin:0 0 6px;font-weight:700;color:#92400e;">¿Nos ayudas con una reseña?</p>
+        <p style="margin:0 0 14px;color:#a16207;font-size:14px;line-height:1.5;">
+          Cuando recibas tu pedido, cuéntanos qué te pareció. Tu opinión ayuda a otros clientes a decidir.
+        </p>
+        <a href="${reviewUrl}"
+           style="display:inline-block;background:#f59e0b;color:#fff;text-decoration:none;padding:11px 26px;border-radius:10px;font-weight:700;font-size:14px;">
+          Dejar mi reseña
+        </a>
+        <p style="margin:12px 0 0;font-size:12px;color:#b45309;">
+          Ingresa el código <strong>${shortId}</strong> para que aparezca como compra verificada.
+        </p>
+      </div>`
 
   return `<!doctype html>
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
@@ -130,6 +151,8 @@ function buildHtml(order: Order): string {
         </a>
       </div>
 
+      ${reviewBlock}
+
       <p style="margin:24px 0 0;text-align:center;color:#888;font-size:13px;line-height:1.6;">
         ¿Dudas con tu pedido?<br>
         Escríbenos por <a href="https://wa.me/${WHATSAPP}?text=${encodeURIComponent(`Hola! Consulta sobre mi pedido #${shortId}`)}" style="color:#c0392b;font-weight:600;">WhatsApp</a>
@@ -156,12 +179,29 @@ export async function sendOrderReceipt(order: Order): Promise<void> {
   if (!order.customer_email) return
 
   try {
+    // Slug del primer producto, para enlazar la invitación a dejar reseña
+    let reviewSlug: string | null = null
+    const firstProductId = (order.items ?? [])[0]?.product_id
+    if (firstProductId) {
+      try {
+        const supabase = await createAdminClient()
+        const { data } = await supabase
+          .from('products')
+          .select('slug')
+          .eq('id', firstProductId)
+          .maybeSingle()
+        reviewSlug = data?.slug ?? null
+      } catch {
+        // Si falla, el correo enlaza al catálogo general
+      }
+    }
+
     const resend = new Resend(API_KEY)
     const { error } = await resend.emails.send({
       from: FROM,
       to: order.customer_email,
       subject: `Comprobante de tu pedido #${order.id.slice(0, 8).toUpperCase()} — AracnidaStore`,
-      html: buildHtml(order),
+      html: buildHtml(order, reviewSlug),
     })
     if (error) console.error('[Email] Error enviando comprobante:', error)
   } catch (err) {
