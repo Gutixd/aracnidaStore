@@ -31,6 +31,11 @@ export const REGIONES_CHILE = Object.keys(SHIPPING_ZONES)
 
 const DEFAULT_COST = 3990
 
+/** Costo de envío más barato de todas las zonas (para mostrar "desde $X"). */
+export const MIN_SHIPPING_COST = Math.min(
+  ...Object.values(SHIPPING_ZONES).map((z) => z.cost)
+)
+
 export function getShippingInfo(region: string | undefined, subtotal: number) {
   if (!region) return { cost: DEFAULT_COST, label: '', freeShipping: false, zone: 0 }
   const zone = SHIPPING_ZONES[region]

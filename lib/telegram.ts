@@ -137,6 +137,25 @@ ${emoji} <b>PEDIDO ${label}</b>
   await sendMessage(text)
 }
 
+/**
+ * Se dispara cuando llega un pago de un pedido que ya había expirado y el stock
+ * que tenía reservado se vendió a otra persona. Requiere acción manual.
+ */
+export async function notifyStockConflict(order: Order): Promise<void> {
+  const text = `
+⚠️ <b>PAGO RECIBIDO SIN STOCK SUFICIENTE</b>
+📋 <b>Pedido:</b> #${order.id.slice(0, 8).toUpperCase()}
+👤 <b>Cliente:</b> ${order.customer_name}
+📞 <b>Teléfono:</b> ${order.customer_phone}
+💵 <b>Monto:</b> ${formatPrice(order.total)}
+
+El pago llegó después de que el pedido expirara y parte del stock ya se vendió.
+❗ Contacta al cliente para reponer o reembolsar.
+`.trim()
+
+  await sendMessage(text)
+}
+
 export async function notifyLowStock(
   productName: string,
   stock: number

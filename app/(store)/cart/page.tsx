@@ -5,12 +5,11 @@ import { formatPrice } from '@/lib/utils'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Trash2, Plus, Minus, ShoppingBag, ArrowRight, ArrowLeft } from 'lucide-react'
+import { FREE_SHIPPING_THRESHOLD, MIN_SHIPPING_COST } from '@/lib/shipping'
 
 export default function CartPage() {
   const { items, removeItem, updateQuantity, getTotalPrice, clearCart } = useCart()
   const total = getTotalPrice()
-  const FREE_SHIPPING = 50000
-  const SHIPPING = 3000
 
   if (items.length === 0) {
     return (
@@ -29,8 +28,9 @@ export default function CartPage() {
     )
   }
 
-  const shippingCost = total >= FREE_SHIPPING ? 0 : SHIPPING
-  const orderTotal = total + shippingCost
+  // El costo real depende de la región y del método de entrega, que se eligen
+  // en el checkout. Aquí solo mostramos el mínimo posible para no prometer de más.
+  const faltaParaEnvioGratis = Math.max(0, FREE_SHIPPING_THRESHOLD - total)
 
   return (
     <div style={{ background: 'var(--gray-50)', minHeight: '100vh' }}>
@@ -100,23 +100,26 @@ export default function CartPage() {
               <h2 className="text-lg font-black mb-6" style={{ color: 'var(--text)' }}>Resumen de compra</h2>
               <div className="space-y-3 mb-6">
                 <div className="flex justify-between text-sm">
-                  <span style={{ color: 'var(--gray-600)' }}>Subtotal</span>
+                  <span style={{ color: 'var(--gray-600)' }}>Productos</span>
                   <span style={{ color: 'var(--text)' }} className="font-semibold tabular-nums">{formatPrice(total)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span style={{ color: 'var(--gray-600)' }}>Envío</span>
-                  <span className="font-semibold tabular-nums" style={{ color: shippingCost === 0 ? '#15803d' : 'var(--text)' }}>
-                    {shippingCost === 0 ? 'Gratis' : formatPrice(shippingCost)}
+                  <span className="font-semibold text-right" style={{ color: 'var(--gray-600)' }}>
+                    Se calcula al pagar
                   </span>
                 </div>
-                {shippingCost > 0 && (
+                <p className="text-xs" style={{ color: 'var(--gray-400)' }}>
+                  Desde {formatPrice(MIN_SHIPPING_COST)} según tu región, o gratis si retiras en Plaza de Maipú.
+                </p>
+                {faltaParaEnvioGratis > 0 && (
                   <p className="text-xs" style={{ color: 'var(--gray-400)' }}>
-                    Envío gratis en compras sobre {formatPrice(FREE_SHIPPING)}
+                    Te faltan {formatPrice(faltaParaEnvioGratis)} para envío gratis en la zona centro.
                   </p>
                 )}
-                <div className="pt-3 flex justify-between" style={{ borderTop: '1px solid var(--gray-100)' }}>
-                  <span className="font-bold" style={{ color: 'var(--text)' }}>Total</span>
-                  <span className="font-black text-xl tabular-nums" style={{ color: 'var(--red)' }}>{formatPrice(orderTotal)}</span>
+                <div className="pt-3 flex justify-between items-baseline" style={{ borderTop: '1px solid var(--gray-100)' }}>
+                  <span className="font-bold" style={{ color: 'var(--text)' }}>Total sin envío</span>
+                  <span className="font-black text-xl tabular-nums" style={{ color: 'var(--red)' }}>{formatPrice(total)}</span>
                 </div>
               </div>
 

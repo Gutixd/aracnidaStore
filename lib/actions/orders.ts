@@ -2,6 +2,7 @@
 
 import { createAdminClient, createClient } from '@/lib/supabase/server'
 import { notifyNewOrder, notifyLowStock, notifyOutOfStock } from '@/lib/telegram'
+import { sendOrderReceipt } from '@/lib/email'
 import { CheckoutFormData } from '@/lib/validations'
 import { CartItem } from '@/types'
 import { calcShippingCost } from '@/lib/shipping'
@@ -15,6 +16,10 @@ export async function createOrder(
 ) {
   if (!cartItems.length) return { error: 'El carrito está vacío' }
   if (cartItems.length > 50) return { error: 'Demasiados productos en el carrito' }
+
+  // Libera el stock de checkouts abandonados antes de validar disponibilidad,
+  // para no rechazar una venta real por stock que nadie llegó a pagar.
+  await releaseExpiredOrders()
 
   const supabase = await createAdminClient()
 
@@ -146,6 +151,7 @@ export async function createOrder(
   // Para delivery, esperamos la confirmación de MercadoPago en el webhook.
   if (fullOrder && formData.delivery_method === 'retiro') {
     await notifyNewOrder(fullOrder)
+    await sendOrderReceipt(fullOrder)
   }
 
   return { orderId: order.id }
@@ -166,6 +172,162 @@ async function recalcProductStock(
 }
 
 /**
+ * Devuelve al stock todas las unidades de un pedido (una sola vez).
+ * Se usa al cancelar o al expirar un pedido sin pagar.
+ */
+async function returnStockForOrder(
+  supabase: Awaited<ReturnType<typeof createAdminClient>>,
+  orderId: string,
+  reason: string
+) {
+  const { data: items } = await supabase
+    .from('order_items')
+    .select('product_id, variant_id, size, quantity')
+    .eq('order_id', orderId)
+
+  for (const item of items ?? []) {
+    if (!item.variant_id) continue
+
+    const { data: currentVariant } = await supabase
+      .from('product_variants')
+      .select('stock')
+      .eq('id', item.variant_id)
+      .single()
+
+    const previousStock = currentVariant?.stock ?? 0
+    const newStock = previousStock + item.quantity
+
+    await supabase
+      .from('product_variants')
+      .update({ stock: newStock, updated_at: new Date().toISOString() })
+      .eq('id', item.variant_id)
+
+    await recalcProductStock(supabase, item.product_id)
+
+    await supabase.from('inventory_movements').insert({
+      product_id: item.product_id,
+      variant_id: item.variant_id,
+      type: 'return',
+      quantity: item.quantity,
+      reason: `${reason} (Talla ${item.size})`,
+      previous_stock: previousStock,
+      new_stock: newStock,
+      created_by: 'system',
+    })
+  }
+}
+
+// Minutos que se mantiene reservado el stock de un pedido con pago en línea sin completar
+const PAYMENT_WINDOW_MINUTES = 45
+
+/**
+ * Cancela los pedidos con pago en línea que quedaron sin pagar y devuelve su stock.
+ * Sin esto, cada checkout abandonado en Mercado Pago dejaba el stock perdido para siempre.
+ * Se ejecuta de forma perezosa (al crear un pedido y al abrir el panel de pedidos).
+ */
+export async function releaseExpiredOrders() {
+  const supabase = await createAdminClient()
+  const cutoff = new Date(Date.now() - PAYMENT_WINDOW_MINUTES * 60_000).toISOString()
+
+  const { data: expired } = await supabase
+    .from('orders')
+    .select('id')
+    .eq('status', 'pendiente')
+    .eq('payment_status', 'pendiente')
+    .eq('delivery_method', 'delivery')
+    .lt('created_at', cutoff)
+
+  if (!expired?.length) return { released: 0 }
+
+  for (const order of expired) {
+    await returnStockForOrder(
+      supabase,
+      order.id,
+      `Pago no completado - Pedido #${order.id.slice(0, 8)}`
+    )
+    await supabase
+      .from('orders')
+      .update({ status: 'cancelado', updated_at: new Date().toISOString() })
+      .eq('id', order.id)
+  }
+
+  return { released: expired.length }
+}
+
+/**
+ * Vuelve a descontar el stock de un pedido que había sido cancelado por
+ * expiración pero cuyo pago terminó llegando (carrera entre el corte de 45 min
+ * y el pago real). Devuelve true si logró reservar todo el stock.
+ */
+export async function reclaimStockForPaidOrder(orderId: string): Promise<boolean> {
+  const supabase = await createAdminClient()
+
+  const { data: items } = await supabase
+    .from('order_items')
+    .select('product_id, variant_id, size, quantity')
+    .eq('order_id', orderId)
+
+  let complete = true
+
+  for (const item of items ?? []) {
+    if (!item.variant_id) continue
+
+    const { data: currentVariant } = await supabase
+      .from('product_variants')
+      .select('stock')
+      .eq('id', item.variant_id)
+      .single()
+
+    const previousStock = currentVariant?.stock ?? 0
+    if (previousStock < item.quantity) complete = false
+    const newStock = Math.max(0, previousStock - item.quantity)
+
+    await supabase
+      .from('product_variants')
+      .update({ stock: newStock, updated_at: new Date().toISOString() })
+      .eq('id', item.variant_id)
+
+    await recalcProductStock(supabase, item.product_id)
+
+    await supabase.from('inventory_movements').insert({
+      product_id: item.product_id,
+      variant_id: item.variant_id,
+      type: 'sale',
+      quantity: item.quantity,
+      reason: `Pago recibido tras expiración - Pedido #${orderId.slice(0, 8)} (Talla ${item.size})`,
+      previous_stock: previousStock,
+      new_stock: newStock,
+      created_by: 'system',
+    })
+  }
+
+  return complete
+}
+
+/**
+ * Marca el estado de pago de un pedido. Pensado para los pedidos con retiro
+ * (efectivo/transferencia), donde el pago ocurre fuera de línea y alguien
+ * tiene que registrarlo a mano.
+ */
+export async function updatePaymentStatus(orderId: string, newPaymentStatus: string) {
+  const auth = await createClient()
+  const { data: { user } } = await auth.auth.getUser()
+  if (!user) return { error: 'No autorizado' }
+
+  const VALID = ['pendiente', 'pagado', 'rechazado', 'reembolsado']
+  if (!VALID.includes(newPaymentStatus)) return { error: 'Estado de pago inválido' }
+
+  const supabase = await createAdminClient()
+  const { error } = await supabase
+    .from('orders')
+    .update({ payment_status: newPaymentStatus, updated_at: new Date().toISOString() })
+    .eq('id', orderId)
+
+  if (error) return { error: 'No se pudo actualizar el estado de pago' }
+  return { ok: true }
+}
+
+/**
  * Cambia el estado de un pedido y ajusta el stock automáticamente:
  * - Al pasar a "cancelado": devuelve al stock las unidades del pedido (movimiento "return").
  * - Al sacar de "cancelado" (reactivar): vuelve a descontar el stock (movimiento "sale").
@@ -181,28 +343,54 @@ export async function updateOrderStatus(orderId: string, newStatus: string) {
 
   const { data: order } = await supabase
     .from('orders')
-    .select('id, status')
+    .select('id, status, payment_status, delivery_method')
     .eq('id', orderId)
     .single()
 
   if (!order) return { error: 'Pedido no encontrado' }
   if (order.status === newStatus) return { ok: true }
 
+  // Coherencia: no se puede entregar un pedido cuyo pago fue rechazado.
+  if (newStatus === 'entregado' && order.payment_status === 'rechazado') {
+    return {
+      error: 'Este pedido tiene el pago rechazado. Marca el pago como pagado antes de entregarlo.',
+    }
+  }
+
   const wasCancelled = order.status === 'cancelado'
   const willBeCancelled = newStatus === 'cancelado'
 
-  // Actualizar estado
-  const { error: updErr } = await supabase
-    .from('orders')
-    .update({ status: newStatus, updated_at: new Date().toISOString() })
-    .eq('id', orderId)
+  const update: Record<string, string> = {
+    status: newStatus,
+    updated_at: new Date().toISOString(),
+  }
+
+  // En retiro el cliente paga en persona: al entregar, el pago queda saldado.
+  let autoPaid = false
+  if (
+    newStatus === 'entregado' &&
+    order.delivery_method === 'retiro' &&
+    order.payment_status === 'pendiente'
+  ) {
+    update.payment_status = 'pagado'
+    autoPaid = true
+  }
+
+  const { error: updErr } = await supabase.from('orders').update(update).eq('id', orderId)
   if (updErr) return { error: 'No se pudo actualizar el estado del pedido' }
 
   // Ajuste de stock solo si cruza la frontera de "cancelado"
-  if (willBeCancelled !== wasCancelled) {
+  if (willBeCancelled) {
+    await returnStockForOrder(
+      supabase,
+      orderId,
+      `Devolución por cancelación - Pedido #${orderId.slice(0, 8)}`
+    )
+  } else if (wasCancelled) {
+    // Reactivar un pedido cancelado: vuelve a descontar el stock
     const { data: items } = await supabase
       .from('order_items')
-      .select('product_id, variant_id, product_name, size, quantity')
+      .select('product_id, variant_id, size, quantity')
       .eq('order_id', orderId)
 
     for (const item of items ?? []) {
@@ -215,10 +403,7 @@ export async function updateOrderStatus(orderId: string, newStatus: string) {
         .single()
 
       const previousStock = currentVariant?.stock ?? 0
-      // cancelar => devolver (sumar); reactivar => descontar (restar)
-      const newStock = willBeCancelled
-        ? previousStock + item.quantity
-        : Math.max(0, previousStock - item.quantity)
+      const newStock = Math.max(0, previousStock - item.quantity)
 
       await supabase
         .from('product_variants')
@@ -230,11 +415,9 @@ export async function updateOrderStatus(orderId: string, newStatus: string) {
       await supabase.from('inventory_movements').insert({
         product_id: item.product_id,
         variant_id: item.variant_id,
-        type: willBeCancelled ? 'return' : 'sale',
+        type: 'sale',
         quantity: item.quantity,
-        reason: willBeCancelled
-          ? `Devolución por cancelación - Pedido #${orderId.slice(0, 8)} (Talla ${item.size})`
-          : `Reactivación de pedido #${orderId.slice(0, 8)} (Talla ${item.size})`,
+        reason: `Reactivación de pedido #${orderId.slice(0, 8)} (Talla ${item.size})`,
         previous_stock: previousStock,
         new_stock: newStock,
         created_by: 'admin',
@@ -242,5 +425,5 @@ export async function updateOrderStatus(orderId: string, newStatus: string) {
     }
   }
 
-  return { ok: true }
+  return { ok: true, autoPaid }
 }

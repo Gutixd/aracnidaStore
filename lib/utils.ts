@@ -55,3 +55,27 @@ export const ORDER_STATUS_COLORS: Record<string, string> = {
   entregado: 'bg-green-50 text-green-700 border-green-200',
   cancelado: 'bg-red-50 text-red-700 border-red-200',
 }
+
+export const PAYMENT_STATUS_LABELS: Record<string, string> = {
+  pendiente: 'Pago pendiente',
+  pagado: 'Pagado',
+  rechazado: 'Pago rechazado',
+  reembolsado: 'Reembolsado',
+}
+
+export const PAYMENT_STATUS_COLORS: Record<string, string> = {
+  pendiente: 'bg-amber-50 text-amber-700 border-amber-200',
+  pagado: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  rechazado: 'bg-red-50 text-red-700 border-red-200',
+  reembolsado: 'bg-gray-100 text-gray-600 border-gray-200',
+}
+
+export const PAYMENT_METHOD_LABELS: Record<string, string> = {
+  transferencia: 'Transferencia',
+  efectivo: 'Efectivo',
+}
+
+export const PICKUP_SLOT_LABELS: Record<string, string> = {
+  martes: 'Martes',
+  sabado: 'Sábado',
+}

@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { createAdminClient } from '@/lib/supabase/server'
 import { getPaymentClient } from '@/lib/mercadopago'
-import { notifyNewOrder } from '@/lib/telegram'
+import { notifyNewOrder, notifyStockConflict } from '@/lib/telegram'
+import { sendOrderReceipt } from '@/lib/email'
+import { reclaimStockForPaidOrder } from '@/lib/actions/orders'
 
 const WEBHOOK_SECRET = process.env.MP_WEBHOOK_SECRET
 
@@ -89,6 +91,19 @@ export async function POST(req: NextRequest) {
     const newPaymentStatus = paymentStatusMap[status ?? ''] ?? 'pendiente'
 
     const alreadyPaid = order.payment_status === 'pagado'
+    const approved = status === 'approved'
+
+    // El pedido pudo haberse cancelado automáticamente por no pagar a tiempo.
+    // Si el pago finalmente llega, recuperamos la reserva de stock y lo revivimos.
+    let stockIncompleto = false
+    if (approved && !alreadyPaid && order.status === 'cancelado') {
+      stockIncompleto = !(await reclaimStockForPaidOrder(orderId))
+    }
+
+    const nextStatus =
+      approved && (order.status === 'pendiente' || order.status === 'cancelado')
+        ? 'confirmado'
+        : order.status
 
     await supabase
       .from('orders')
@@ -96,20 +111,25 @@ export async function POST(req: NextRequest) {
         payment_status: newPaymentStatus,
         payment_id: String(paymentId),
         payment_method: payment.payment_method_id ?? null,
-        // Si el pago se aprueba y el pedido seguía pendiente, lo confirmamos
-        status: status === 'approved' && order.status === 'pendiente' ? 'confirmado' : order.status,
+        status: nextStatus,
         updated_at: new Date().toISOString(),
       })
       .eq('id', orderId)
 
-    if (status === 'approved' && !alreadyPaid) {
+    if (approved && !alreadyPaid) {
       // Re-fetch con items actualizados por si acaso
       const { data: fullOrder } = await supabase
         .from('orders')
         .select('*, items:order_items(*)')
         .eq('id', orderId)
         .single()
-      if (fullOrder) await notifyNewOrder(fullOrder)
+      if (fullOrder) {
+        await notifyNewOrder(fullOrder)
+        await sendOrderReceipt(fullOrder)
+        if (stockIncompleto) {
+          await notifyStockConflict(fullOrder)
+        }
+      }
     }
 
     return NextResponse.json({ ok: true })

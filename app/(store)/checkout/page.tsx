@@ -8,11 +8,12 @@ import { createOrder } from '@/lib/actions/orders'
 import { createMercadoPagoPreference } from '@/lib/actions/payment'
 import { formatPrice } from '@/lib/utils'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { checkCart } from '@/lib/actions/cart'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ShoppingBag, Loader2, MapPin, ChevronDown, Truck, Calendar, Banknote, Copy, Check, Clock, AlertCircle } from 'lucide-react'
-import { REGIONES_CHILE, getShippingInfo, FREE_SHIPPING_THRESHOLD } from '@/lib/shipping'
+import { REGIONES_CHILE, getShippingInfo, FREE_SHIPPING_THRESHOLD, MIN_SHIPPING_COST } from '@/lib/shipping'
 
 const TRANSFER_INFO = {
   banco: 'Banco Estado',
@@ -39,11 +40,48 @@ const PICKUP_SLOTS = [
 ]
 
 export default function CheckoutPage() {
-  const { items, getTotalPrice, clearCart } = useCart()
+  const { items, getTotalPrice, clearCart, syncWithServer } = useCart()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
+  const [cartNotice, setCartNotice] = useState<string[]>([])
   const router = useRouter()
+
+  // Al entrar al checkout, comparamos el carrito guardado contra la base de datos.
+  // Puede llevar días en localStorage con precios o stock que ya cambiaron.
+  useEffect(() => {
+    let cancelled = false
+    const ids = useCart.getState().items.map((i) => i.variant.id)
+    if (!ids.length) return
+
+    checkCart(ids).then((fresh) => {
+      if (cancelled) return
+      const result = syncWithServer(
+        fresh.map((f) => ({
+          variantId: f.variantId,
+          price: f.price,
+          stock: f.stock,
+          active: f.active,
+        }))
+      )
+
+      const avisos: string[] = []
+      for (const c of result.priceChanges) {
+        avisos.push(
+          `${c.name} (talla ${c.size}) cambió de ${formatPrice(c.before)} a ${formatPrice(c.after)}.`
+        )
+      }
+      for (const r of result.reduced) {
+        avisos.push(`${r.name} (talla ${r.size}): solo quedan ${r.to} unidades.`)
+      }
+      for (const r of result.removed) {
+        avisos.push(`${r.name} (talla ${r.size}) ya no está disponible y se quitó del carrito.`)
+      }
+      setCartNotice(avisos)
+    })
+
+    return () => { cancelled = true }
+  }, [syncWithServer])
 
   const {
     register,
@@ -126,6 +164,18 @@ export default function CheckoutPage() {
           <h1 className="text-3xl font-black" style={{ color: 'var(--text)' }}>Finalizar compra</h1>
           <p className="mt-1" style={{ color: 'var(--gray-600)' }}>Completa tus datos para realizar el pedido</p>
         </div>
+
+        {cartNotice.length > 0 && (
+          <div className="mb-8 rounded-2xl p-4"
+            style={{ background: 'rgba(234,179,8,.1)', border: '1px solid rgba(234,179,8,.35)' }}>
+            <p className="font-bold text-sm mb-2 flex items-center gap-2" style={{ color: '#a16207' }}>
+              <AlertCircle size={16} /> Tu carrito se actualizó
+            </p>
+            <ul className="text-sm space-y-1" style={{ color: '#a16207' }}>
+              {cartNotice.map((n, i) => <li key={i}>· {n}</li>)}
+            </ul>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
@@ -471,14 +521,25 @@ export default function CheckoutPage() {
                     <span style={{ color: 'var(--gray-600)' }}>
                       {isRetiro ? 'Retiro' : deliveryRegion && shippingInfo.label ? `Envío (${shippingInfo.label.split('·')[0].trim()})` : 'Envío'}
                     </span>
-                    <span className="font-semibold tabular-nums" style={{ color: shippingCost === 0 ? '#15803d' : 'var(--text)' }}>
-                      {isRetiro || shippingCost === 0 ? 'Gratis' : deliveryRegion ? formatPrice(shippingCost) : '—'}
+                    <span className="font-semibold tabular-nums text-right" style={{ color: shippingCost === 0 ? '#15803d' : 'var(--text)' }}>
+                      {isRetiro || shippingCost === 0
+                        ? 'Gratis'
+                        : deliveryRegion
+                          ? formatPrice(shippingCost)
+                          : `Desde ${formatPrice(MIN_SHIPPING_COST)}`}
                     </span>
                   </div>
-                  <div className="flex justify-between pt-3 mt-2" style={{ borderTop: '1px solid var(--gray-100)' }}>
+                  <div className="flex justify-between items-baseline pt-3 mt-2" style={{ borderTop: '1px solid var(--gray-100)' }}>
                     <span className="font-bold" style={{ color: 'var(--text)' }}>Total</span>
-                    <span className="font-black text-xl tabular-nums" style={{ color: 'var(--red)' }}>{formatPrice(total)}</span>
+                    <span className="font-black text-xl tabular-nums" style={{ color: 'var(--red)' }}>
+                      {!isRetiro && !deliveryRegion ? `Desde ${formatPrice(total)}` : formatPrice(total)}
+                    </span>
                   </div>
+                  {!isRetiro && !deliveryRegion && (
+                    <p className="text-xs pt-1" style={{ color: 'var(--gray-400)' }}>
+                      Elige tu región para ver el envío exacto.
+                    </p>
+                  )}
                 </div>
 
                 {/* Info retiro */}

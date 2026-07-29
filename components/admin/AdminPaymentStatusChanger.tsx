@@ -2,25 +2,18 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ORDER_STATUS_LABELS } from '@/lib/utils'
-import { updateOrderStatus } from '@/lib/actions/orders'
+import { updatePaymentStatus } from '@/lib/actions/orders'
+import { PAYMENT_STATUS_LABELS } from '@/lib/utils'
 import { Loader2 } from 'lucide-react'
 
-const STATUSES = [
-  'pendiente',
-  'confirmado',
-  'en_preparacion',
-  'en_reparto',
-  'entregado',
-  'cancelado',
-]
+const STATUSES = ['pendiente', 'pagado', 'rechazado', 'reembolsado']
 
 interface Props {
   orderId: string
   currentStatus: string
 }
 
-export function AdminOrderStatusChanger({ orderId, currentStatus }: Props) {
+export function AdminPaymentStatusChanger({ orderId, currentStatus }: Props) {
   const [status, setStatus] = useState(currentStatus)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
@@ -29,24 +22,12 @@ export function AdminOrderStatusChanger({ orderId, currentStatus }: Props) {
     if (newStatus === status) return
     setLoading(true)
 
-    // Cambia estado + ajusta stock (devuelve/descuenta) en el servidor
-    const res = await updateOrderStatus(orderId, newStatus)
+    const res = await updatePaymentStatus(orderId, newStatus)
     if (res?.error) {
       setLoading(false)
       alert(res.error)
       return
     }
-
-    if (res?.autoPaid) {
-      alert('Pedido entregado. El pago se marcó como pagado automáticamente (retiro en persona).')
-    }
-
-    // Notify Telegram via API route
-    await fetch('/api/notify-order-status', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ orderId, newStatus }),
-    })
 
     setStatus(newStatus)
     setLoading(false)
@@ -60,10 +41,13 @@ export function AdminOrderStatusChanger({ orderId, currentStatus }: Props) {
         value={status}
         onChange={(e) => handleChange(e.target.value)}
         disabled={loading}
+        aria-label="Estado de pago"
         className="input-field text-sm cursor-pointer"
         style={{ width: 'auto', paddingTop: '0.5rem', paddingBottom: '0.5rem' }}
       >
-        {STATUSES.map((s) => <option key={s} value={s}>{ORDER_STATUS_LABELS[s]}</option>)}
+        {STATUSES.map((s) => (
+          <option key={s} value={s}>{PAYMENT_STATUS_LABELS[s]}</option>
+        ))}
       </select>
     </div>
   )
