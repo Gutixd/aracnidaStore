@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { useCart } from '@/store/cart'
-import { ShoppingCart, Menu, X } from 'lucide-react'
+import { ShoppingCart, Menu, X, Search } from 'lucide-react'
 import { useState, useEffect } from 'react'
 
 export function Navbar() {
@@ -74,6 +74,21 @@ export function Navbar() {
           {/* Actions */}
           <div className="flex items-center gap-2">
             <Link
+              href="/rastrear-pedido"
+              className="hidden md:flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-all"
+              style={{ color: scrolled ? '#5a5a54' : 'rgba(255,255,255,.75)' }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = scrolled ? '#f7f7f5' : 'rgba(255,255,255,.1)'
+                e.currentTarget.style.color = scrolled ? '#1a1a18' : '#fff'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent'
+                e.currentTarget.style.color = scrolled ? '#5a5a54' : 'rgba(255,255,255,.75)'
+              }}
+            >
+              <Search size={14} /> Mi pedido
+            </Link>
+            <Link
               href="/cart"
               className="relative flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-sm transition-all"
               style={{ background: '#c0392b', color: '#fff' }}
@@ -109,6 +124,7 @@ export function Navbar() {
             { href: '/products?category=disfraces', label: 'Disfraces' },
             { href: '/products?category=mascaras', label: 'Máscaras' },
             { href: '/products?category=peluches', label: 'Peluches' },
+            { href: '/rastrear-pedido', label: 'Rastrear mi pedido' },
           ].map((link) => (
             <Link
               key={link.href}

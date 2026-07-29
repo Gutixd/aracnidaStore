@@ -70,6 +70,7 @@ export function Footer() {
                 { href: '/sobre-nosotros', label: 'Sobre nosotros' },
                 { href: '/guia-de-tallas', label: 'Guía de tallas' },
                 { href: '/#faq', label: 'Preguntas frecuentes' },
+                { href: '/rastrear-pedido', label: 'Rastrear mi pedido' },
                 { href: '/terminos', label: 'Términos y condiciones' },
                 { href: '/privacidad', label: 'Política de privacidad' },
                 { href: '/cart', label: 'Mi carrito' },
