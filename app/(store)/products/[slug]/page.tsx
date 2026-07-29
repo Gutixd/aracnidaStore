@@ -8,7 +8,10 @@ import { ProductGallery } from '@/components/store/ProductGallery'
 import { ScrollReveal } from '@/components/store/ScrollReveal'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Shield, Truck, RotateCcw, Package, Star, CheckCircle2, Clock, MapPin } from 'lucide-react'
+import { Shield, Truck, RotateCcw, Package, Star, CheckCircle2, Clock, MapPin, Store } from 'lucide-react'
+import { PICKUP_PLACE, PICKUP_SLOTS, PICKUP_LEAD_HOURS } from '@/lib/pickup'
+import { MIN_SHIPPING_COST } from '@/lib/shipping'
+import { formatPrice } from '@/lib/utils'
 import type { Metadata } from 'next'
 
 async function getProduct(slug: string): Promise<Product | null> {
@@ -281,14 +284,43 @@ export default async function ProductPage({
               {/* Divider */}
               <div style={{ borderTop: '1px solid var(--gray-100)' }} />
 
-              {/* Shipping info box */}
+              {/* Retiro presencial — mucha gente no sabía que existía esta opción
+                  porque solo aparecía al final, dentro del checkout. */}
+              <div className="rounded-2xl p-4"
+                style={{ background: 'rgba(22,163,74,.06)', border: '1px solid rgba(22,163,74,.25)' }}>
+                <div className="flex items-start gap-3">
+                  <span className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                    style={{ background: 'rgba(22,163,74,.12)', color: '#15803d' }}>
+                    <Store size={17} />
+                  </span>
+                  <div>
+                    <p className="font-bold text-sm" style={{ color: 'var(--text)' }}>
+                      ¿Vives cerca? Retira gratis en {PICKUP_PLACE}
+                    </p>
+                    <p className="text-sm mt-0.5" style={{ color: 'var(--gray-600)' }}>
+                      Te ahorras el costo de envío. Entregamos los{' '}
+                      <strong>
+                        {PICKUP_SLOTS.map((s) => `${s.plural} de ${s.hours}`).join(' y los ')}
+                      </strong>
+                      , coordinando con {PICKUP_LEAD_HOURS} hrs de anticipación.
+                    </p>
+                    <p className="text-xs mt-1.5 font-semibold" style={{ color: '#15803d' }}>
+                      Puedes elegir esta opción al finalizar tu compra
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Envío a domicilio */}
               <div className="rounded-2xl p-4 space-y-3"
                 style={{ background: 'rgba(192,57,43,.04)', border: '1px solid rgba(192,57,43,.12)' }}>
-                <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: 'var(--red)' }}>Envío y entrega</p>
+                <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: 'var(--red)' }}>
+                  ¿Prefieres que te lo enviemos?
+                </p>
                 {[
-                  { icon: <Truck size={15} />, text: 'Envíos a todo Chile por Starken / Chilexpress' },
+                  { icon: <Truck size={15} />, text: 'Envíos a todo Chile por Blue Express' },
                   { icon: <Clock size={15} />, text: 'Despacho en 24–48 hrs hábiles' },
-                  { icon: <MapPin size={15} />, text: 'Costo de envío según región de destino' },
+                  { icon: <MapPin size={15} />, text: `Envío desde ${formatPrice(MIN_SHIPPING_COST)} según tu región` },
                   { icon: <RotateCcw size={15} />, text: 'Cambios aceptados dentro de 7 días' },
                 ].map((item, i) => (
                   <div key={i} className="flex items-center gap-3">

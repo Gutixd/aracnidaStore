@@ -3,8 +3,9 @@ import {
   formatPrice, formatDate,
   ORDER_STATUS_LABELS, ORDER_STATUS_COLORS,
   PAYMENT_STATUS_LABELS, PAYMENT_STATUS_COLORS,
-  PAYMENT_METHOD_LABELS, PICKUP_SLOT_LABELS,
+  PAYMENT_METHOD_LABELS,
 } from '@/lib/utils'
+import { PICKUP_SLOT_LABELS, PICKUP_PLACE, formatPickupDate } from '@/lib/pickup'
 import { Order } from '@/types'
 import { AdminOrderStatusChanger } from '@/components/admin/AdminOrderStatusChanger'
 import { AdminPaymentStatusChanger } from '@/components/admin/AdminPaymentStatusChanger'
@@ -130,13 +131,17 @@ export default async function AdminOrdersPage() {
               ) : (
                 <div>
                   <p className="text-xs uppercase tracking-wider mb-3 font-bold" style={{ color: 'var(--gray-400)' }}>
-                    Retiro en Plaza de Maipú
+                    Retiro en {PICKUP_PLACE}
                   </p>
                   <div className="text-sm space-y-2" style={{ color: 'var(--gray-600)' }}>
                     <p className="flex items-center gap-2">
                       <Calendar size={14} style={{ color: 'var(--gray-400)' }} />
-                      <span className="font-semibold" style={{ color: 'var(--text)' }}>
-                        {order.pickup_slot ? PICKUP_SLOT_LABELS[order.pickup_slot] ?? order.pickup_slot : 'Día no indicado'}
+                      <span className="font-semibold capitalize" style={{ color: 'var(--text)' }}>
+                        {order.pickup_date
+                          ? formatPickupDate(order.pickup_date)
+                          : order.pickup_slot
+                            ? `${PICKUP_SLOT_LABELS[order.pickup_slot] ?? order.pickup_slot} (sin fecha)`
+                            : 'Día no indicado'}
                       </span>
                     </p>
                     <p className="flex items-center gap-2">

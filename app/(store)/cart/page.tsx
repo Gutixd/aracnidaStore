@@ -4,8 +4,9 @@ import { useCart } from '@/store/cart'
 import { formatPrice } from '@/lib/utils'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Trash2, Plus, Minus, ShoppingBag, ArrowRight, ArrowLeft } from 'lucide-react'
+import { Trash2, Plus, Minus, ShoppingBag, ArrowRight, ArrowLeft, Store } from 'lucide-react'
 import { FREE_SHIPPING_THRESHOLD, MIN_SHIPPING_COST } from '@/lib/shipping'
+import { PICKUP_PLACE } from '@/lib/pickup'
 
 export default function CartPage() {
   const { items, removeItem, updateQuantity, getTotalPrice, clearCart } = useCart()
@@ -110,8 +111,15 @@ export default function CartPage() {
                   </span>
                 </div>
                 <p className="text-xs" style={{ color: 'var(--gray-400)' }}>
-                  Desde {formatPrice(MIN_SHIPPING_COST)} según tu región, o gratis si retiras en Plaza de Maipú.
+                  Desde {formatPrice(MIN_SHIPPING_COST)} según tu región.
                 </p>
+                <div className="rounded-xl px-3 py-2.5 flex items-start gap-2"
+                  style={{ background: 'rgba(22,163,74,.07)', border: '1px solid rgba(22,163,74,.22)' }}>
+                  <Store size={14} className="mt-0.5 shrink-0" style={{ color: '#15803d' }} />
+                  <p className="text-xs" style={{ color: '#15803d' }}>
+                    O <strong>retira gratis</strong> en {PICKUP_PLACE} y ahórrate el envío.
+                  </p>
+                </div>
                 {faltaParaEnvioGratis > 0 && (
                   <p className="text-xs" style={{ color: 'var(--gray-400)' }}>
                     Te faltan {formatPrice(faltaParaEnvioGratis)} para envío gratis en la zona centro.

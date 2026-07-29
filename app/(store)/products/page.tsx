@@ -2,7 +2,10 @@ import { createClient } from '@/lib/supabase/server'
 import { Product, Category } from '@/types'
 import { ProductCard } from '@/components/store/ProductCard'
 import { ProductFilters } from '@/components/store/ProductFilters'
-import { Package } from 'lucide-react'
+import { Package, Store } from 'lucide-react'
+import { PICKUP_PLACE } from '@/lib/pickup'
+import { MIN_SHIPPING_COST } from '@/lib/shipping'
+import { formatPrice } from '@/lib/utils'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -95,6 +98,16 @@ export default async function ProductsPage({
           <p className="mt-2 text-sm" style={{ color: 'rgba(255,255,255,.45)' }}>
             {inStock} productos disponibles · {products.length - inStock} sin stock
           </p>
+
+          {/* Aviso de retiro: antes solo se enteraban dentro del checkout */}
+          <div className="mt-5 inline-flex items-start gap-2.5 rounded-xl px-4 py-2.5"
+            style={{ background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.15)' }}>
+            <Store size={16} className="mt-0.5 shrink-0" style={{ color: '#4ade80' }} />
+            <p className="text-sm" style={{ color: 'rgba(255,255,255,.8)' }}>
+              Envíos a todo Chile desde {formatPrice(MIN_SHIPPING_COST)}, o{' '}
+              <strong style={{ color: '#fff' }}>retira gratis en {PICKUP_PLACE}</strong>
+            </p>
+          </div>
         </div>
       </div>
 

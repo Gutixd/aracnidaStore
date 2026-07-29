@@ -8,12 +8,16 @@ import { createOrder } from '@/lib/actions/orders'
 import { createMercadoPagoPreference } from '@/lib/actions/payment'
 import { formatPrice } from '@/lib/utils'
 import { useRouter } from 'next/navigation'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { checkCart } from '@/lib/actions/cart'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ShoppingBag, Loader2, MapPin, ChevronDown, Truck, Calendar, Banknote, Copy, Check, Clock, AlertCircle } from 'lucide-react'
 import { REGIONES_CHILE, getShippingInfo, FREE_SHIPPING_THRESHOLD, MIN_SHIPPING_COST } from '@/lib/shipping'
+import {
+  PICKUP_SLOTS, PICKUP_PLACE, PICKUP_LEAD_HOURS,
+  getNextPickupDate, getAvailableTimes, formatPickupDate, toISODate,
+} from '@/lib/pickup'
 
 const TRANSFER_INFO = {
   banco: 'Banco Estado',
@@ -22,22 +26,6 @@ const TRANSFER_INFO = {
   rut: '21.481.177-4',
 }
 
-const PICKUP_SLOTS = [
-  {
-    id: 'martes' as const,
-    label: 'Martes',
-    hours: '13:00 – 16:00',
-    desc: 'Confirmación con 24 hrs de anticipación',
-    times: ['13:00', '13:30', '14:00', '14:30', '15:00', '15:30'],
-  },
-  {
-    id: 'sabado' as const,
-    label: 'Sábado',
-    hours: '11:00 – 15:00',
-    desc: 'Confirmación con 24 hrs de anticipación',
-    times: ['11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30'],
-  },
-]
 
 export default function CheckoutPage() {
   const { items, getTotalPrice, clearCart, syncWithServer } = useCart()
@@ -45,7 +33,28 @@ export default function CheckoutPage() {
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
   const [cartNotice, setCartNotice] = useState<string[]>([])
+  // Las fechas se calculan tras montar: en el servidor la zona horaria es UTC
+  // y daría un día distinto al del cliente en Chile.
+  const [now, setNow] = useState<Date | null>(null)
   const router = useRouter()
+
+  useEffect(() => { setNow(new Date()) }, [])
+
+  const pickupOptions = useMemo(() => {
+    if (!now) return []
+    return PICKUP_SLOTS.map((slot) => {
+      const date = getNextPickupDate(slot, now)
+      return {
+        slot,
+        date,
+        iso: toISODate(date),
+        pretty: formatPickupDate(date),
+        times: getAvailableTimes(slot, date, now),
+      }
+    })
+      // La fecha más cercana primero, sin importar el orden de los horarios
+      .sort((a, b) => a.date.getTime() - b.date.getTime())
+  }, [now])
 
   // Al entrar al checkout, comparamos el carrito guardado contra la base de datos.
   // Puede llevar días en localStorage con precios o stock que ya cambiaron.
@@ -100,8 +109,9 @@ export default function CheckoutPage() {
   const pickupTime = watch('pickup_time')
   const deliveryRegion = watch('delivery_region')
 
-  // Registrar pickup_time para que react-hook-form lo incluya en la data
+  // Registrar los campos que se setean con setValue para que lleguen en la data
   register('pickup_time')
+  register('pickup_date')
 
   const subtotal = getTotalPrice()
   const isRetiro = deliveryMethod === 'retiro'
@@ -330,7 +340,7 @@ export default function CheckoutPage() {
                         Elige el día de retiro *
                       </label>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {PICKUP_SLOTS.map((slot) => (
+                        {pickupOptions.map(({ slot, iso, pretty, times }) => (
                           <label
                             key={slot.id}
                             className="flex items-start gap-3 p-4 rounded-2xl cursor-pointer transition-all"
@@ -346,6 +356,7 @@ export default function CheckoutPage() {
                               onChange={() => {
                                 setValue('pickup_slot', slot.id)
                                 setValue('pickup_time', '')
+                                setValue('pickup_date', iso)
                               }}
                               className="sr-only"
                             />
@@ -354,27 +365,36 @@ export default function CheckoutPage() {
                               <Calendar size={17} />
                             </div>
                             <div>
-                              <p className="font-bold text-sm" style={{ color: 'var(--text)' }}>{slot.label}</p>
+                              {/* Fecha concreta: evita la duda de "¿qué martes?" */}
+                              <p className="font-bold text-sm" style={{ color: 'var(--text)' }}>{pretty}</p>
                               <p className="text-xs font-semibold" style={{ color: pickupSlot === slot.id ? 'var(--red)' : 'var(--gray-600)' }}>
                                 <Clock size={11} className="inline mr-1" />{slot.hours}
                               </p>
-                              <p className="text-xs mt-0.5" style={{ color: 'var(--gray-400)' }}>{slot.desc}</p>
+                              <p className="text-xs mt-0.5" style={{ color: 'var(--gray-400)' }}>
+                                {times.length} horarios disponibles
+                              </p>
                             </div>
                           </label>
                         ))}
+                        {!now && (
+                          <p className="text-sm col-span-full" style={{ color: 'var(--gray-400)' }}>
+                            Cargando fechas disponibles…
+                          </p>
+                        )}
                       </div>
                       {errors.pickup_slot && <p className="text-xs mt-1" style={{ color: 'var(--red)' }}>{errors.pickup_slot.message}</p>}
 
                       {/* Selector de hora — aparece cuando se elige día */}
                       {pickupSlot && (() => {
-                        const slotData = PICKUP_SLOTS.find((s) => s.id === pickupSlot)!
+                        const opt = pickupOptions.find((o) => o.slot.id === pickupSlot)
+                        if (!opt) return null
                         return (
                           <div className="mt-4">
                             <label className="block text-sm font-semibold mb-3" style={{ color: 'var(--gray-600)' }}>
-                              Hora de retiro el {slotData.label} *
+                              Hora de retiro el {opt.pretty} *
                             </label>
                             <div className="flex flex-wrap gap-2">
-                              {slotData.times.map((t) => (
+                              {opt.times.map((t) => (
                                 <button
                                   key={t}
                                   type="button"
@@ -393,7 +413,7 @@ export default function CheckoutPage() {
                             {errors.pickup_time && <p className="text-xs mt-1" style={{ color: 'var(--red)' }}>{errors.pickup_time.message}</p>}
                             {pickupTime && (
                               <p className="text-xs mt-2 font-semibold" style={{ color: '#15803d' }}>
-                                ✓ Retiro el {slotData.label} a las {pickupTime} · Coordinar con 24 hrs de anticipación
+                                ✓ Retiro el {opt.pretty} a las {pickupTime} en {PICKUP_PLACE}
                               </p>
                             )}
                           </div>
@@ -546,9 +566,9 @@ export default function CheckoutPage() {
                 {isRetiro && (
                   <div className="mb-5 p-3.5 rounded-xl text-sm"
                     style={{ background: 'rgba(192,57,43,.05)', border: '1px solid rgba(192,57,43,.15)' }}>
-                    <p className="font-bold mb-1" style={{ color: 'var(--text)' }}>Retiro en Plaza de Maipú</p>
+                    <p className="font-bold mb-1" style={{ color: 'var(--text)' }}>Retiro en {PICKUP_PLACE}</p>
                     <p style={{ color: 'var(--gray-600)' }}>
-                      {pickupSlot === 'martes' ? 'Martes' : pickupSlot === 'sabado' ? 'Sábado' : 'Elige el día'}
+                      {pickupOptions.find((o) => o.slot.id === pickupSlot)?.pretty ?? 'Elige el día'}
                       {pickupTime ? ` · ${pickupTime} hrs` : ' · Elige la hora'}
                     </p>
                   </div>

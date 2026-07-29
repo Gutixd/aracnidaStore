@@ -11,6 +11,8 @@ export const checkoutSchema = z.object({
   delivery_reference: z.string().optional(),
   pickup_slot: z.enum(['martes', 'sabado']).optional(),
   pickup_time: z.string().optional(),
+  /** Fecha concreta del retiro en formato YYYY-MM-DD */
+  pickup_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Fecha inválida').optional(),
   payment_method: z.enum(['transferencia', 'efectivo']).optional(),
   notes: z.string().optional(),
 }).refine(

@@ -1,5 +1,6 @@
 import { Resend } from 'resend'
 import { Order } from '@/types'
+import { PICKUP_PLACE, PICKUP_SLOT_LABELS, formatPickupDate } from '@/lib/pickup'
 
 const API_KEY = process.env.RESEND_API_KEY
 // Debe ser un dominio verificado en Resend. Mientras no lo esté, se puede usar
@@ -15,7 +16,6 @@ const TRANSFER_INFO = {
   rut: '21.481.177-4',
 }
 
-const PICKUP_LABELS: Record<string, string> = { martes: 'Martes', sabado: 'Sábado' }
 
 export const isEmailEnabled = () => Boolean(API_KEY)
 
@@ -48,8 +48,8 @@ function buildHtml(order: Order): string {
 
   const entregaBlock = isRetiro
     ? `
-      <p style="margin:0 0 6px;"><strong>Retiro en Metro Plaza de Maipú</strong></p>
-      <p style="margin:0 0 4px;color:#555;">Día: <strong>${esc(PICKUP_LABELS[order.pickup_slot ?? ''] ?? 'Por coordinar')}</strong></p>
+      <p style="margin:0 0 6px;"><strong>Retiro en ${PICKUP_PLACE}</strong></p>
+      <p style="margin:0 0 4px;color:#555;">Día: <strong style="text-transform:capitalize;">${esc(order.pickup_date ? formatPickupDate(order.pickup_date) : (PICKUP_SLOT_LABELS[order.pickup_slot ?? ''] ?? 'Por coordinar'))}</strong></p>
       <p style="margin:0 0 4px;color:#555;">Hora: <strong>${esc(order.pickup_time ?? 'Por coordinar')}</strong></p>
       <p style="margin:0;color:#555;">Pago: <strong>${order.payment_method === 'transferencia' ? 'Transferencia bancaria' : 'Efectivo'}</strong></p>
       <p style="margin:12px 0 0;padding:10px;background:#fff8e1;border-radius:8px;font-size:13px;color:#8a6d1a;">

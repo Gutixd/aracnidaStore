@@ -90,6 +90,8 @@ export interface Order {
   payment_method?: string | null
   pickup_slot?: string | null
   pickup_time?: string | null
+  /** Fecha exacta del retiro (YYYY-MM-DD) */
+  pickup_date?: string | null
   mp_preference_id?: string | null
   notes: string
   created_at: string

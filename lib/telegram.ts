@@ -1,4 +1,5 @@
 import { Order } from '@/types'
+import { formatPickupDate, PICKUP_SLOT_LABELS } from '@/lib/pickup'
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN!
 const CHAT_ID = process.env.TELEGRAM_CHAT_ID!
@@ -73,7 +74,7 @@ ${items}
 📦 <b>Método:</b> ${order.delivery_method === 'delivery' ? '🏠 Delivery a domicilio' : '📍 Retiro en Plaza de Maipú'}
 ${order.delivery_method === 'delivery'
   ? `📍 <b>Dirección:</b> ${order.delivery_address}, ${order.delivery_commune}, ${order.delivery_region ?? ''}\n📌 <b>Referencia:</b> ${order.delivery_reference}`
-  : `📅 <b>Día:</b> ${order.pickup_slot === 'martes' ? 'Martes' : 'Sábado'}\n🕐 <b>Hora:</b> ${order.pickup_time ?? '—'}\n💳 <b>Pago:</b> ${order.payment_method === 'transferencia' ? '🏦 Transferencia bancaria' : '💵 Efectivo'}`
+  : `📅 <b>Día:</b> ${order.pickup_date ? formatPickupDate(order.pickup_date) : (PICKUP_SLOT_LABELS[order.pickup_slot ?? ''] ?? '—')}\n🕐 <b>Hora:</b> ${order.pickup_time ?? '—'}\n💳 <b>Pago:</b> ${order.payment_method === 'transferencia' ? '🏦 Transferencia bancaria' : '💵 Efectivo'}`
 }
 ${order.notes ? `📝 <b>Notas:</b> ${order.notes}` : ''}
 

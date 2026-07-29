@@ -73,6 +73,7 @@ export async function createOrder(
       delivery_reference: formData.delivery_reference ?? '',
       pickup_slot: formData.pickup_slot ?? null,
       pickup_time: formData.pickup_time ?? null,
+      pickup_date: formData.pickup_date ?? null,
       payment_method: formData.payment_method ?? null,
       status: 'pendiente',
       payment_status: 'pendiente',

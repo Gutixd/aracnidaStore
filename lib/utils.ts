@@ -75,7 +75,3 @@ export const PAYMENT_METHOD_LABELS: Record<string, string> = {
   efectivo: 'Efectivo',
 }
 
-export const PICKUP_SLOT_LABELS: Record<string, string> = {
-  martes: 'Martes',
-  sabado: 'Sábado',
-}
