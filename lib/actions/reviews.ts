@@ -2,6 +2,7 @@
 
 import { createAdminClient, createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 export interface ReviewSummary {
   average: number
@@ -52,6 +53,9 @@ export async function submitReview(input: {
   rating: number
   comment: string
 }) {
+  const rl = await checkRateLimit('submit-review', { max: 5, windowMinutes: 60 })
+  if (!rl.allowed) return { error: rl.error }
+
   const name = input.customerName.trim()
   const comment = input.comment.trim()
 

@@ -12,6 +12,7 @@ import { Shield, Truck, RotateCcw, Package, Star, CheckCircle2, Clock, MapPin, S
 import { ProductReviews } from '@/components/store/ProductReviews'
 import { getReviewSummary, getProductReviews } from '@/lib/actions/reviews'
 import { PICKUP_PLACE, PICKUP_SLOTS, PICKUP_LEAD_HOURS } from '@/lib/pickup'
+import { safeJsonLd } from '@/lib/jsonld'
 import { MIN_SHIPPING_COST } from '@/lib/shipping'
 import { formatPrice } from '@/lib/utils'
 import type { Metadata } from 'next'
@@ -165,7 +166,7 @@ export default async function ProductPage({
 
   return (
     <div style={{ background: 'var(--gray-50)', minHeight: '100vh' }}>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
 
       {/* ── Main product section ── */}
       <div className="max-w-7xl mx-auto pt-28 pb-12 px-4 sm:px-6 lg:px-8">

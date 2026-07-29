@@ -7,6 +7,7 @@ import { Shield, Truck, Package, Zap, Star, MapPin, RotateCcw, ChevronRight, Sho
 import { ScrollReveal } from '@/components/store/ScrollReveal'
 import { VideoShowcase } from '@/components/store/VideoShowcase'
 import { HeroVideo } from '@/components/store/HeroVideo'
+import { safeJsonLd } from '@/lib/jsonld'
 
 // Respuestas concretas y verificables. Los buscadores con IA (ChatGPT, Gemini,
 // Perplexity) citan este tipo de contenido directo cuando alguien pregunta
@@ -83,7 +84,7 @@ export default async function HomePage() {
 
   return (
     <div className="overflow-x-hidden">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(faqJsonLd) }} />
 
       {/* ===== HERO con video de fondo ===== */}
       <HeroVideo />

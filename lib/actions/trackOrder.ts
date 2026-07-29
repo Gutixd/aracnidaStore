@@ -1,6 +1,7 @@
 'use server'
 
 import { createAdminClient } from '@/lib/supabase/server'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 /**
  * Busca un pedido por su código corto (los 8 caracteres que se muestran en el
@@ -9,6 +10,9 @@ import { createAdminClient } from '@/lib/supabase/server'
  * Devuelve el UUID completo para redirigir a /order-success/[id].
  */
 export async function findOrderByCode(code: string, email: string) {
+  const rl = await checkRateLimit('track-order', { max: 15, windowMinutes: 15 })
+  if (!rl.allowed) return { error: rl.error }
+
   const cleanCode = code.trim().toLowerCase().replace(/[^a-f0-9]/g, '')
   const cleanEmail = email.trim().toLowerCase()
 

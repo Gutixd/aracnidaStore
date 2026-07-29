@@ -6,6 +6,7 @@ import { sendOrderReceipt } from '@/lib/email'
 import { CheckoutFormData } from '@/lib/validations'
 import { CartItem } from '@/types'
 import { calcShippingCost } from '@/lib/shipping'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 const LOW_STOCK_THRESHOLD = 3
 const MAX_QTY_PER_ITEM = 20
@@ -16,6 +17,11 @@ export async function createOrder(
 ) {
   if (!cartItems.length) return { error: 'El carrito está vacío' }
   if (cartItems.length > 50) return { error: 'Demasiados productos en el carrito' }
+
+  // Sin esto, crear pedidos en bucle reservaría stock real sin pagar nunca
+  // (el stock se descuenta al crear el pedido y se libera recién a los 45 min).
+  const rl = await checkRateLimit('create-order', { max: 5, windowMinutes: 30 })
+  if (!rl.allowed) return { error: rl.error }
 
   // Libera el stock de checkouts abandonados antes de validar disponibilidad,
   // para no rechazar una venta real por stock que nadie llegó a pagar.
