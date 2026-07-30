@@ -91,7 +91,14 @@ export function Footer() {
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs"
           style={{ borderTop: '1px solid rgba(255,255,255,.08)', color: 'rgba(255,255,255,.3)' }}>
           <span>© {new Date().getFullYear()} AracnidaStore. Todos los derechos reservados.</span>
-          <span>Hecho en Santiago de Chile · Envíos a todo el país</span>
+          <span>
+            Sitio hecho por{' '}
+            <a href="https://brandup.cl" target="_blank" rel="noopener noreferrer"
+              className="font-semibold transition-colors hover:text-white"
+              style={{ color: 'rgba(255,255,255,.5)' }}>
+              BrandUp.cl
+            </a>
+          </span>
         </div>
       </div>
     </footer>
