@@ -17,6 +17,8 @@ import { MIN_SHIPPING_COST } from '@/lib/shipping'
 import { formatPrice } from '@/lib/utils'
 import type { Metadata } from 'next'
 
+const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://aracnidastore.com'
+
 async function getProduct(slug: string): Promise<Product | null> {
   const supabase = await createClient()
   const { data } = await supabase
@@ -58,13 +60,19 @@ export async function generateMetadata({
   const { slug } = await params
   const product = await getProduct(slug)
   if (!product) return {}
+
+  // "en Chile" en el título es lo que hace calzar el título con búsquedas
+  // reales tipo "traje de spiderman chile" — el nombre solo no lo logra.
+  const title = `${product.name} en Chile`
+  const description = `${product.description} Envío a todo Chile o retiro gratis en Metro Plaza de Maipú, Santiago.`.slice(0, 300)
+
   return {
-    title: product.name,
-    description: product.description,
+    title,
+    description,
     alternates: { canonical: `/products/${product.slug}` },
     openGraph: {
-      title: product.name,
-      description: product.description,
+      title,
+      description,
       type: 'website',
       images: product.image_url ? [{ url: product.image_url }] : [],
     },
@@ -141,6 +149,28 @@ export default async function ProductPage({
     }),
   }
 
+  // Refleja exactamente las migas de pan visibles (Inicio / Catálogo /
+  // Categoría / Producto) para que Google pueda mostrar esa ruta en los
+  // resultados de búsqueda en vez de solo la URL cruda.
+  const breadcrumbItems = [
+    { name: 'Inicio', url: '/' },
+    { name: 'Catálogo', url: '/products' },
+    ...(product.category
+      ? [{ name: product.category.name, url: `/products?category=${product.category.slug}` }]
+      : []),
+    { name: product.name, url: `/products/${product.slug}` },
+  ]
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: breadcrumbItems.map((item, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: item.name,
+      item: `${SITE_URL}${item.url}`,
+    })),
+  }
+
   const isMask = product.category?.slug === 'mascaras'
   const isAccessory = product.category?.slug === 'accesorios'
 
@@ -167,6 +197,7 @@ export default async function ProductPage({
   return (
     <div style={{ background: 'var(--gray-50)', minHeight: '100vh' }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumbJsonLd) }} />
 
       {/* ── Main product section ── */}
       <div className="max-w-7xl mx-auto pt-28 pb-12 px-4 sm:px-6 lg:px-8">

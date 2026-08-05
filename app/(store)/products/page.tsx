@@ -8,12 +8,6 @@ import { MIN_SHIPPING_COST } from '@/lib/shipping'
 import { formatPrice } from '@/lib/utils'
 import type { Metadata } from 'next'
 
-export const metadata: Metadata = {
-  title: 'Catálogo de disfraces y máscaras de Spider-Man',
-  description: 'Explora todo el catálogo de disfraces y máscaras de Spider-Man en Chile: Miles Morales, Tom Holland, Tobey, Venom y más. Tallas 100 a 190 cm. Envíos a todo Chile.',
-  alternates: { canonical: '/products' },
-}
-
 interface SearchParams {
   category?: string
   size?: string
@@ -22,6 +16,45 @@ interface SearchParams {
   max?: string
   search?: string
   sort?: string
+}
+
+// Antes el título y la descripción eran siempre los mismos sin importar la
+// categoría filtrada, perdiendo la oportunidad de posicionar cada búsqueda
+// específica ("disfraces de spiderman chile", "máscaras de spiderman chile").
+const CATEGORY_SEO: Record<string, { title: string; description: string }> = {
+  disfraces: {
+    title: 'Disfraces de Spider-Man en Chile — Miles Morales, Tom Holland, Venom',
+    description: 'Los mejores disfraces de Spider-Man en Chile: Miles Morales, Tom Holland, Tobey Maguire, Andrew Garfield y Venom. Tallas 100 a 190 cm. Envíos a todo Chile o retiro gratis en Santiago.',
+  },
+  mascaras: {
+    title: 'Máscaras de Spider-Man en Chile — PRO ULTRA, Standard y Básicas',
+    description: 'Máscaras de Spider-Man en Chile con y sin control remoto: PRO ULTRA, Standard y básicas. Talla única ajustable. Envíos a todo Chile o retiro gratis en Santiago.',
+  },
+  accesorios: {
+    title: 'Accesorios de Spider-Man en Chile',
+    description: 'Accesorios de Spider-Man en Chile: lanza telarañas y complementos para tu disfraz. Envíos a todo Chile o retiro gratis en Santiago.',
+  },
+  peluches: {
+    title: 'Peluches de Spider-Man en Chile',
+    description: 'Peluches de Spider-Man en Chile, ideales de regalo. Envíos a todo Chile o retiro gratis en Santiago.',
+  },
+}
+
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>
+}): Promise<Metadata> {
+  const { category } = await searchParams
+  const seo = category ? CATEGORY_SEO[category] : undefined
+
+  return {
+    title: seo?.title ?? 'Catálogo de disfraces y máscaras de Spider-Man en Chile',
+    description:
+      seo?.description ??
+      'Explora todo el catálogo de disfraces y máscaras de Spider-Man en Chile: Miles Morales, Tom Holland, Tobey, Venom y más. Tallas 100 a 190 cm. Envíos a todo Chile.',
+    alternates: { canonical: category ? `/products?category=${category}` : '/products' },
+  }
 }
 
 async function getProducts(params: SearchParams): Promise<Product[]> {
@@ -82,6 +115,7 @@ export default async function ProductsPage({
   const categoryLabel = params.category
     ? categories.find(c => c.slug === params.category)?.name
     : 'Todos'
+  const categorySeo = params.category ? CATEGORY_SEO[params.category] : undefined
 
   return (
     <div style={{ background: 'var(--gray-50)', minHeight: '100vh' }}>
@@ -93,11 +127,18 @@ export default async function ProductsPage({
             Catálogo
           </div>
           <h1 className="text-3xl md:text-4xl font-black text-white mt-2">
-            {categoryLabel ?? 'Todo el catálogo'}
+            {params.category ? `${categoryLabel} de Spider-Man en Chile` : 'Disfraces y máscaras de Spider-Man en Chile'}
           </h1>
           <p className="mt-2 text-sm" style={{ color: 'rgba(255,255,255,.45)' }}>
             {inStock} productos disponibles · {products.length - inStock} sin stock
           </p>
+          {/* Párrafo con las mismas palabras clave que el título/meta:
+              el contenido visible pesa más para SEO que el meta description solo. */}
+          {categorySeo && (
+            <p className="mt-3 max-w-2xl text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,.6)' }}>
+              {categorySeo.description}
+            </p>
+          )}
 
           {/* Aviso de retiro: antes solo se enteraban dentro del checkout */}
           <div className="mt-5 inline-flex items-start gap-2.5 rounded-xl px-4 py-2.5"

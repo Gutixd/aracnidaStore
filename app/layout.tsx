@@ -12,7 +12,7 @@ export const viewport: Viewport = {
 
 const geist = Geist({ subsets: ['latin'], variable: '--font-geist-sans' })
 
-const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://aracnida-store.vercel.app'
+const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://aracnidastore.com'
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

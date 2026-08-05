@@ -62,21 +62,25 @@ export function HeroVideo() {
                 Nuevos modelos · Envíos a todo Chile
               </div>
 
+              {/* El H1 antes era puro branding ("Viste la leyenda.") sin ninguna
+                  palabra clave real. Google usa el H1 como la señal más fuerte
+                  del tema de la página, así que ahora incluye "traje de
+                  Spider-Man" de forma natural sin perder el tono de marca. */}
               <h1 className="text-5xl sm:text-6xl md:text-7xl font-black tracking-tight mb-6 leading-none animate-fade-in">
-                <span className="text-white block">Viste la</span>
+                <span className="text-white block">Trajes de Spider-Man</span>
                 <span className="block mt-1"
                   style={{
                     background: 'linear-gradient(135deg, #e74c3c 0%, #c0392b 50%, #f87171 100%)',
                     WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
                   }}>
-                  leyenda.
+                  para vivir la leyenda.
                 </span>
               </h1>
 
               <p className="text-lg md:text-xl max-w-lg mx-auto lg:mx-0 mb-10 leading-relaxed animate-fade-in"
                 style={{ color: 'rgba(255,255,255,.6)', animationDelay: '200ms' }}>
-                Disfraces y máscaras de Spider-Man de calidad premium en Santiago.
-                Materiales de primera y diseños de alta fidelidad.
+                Disfraces y máscaras de Spider-Man de calidad premium en Chile, despachados
+                desde Santiago. Materiales de primera y diseños de alta fidelidad.
               </p>
 
               <div className="flex flex-col sm:flex-row items-center lg:items-start justify-center lg:justify-start gap-4 animate-fade-in"
@@ -97,7 +101,7 @@ export function HeroVideo() {
                 {[
                   { value: '14+', label: 'Modelos' },
                   { value: '48h', label: 'Despacho' },
-                  { value: '★ 5.0', label: 'Reseñas' },
+                  { value: '+500', label: 'Clientes' },
                 ].map((s) => (
                   <div key={s.label} className="text-center lg:text-left">
                     <p className="text-2xl font-black text-white">{s.value}</p>
