@@ -32,11 +32,12 @@ export function AdminExpenseForm() {
     setLoading(true)
     setError(null)
     const supabase = createClient()
-    await supabase.from('expenses').insert({ ...form, amount })
+    const { error: insError } = await supabase.from('expenses').insert({ ...form, amount })
+    setLoading(false)
+    if (insError) { setError('No se pudo registrar el gasto: ' + insError.message); return }
     setForm({ title: '', amount: '', category: 'otro', note: '' })
     setSuccess(true)
     setTimeout(() => setSuccess(false), 2000)
-    setLoading(false)
     router.refresh()
   }
 

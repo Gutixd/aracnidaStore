@@ -10,12 +10,17 @@ interface Props { id: string; name: string }
 export function AdminDeleteProduct({ id, name }: Props) {
   const [confirming, setConfirming] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(false)
   const router = useRouter()
 
   async function handleDelete() {
     setLoading(true)
+    setError(false)
     const supabase = createClient()
-    await supabase.from('products').delete().eq('id', id)
+    const { error: delError } = await supabase.from('products').delete().eq('id', id)
+    setLoading(false)
+    if (delError) { setError(true); return }
+    setConfirming(false)
     router.refresh()
   }
 
@@ -33,6 +38,7 @@ export function AdminDeleteProduct({ id, name }: Props) {
         <button onClick={() => setConfirming(false)} className="text-xs px-2 py-1.5 rounded-lg transition-colors" style={{ color: 'var(--gray-400)' }}>
           Cancelar
         </button>
+        {error && <span className="text-xs" style={{ color: 'var(--red)' }}>No se pudo eliminar</span>}
       </div>
     )
   }

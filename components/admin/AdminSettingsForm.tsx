@@ -44,14 +44,16 @@ export function AdminSettingsForm({ settings }: Props) {
     setMessage(null)
     const supabase = createClient()
 
-    if (settings?.id) {
-      await supabase.from('settings').update({ ...form, updated_at: new Date().toISOString() }).eq('id', settings.id)
-    } else {
-      await supabase.from('settings').insert(form)
-    }
+    const { error } = settings?.id
+      ? await supabase.from('settings').update({ ...form, updated_at: new Date().toISOString() }).eq('id', settings.id)
+      : await supabase.from('settings').insert(form)
 
-    setMessage('Configuración guardada correctamente')
     setLoading(false)
+    if (error) {
+      setMessage('Error al guardar: ' + error.message)
+      return
+    }
+    setMessage('Configuración guardada correctamente')
     router.refresh()
     setTimeout(() => setMessage(null), 3000)
   }
@@ -137,7 +139,11 @@ export function AdminSettingsForm({ settings }: Props) {
       </section>
 
       {message && (
-        <div className="rounded-xl p-3 text-sm" style={{ background: 'rgba(22,163,74,.1)', border: '1px solid rgba(22,163,74,.3)', color: '#15803d' }}>
+        <div className="rounded-xl p-3 text-sm" style={
+          message.startsWith('Error')
+            ? { background: 'rgba(192,57,43,.1)', border: '1px solid rgba(192,57,43,.3)', color: 'var(--red)' }
+            : { background: 'rgba(22,163,74,.1)', border: '1px solid rgba(22,163,74,.3)', color: '#15803d' }
+        }>
           {message}
         </div>
       )}

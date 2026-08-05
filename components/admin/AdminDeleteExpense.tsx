@@ -7,11 +7,15 @@ import { Trash2, Check, X } from 'lucide-react'
 
 export function AdminDeleteExpense({ id }: { id: string }) {
   const [confirming, setConfirming] = useState(false)
+  const [error, setError] = useState(false)
   const router = useRouter()
 
   async function handleDelete() {
+    setError(false)
     const supabase = createClient()
-    await supabase.from('expenses').delete().eq('id', id)
+    const { error: delError } = await supabase.from('expenses').delete().eq('id', id)
+    if (delError) { setError(true); return }
+    setConfirming(false)
     router.refresh()
   }
 
@@ -24,6 +28,7 @@ export function AdminDeleteExpense({ id }: { id: string }) {
         <button onClick={() => setConfirming(false)} className="p-1.5 rounded-lg" style={{ color: 'var(--gray-400)' }} aria-label="Cancelar">
           <X size={14} />
         </button>
+        {error && <span className="text-xs" style={{ color: 'var(--red)' }}>Error</span>}
       </div>
     )
   }
