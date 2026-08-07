@@ -15,6 +15,12 @@ export const checkoutSchema = z.object({
   pickup_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Fecha inválida').optional(),
   payment_method: z.enum(['transferencia', 'efectivo']).optional(),
   notes: z.string().optional(),
+  /**
+   * Consentimiento para recibir ofertas por correo. Desmarcado por defecto a
+   * propósito: una casilla premarcada no es consentimiento, y la Política de
+   * Privacidad promete no enviar publicidad sin permiso.
+   */
+  marketing_opt_in: z.boolean().optional(),
 }).refine(
   (data) => {
     if (data.delivery_method === 'delivery') {

@@ -503,6 +503,26 @@ export default function CheckoutPage() {
                 <textarea {...register('notes')} placeholder="Instrucciones especiales, alergias, talla exacta, etc." rows={3} className="input-field resize-none" />
               </div>
 
+              {/* Permiso para ofertas. Va desmarcado: una casilla premarcada
+                  no es consentimiento, y la Política de Privacidad promete no
+                  enviar publicidad sin permiso. */}
+              <div className="card p-6">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    {...register('marketing_opt_in')}
+                    type="checkbox"
+                    className="mt-1 h-4 w-4 shrink-0 accent-current cursor-pointer"
+                    style={{ accentColor: 'var(--red, #c8102e)' }}
+                  />
+                  <span className="text-sm" style={{ color: 'var(--text)' }}>
+                    Quiero recibir ofertas y lanzamientos por correo
+                    <span className="block text-xs mt-1" style={{ color: 'var(--gray-400)' }}>
+                      Sin spam. Puedes darte de baja cuando quieras desde cualquier correo.
+                    </span>
+                  </span>
+                </label>
+              </div>
+
               <p className="text-xs" style={{ color: 'var(--gray-400)' }}>
                 Al realizar tu compra aceptas nuestros{' '}
                 <Link href="/terminos" className="underline hover:opacity-75">Términos y Condiciones</Link>

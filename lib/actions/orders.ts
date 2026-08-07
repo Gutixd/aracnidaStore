@@ -2,6 +2,7 @@
 
 import { createAdminClient } from '@/lib/supabase/server'
 import { isAdmin } from '@/lib/auth/admin'
+import { upsertMarketingContact } from '@/lib/actions/marketing'
 import { notifyNewOrder, notifyLowStock, notifyOutOfStock } from '@/lib/telegram'
 import { sendOrderReceipt } from '@/lib/email'
 import { CheckoutFormData } from '@/lib/validations'
@@ -85,6 +86,7 @@ export async function createOrder(
       status: 'pendiente',
       payment_status: 'pendiente',
       notes: formData.notes ?? '',
+      marketing_opt_in: formData.marketing_opt_in === true,
     })
     .select()
     .single()
@@ -146,6 +148,20 @@ export async function createOrder(
     } else if (productStock <= LOW_STOCK_THRESHOLD) {
       await notifyLowStock(product.name, productStock)
     }
+  }
+
+  // Si el cliente marcó la casilla, queda en la lista de ofertas. Fuera del
+  // try principal a propósito: que falle el correo de marketing nunca debe
+  // tumbar un pedido ya cobrado.
+  try {
+    await upsertMarketingContact({
+      email: formData.customer_email,
+      name: formData.customer_name,
+      phone: formData.customer_phone,
+      consent: formData.marketing_opt_in === true,
+    })
+  } catch (err) {
+    console.error('[Marketing] No se pudo registrar el consentimiento:', err)
   }
 
   // Pedido completo para notificación Telegram
