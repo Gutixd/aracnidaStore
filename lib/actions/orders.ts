@@ -1,6 +1,7 @@
 'use server'
 
-import { createAdminClient, createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server'
+import { isAdmin } from '@/lib/auth/admin'
 import { notifyNewOrder, notifyLowStock, notifyOutOfStock } from '@/lib/telegram'
 import { sendOrderReceipt } from '@/lib/email'
 import { CheckoutFormData } from '@/lib/validations'
@@ -317,9 +318,7 @@ export async function reclaimStockForPaidOrder(orderId: string): Promise<boolean
  * tiene que registrarlo a mano.
  */
 export async function updatePaymentStatus(orderId: string, newPaymentStatus: string) {
-  const auth = await createClient()
-  const { data: { user } } = await auth.auth.getUser()
-  if (!user) return { error: 'No autorizado' }
+  if (!(await isAdmin())) return { error: 'No autorizado' }
 
   const VALID = ['pendiente', 'pagado', 'rechazado', 'reembolsado']
   if (!VALID.includes(newPaymentStatus)) return { error: 'Estado de pago inválido' }
@@ -342,9 +341,7 @@ export async function updatePaymentStatus(orderId: string, newPaymentStatus: str
  */
 export async function updateOrderStatus(orderId: string, newStatus: string) {
   // Solo administradores autenticados pueden cambiar el estado de un pedido.
-  const auth = await createClient()
-  const { data: { user } } = await auth.auth.getUser()
-  if (!user) return { error: 'No autorizado' }
+  if (!(await isAdmin())) return { error: 'No autorizado' }
 
   const supabase = await createAdminClient()
 

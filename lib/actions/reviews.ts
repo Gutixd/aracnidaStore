@@ -1,6 +1,7 @@
 'use server'
 
 import { createAdminClient, createClient } from '@/lib/supabase/server'
+import { isAdmin } from '@/lib/auth/admin'
 import { revalidatePath } from 'next/cache'
 import { checkRateLimit } from '@/lib/rate-limit'
 
@@ -115,9 +116,7 @@ export async function submitReview(input: {
 
 /** Aprueba o rechaza una reseña (solo administradores). */
 export async function moderateReview(reviewId: string, approved: boolean) {
-  const auth = await createClient()
-  const { data: { user } } = await auth.auth.getUser()
-  if (!user) return { error: 'No autorizado' }
+  if (!(await isAdmin())) return { error: 'No autorizado' }
 
   const supabase = await createAdminClient()
   const { error } = await supabase
@@ -131,9 +130,7 @@ export async function moderateReview(reviewId: string, approved: boolean) {
 }
 
 export async function deleteReview(reviewId: string) {
-  const auth = await createClient()
-  const { data: { user } } = await auth.auth.getUser()
-  if (!user) return { error: 'No autorizado' }
+  if (!(await isAdmin())) return { error: 'No autorizado' }
 
   const supabase = await createAdminClient()
   const { error } = await supabase.from('reviews').delete().eq('id', reviewId)

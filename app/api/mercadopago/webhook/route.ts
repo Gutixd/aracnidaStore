@@ -14,7 +14,18 @@ const WEBHOOK_SECRET = process.env.MP_WEBHOOK_SECRET
  * Ver: https://www.mercadopago.cl/developers/es/docs/your-integrations/notifications/webhooks
  */
 function isValidSignature(req: NextRequest, dataId: string | null): boolean {
-  if (!WEBHOOK_SECRET) return true // sin secreto configurado, no validamos
+  if (!WEBHOOK_SECRET) {
+    // Sin secreto no se puede verificar quién llama. NO se rechaza la
+    // notificación a propósito: hacerlo dejaría los pagos sin confirmar
+    // mientras la variable no esté puesta, que es peor que el riesgo real
+    // (más abajo el pago se vuelve a consultar contra la API de Mercado
+    // Pago, así que no se puede inventar un pago aprobado desde fuera).
+    // Configura MP_WEBHOOK_SECRET para que esta validación se active sola.
+    console.warn(
+      '[MercadoPago Webhook] MP_WEBHOOK_SECRET no configurado: notificación aceptada sin verificar firma'
+    )
+    return true
+  }
   const signature = req.headers.get('x-signature')
   const requestId = req.headers.get('x-request-id')
   if (!signature || !dataId) return false

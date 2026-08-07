@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server'
+import { isAdmin } from '@/lib/auth/admin'
 import { notifyOrderStatusChange } from '@/lib/telegram'
 
 const VALID_STATUSES = [
@@ -8,10 +9,10 @@ const VALID_STATUSES = [
 
 export async function POST(request: NextRequest) {
   try {
-    // Solo administradores autenticados pueden disparar notificaciones.
-    const auth = await createClient()
-    const { data: { user } } = await auth.auth.getUser()
-    if (!user) {
+    // Solo administradores. Antes bastaba con tener sesión iniciada, y como
+    // más abajo se consulta con la service role key (que ignora RLS),
+    // cualquier cuenta podía pedir notificaciones sobre pedidos ajenos.
+    if (!(await isAdmin())) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 
