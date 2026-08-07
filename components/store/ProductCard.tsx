@@ -23,6 +23,9 @@ export function ProductCard({ product }: ProductCardProps) {
     : product.stock
   const minPrice = variants.length ? Math.min(...variants.map((v) => v.price)) : product.price
   const hasMultiplePrices = variants.length > 1 && new Set(variants.map((v) => v.price)).size > 1
+  // Solo se anuncia el alza si de verdad es más cara que lo que se cobra hoy.
+  const risesTo =
+    product.future_price && product.future_price > minPrice ? product.future_price : null
 
   const isOutOfStock = totalStock === 0
   const isLowStock = totalStock > 0 && totalStock <= 3
@@ -124,6 +127,13 @@ export function ProductCard({ product }: ProductCardProps) {
             <span className="text-lg font-black" style={{ color: isOutOfStock ? 'var(--gray-400)' : 'var(--red)' }}>
               {hasMultiplePrices && <span className="text-xs font-semibold mr-1" style={{ color: 'var(--gray-400)' }}>Desde</span>}
               {formatPrice(minPrice)}
+              {/* Aviso de alza, no un precio tachado: este producto nunca se
+                  vendió más caro, así que un "antes" sería falso. */}
+              {risesTo && (
+                <span className="block text-[11px] font-semibold mt-0.5" style={{ color: 'var(--gray-400)' }}>
+                  Sube a {formatPrice(risesTo)}
+                </span>
+              )}
             </span>
             {inCart && !added && (
               <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: 'rgba(22,163,74,.1)', color: '#15803d' }}>

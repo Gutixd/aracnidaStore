@@ -26,6 +26,12 @@ export interface Product {
   description: string
   price: number
   cost_price: number
+  /**
+   * Precio anunciado al que subirá el producto. NO es un precio anterior:
+   * nunca se vendió a ese valor, así que no debe mostrarse tachado — sería
+   * un precio de referencia falso (Ley 19.496). Se muestra como "sube a $X".
+   */
+  future_price?: number | null
   stock: number
   sku: string
   category_id: string

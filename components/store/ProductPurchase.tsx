@@ -3,7 +3,7 @@
 import { Product, ProductVariant } from '@/types'
 import { useCart } from '@/store/cart'
 import { formatPrice } from '@/lib/utils'
-import { ShoppingCart, Check, Minus, Plus } from 'lucide-react'
+import { ShoppingCart, Check, Minus, Plus, TrendingUp } from 'lucide-react'
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 
@@ -32,6 +32,11 @@ export function ProductPurchase({ product, variants }: Props) {
   const maxQty = selected?.stock ?? 0
   const totalStock = variants.reduce((s, v) => s + v.stock, 0)
 
+  const currentPrice = selected?.price ?? product.price
+  // Solo se anuncia el alza si de verdad supera lo que se cobra hoy.
+  const risesTo =
+    product.future_price && product.future_price > currentPrice ? product.future_price : null
+
   function handleAdd() {
     if (!selected || selected.stock === 0) return
     addItem(product, selected, quantity)
@@ -52,14 +57,32 @@ export function ProductPurchase({ product, variants }: Props) {
   return (
     <div className="space-y-6">
       {/* Precio de la variante seleccionada */}
-      <div className="flex items-baseline gap-3">
-        <span className="text-4xl font-black" style={{ color: 'var(--red)' }}>
-          {formatPrice(selected?.price ?? product.price)}
-        </span>
-        {!isSingle && (
-          <span className="text-sm" style={{ color: 'var(--gray-400)' }}>
-            Talla {selected?.size}
+      <div>
+        <div className="flex items-baseline gap-3">
+          <span className="text-4xl font-black" style={{ color: 'var(--red)' }}>
+            {formatPrice(currentPrice)}
           </span>
+          {!isSingle && (
+            <span className="text-sm" style={{ color: 'var(--gray-400)' }}>
+              Talla {selected?.size}
+            </span>
+          )}
+        </div>
+
+        {/* Anuncio de alza. A propósito NO es un precio tachado: este
+            producto nunca se vendió a ese valor, y presentarlo como
+            "antes" sería un precio de referencia falso. */}
+        {risesTo && (
+          <div
+            className="mt-3 inline-flex items-center gap-2 rounded-xl px-3 py-2"
+            style={{ background: 'rgba(22,163,74,.08)', border: '1px solid rgba(22,163,74,.2)' }}
+          >
+            <TrendingUp size={15} style={{ color: '#15803d' }} />
+            <span className="text-sm" style={{ color: 'var(--gray-600)' }}>
+              <strong style={{ color: '#15803d' }}>Precio de lanzamiento.</strong>{' '}
+              Sube a {formatPrice(risesTo)} próximamente.
+            </span>
+          </div>
         )}
       </div>
 

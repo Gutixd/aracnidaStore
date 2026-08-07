@@ -21,6 +21,7 @@ export function AdminProductForm({ product, categories }: Props) {
     description: (product?.description as string) ?? '',
     price: String(product?.price ?? ''),
     cost_price: String(product?.cost_price ?? ''),
+    future_price: String(product?.future_price ?? ''),
     stock: String(product?.stock ?? '0'),
     color: (product?.color as string) ?? '',
     category_id: (product?.category_id as string) ?? '',
@@ -49,6 +50,9 @@ export function AdminProductForm({ product, categories }: Props) {
       description: form.description,
       price: parseFloat(form.price),
       cost_price: parseFloat(form.cost_price) || 0,
+      // Vacío = sin anuncio de alza. Al subir el precio de verdad, se borra
+      // este campo (si no, quedaría anunciando un alza que ya ocurrió).
+      future_price: parseFloat(form.future_price) || null,
       color: form.color,
       category_id: form.category_id,
       image_url: form.image_url,
@@ -113,6 +117,15 @@ export function AdminProductForm({ product, categories }: Props) {
         <div>
           <label className={labelClass} style={labelStyle}>Costo (CLP)</label>
           <input value={form.cost_price} onChange={(e) => update('cost_price', e.target.value)} type="number" className="input-field" placeholder="9000" />
+        </div>
+
+        <div>
+          <label className={labelClass} style={labelStyle}>Sube a (CLP)</label>
+          <input value={form.future_price} onChange={(e) => update('future_price', e.target.value)} type="number" className="input-field" placeholder="28000" />
+          <p className="text-xs mt-1.5" style={{ color: 'var(--gray-400)' }}>
+            Anuncia en la tienda que este precio va a subir. Déjalo vacío si no aplica.
+            No es un precio tachado: mostrar un &quot;antes&quot; que nunca se cobró es publicidad engañosa.
+          </p>
         </div>
 
         {!product && (
