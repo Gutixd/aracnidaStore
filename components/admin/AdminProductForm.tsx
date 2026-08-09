@@ -167,7 +167,7 @@ export function AdminProductForm({ product, categories }: Props) {
 
       {product && (
         <p className="text-xs" style={{ color: 'var(--gray-400)' }}>
-          Las tallas y su stock se gestionan en el panel "Stock por talla" de la derecha.
+          Las tallas y su stock se gestionan en el panel &quot;Stock por talla&quot; de la derecha.
         </p>
       )}
 

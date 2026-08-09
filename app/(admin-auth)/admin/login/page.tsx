@@ -1,17 +1,40 @@
 'use client'
 
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Loader2, AlertTriangle } from 'lucide-react'
 import Image from 'next/image'
 
+/**
+ * `useSearchParams` obliga a que el componente se renderice en el cliente,
+ * así que va envuelto en Suspense para no arrastrar toda la página fuera
+ * del prerenderizado estático.
+ */
 export default function AdminLoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
+  )
+}
+
+function LoginForm() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
+
+  // El middleware y el layout del panel redirigen aquí con ?error=sin-permisos
+  // cuando alguien con sesión pero sin permisos intenta entrar. Sin este
+  // mensaje, la persona veía un formulario en blanco sin saber qué pasó.
+  const motivo = useSearchParams().get('error')
+  const aviso =
+    error ??
+    (motivo === 'sin-permisos'
+      ? 'Esa cuenta no tiene acceso al panel. Inicia sesión con una cuenta de administrador.'
+      : null)
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -111,10 +134,10 @@ export default function AdminLoginPage() {
               />
             </div>
 
-            {error && (
-              <div className="rounded-xl p-3 text-sm flex items-center gap-2"
+            {aviso && (
+              <div className="rounded-xl p-3 text-sm flex items-start gap-2"
                 style={{ background: 'rgba(192,57,43,.15)', border: '1px solid rgba(192,57,43,.3)', color: '#f87171' }}>
-                <AlertTriangle size={14} /> {error}
+                <AlertTriangle size={14} className="mt-0.5 shrink-0" /> <span>{aviso}</span>
               </div>
             )}
 
