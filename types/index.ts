@@ -99,6 +99,8 @@ export interface Order {
   /** Fecha exacta del retiro (YYYY-MM-DD) */
   pickup_date?: string | null
   mp_preference_id?: string | null
+  /** Id del evento en Google Calendar, si el pedido es retiro y el calendario está activo. */
+  calendar_event_id?: string | null
   notes: string
   created_at: string
   updated_at: string

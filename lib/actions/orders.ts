@@ -5,6 +5,7 @@ import { isAdmin } from '@/lib/auth/admin'
 import { upsertMarketingContact } from '@/lib/actions/marketing'
 import { notifyNewOrder, notifyLowStock, notifyOutOfStock } from '@/lib/telegram'
 import { sendOrderReceipt } from '@/lib/email'
+import { createPickupEvent, deletePickupEvent } from '@/lib/calendar'
 import { CheckoutFormData } from '@/lib/validations'
 import { CartItem } from '@/types'
 import { calcShippingCost } from '@/lib/shipping'
@@ -176,6 +177,18 @@ export async function createOrder(
   if (fullOrder && formData.delivery_method === 'retiro') {
     await notifyNewOrder(fullOrder)
     await sendOrderReceipt(fullOrder)
+
+    // Reserva la hora en Google Calendar. Solo el retiro tiene una hora real
+    // que bloquear; el envío no. Si falla (sin credenciales, o Google caído),
+    // no debe tumbar el pedido — ya está pagado o por pagar en persona.
+    try {
+      const eventId = await createPickupEvent(fullOrder)
+      if (eventId) {
+        await supabase.from('orders').update({ calendar_event_id: eventId }).eq('id', order.id)
+      }
+    } catch (err) {
+      console.error('[Calendar] No se pudo crear el evento de retiro:', err)
+    }
   }
 
   return { orderId: order.id }
@@ -363,7 +376,7 @@ export async function updateOrderStatus(orderId: string, newStatus: string) {
 
   const { data: order } = await supabase
     .from('orders')
-    .select('id, status, payment_status, delivery_method')
+    .select('id, status, payment_status, delivery_method, calendar_event_id')
     .eq('id', orderId)
     .single()
 
@@ -406,6 +419,10 @@ export async function updateOrderStatus(orderId: string, newStatus: string) {
       orderId,
       `Devolución por cancelación - Pedido #${orderId.slice(0, 8)}`
     )
+    // La hora reservada ya no aplica: se libera el bloque en el calendario.
+    if (order.calendar_event_id) {
+      await deletePickupEvent(order.calendar_event_id)
+    }
   } else if (wasCancelled) {
     // Reactivar un pedido cancelado: vuelve a descontar el stock
     const { data: items } = await supabase
