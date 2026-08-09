@@ -1,63 +1,50 @@
-import crypto from 'crypto'
 import { Order } from '@/types'
 import { PICKUP_PLACE, PICKUP_SLOT_LABELS } from '@/lib/pickup'
 
 /**
- * Crea la cita de retiro directo en Google Calendar, sin librerías externas:
- * Node trae `crypto`, que alcanza para firmar el JWT de una cuenta de
- * servicio (RS256) y pedir el token de acceso por REST.
+ * Crea la cita de retiro directo en Google Calendar.
+ *
+ * Usa OAuth con la cuenta personal del dueño (no una cuenta de servicio):
+ * Google Workspace bloquea la creación de claves de cuenta de servicio por
+ * política de organización (`iam.disableServiceAccountKeyCreation`), y no
+ * tiene sentido pedir a un admin que la desactive por un solo calendario.
+ * El flujo OAuth con refresh token no depende de esa política, y además el
+ * evento cae directo en el calendario del dueño sin tener que compartirlo
+ * con nadie.
  *
  * Solo aplica a pedidos con retiro presencial: son los únicos con día y hora
  * exactos reservados. Los envíos no tienen una hora que bloquear en el
  * calendario.
  *
- * Requiere en el entorno:
- *   GOOGLE_CALENDAR_CLIENT_EMAIL  — el "client_email" del JSON de la cuenta de servicio
- *   GOOGLE_CALENDAR_PRIVATE_KEY   — el "private_key" del mismo JSON (con los \n literales)
- *   GOOGLE_CALENDAR_ID            — el correo del calendario a usar (o "primary")
+ * Requiere en el entorno (ver README de configuración para obtenerlas):
+ *   GOOGLE_CALENDAR_CLIENT_ID
+ *   GOOGLE_CALENDAR_CLIENT_SECRET
+ *   GOOGLE_CALENDAR_REFRESH_TOKEN
+ *   GOOGLE_CALENDAR_ID            — "primary" para el calendario principal del dueño
  */
 
-const CLIENT_EMAIL = process.env.GOOGLE_CALENDAR_CLIENT_EMAIL
-const PRIVATE_KEY = process.env.GOOGLE_CALENDAR_PRIVATE_KEY?.replace(/\\n/g, '\n')
-const CALENDAR_ID = process.env.GOOGLE_CALENDAR_ID
+const CLIENT_ID = process.env.GOOGLE_CALENDAR_CLIENT_ID
+const CLIENT_SECRET = process.env.GOOGLE_CALENDAR_CLIENT_SECRET
+const REFRESH_TOKEN = process.env.GOOGLE_CALENDAR_REFRESH_TOKEN
+const CALENDAR_ID = process.env.GOOGLE_CALENDAR_ID || 'primary'
 
-export const isCalendarEnabled = () => Boolean(CLIENT_EMAIL && PRIVATE_KEY && CALENDAR_ID)
+export const isCalendarEnabled = () => Boolean(CLIENT_ID && CLIENT_SECRET && REFRESH_TOKEN)
 
-function base64url(input: Buffer | string) {
-  return Buffer.from(input)
-    .toString('base64')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/, '')
-}
-
-/** Intercambia la cuenta de servicio por un access token de corta duración. */
+/** Cambia el refresh token (de larga duración) por un access token de una hora. */
 async function getAccessToken(): Promise<string> {
-  const now = Math.floor(Date.now() / 1000)
-  const header = { alg: 'RS256', typ: 'JWT' }
-  const claims = {
-    iss: CLIENT_EMAIL,
-    scope: 'https://www.googleapis.com/auth/calendar.events',
-    aud: 'https://oauth2.googleapis.com/token',
-    iat: now,
-    exp: now + 3600,
-  }
-
-  const unsigned = `${base64url(JSON.stringify(header))}.${base64url(JSON.stringify(claims))}`
-  const signature = crypto.sign('RSA-SHA256', Buffer.from(unsigned), PRIVATE_KEY!)
-  const jwt = `${unsigned}.${base64url(signature)}`
-
   const res = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
-      grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-      assertion: jwt,
+      client_id: CLIENT_ID!,
+      client_secret: CLIENT_SECRET!,
+      refresh_token: REFRESH_TOKEN!,
+      grant_type: 'refresh_token',
     }),
   })
 
   if (!res.ok) {
-    throw new Error(`[Calendar] No se pudo obtener el access token: ${await res.text()}`)
+    throw new Error(`[Calendar] No se pudo renovar el access token: ${await res.text()}`)
   }
   const data = await res.json()
   return data.access_token as string
