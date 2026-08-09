@@ -23,7 +23,8 @@ export function Footer() {
 
             {/* Social */}
             <div className="flex items-center gap-3 mt-5">
-              <a href="https://www.instagram.com/aracnida.store/" target="_blank" rel="noopener noreferrer"
+              <a href="https://www.instagram.com/aracnidastore.cl/" target="_blank" rel="noopener noreferrer"
+                aria-label="Instagram de AracnidaStore"
                 className="w-9 h-9 rounded-xl flex items-center justify-center transition-all hover:scale-110"
                 style={{ background: 'rgba(255,255,255,.08)' }}>
                 <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4" style={{ color: 'rgba(255,255,255,.6)' }}>

@@ -83,6 +83,10 @@ const jsonLd = {
   telephone: '+56978829942',
   email: 'contacto@aracnidastore.com',
   knowsLanguage: 'es-CL',
+  // Vincula el sitio con las cuentas oficiales. Importa especialmente después
+  // de cambiar de handle: sin esto, Google puede seguir asociando la tienda al
+  // Instagram antiguo, que ya no es nuestro.
+  sameAs: ['https://www.instagram.com/aracnidastore.cl/'],
   // Puntos de entrega y catálogo, para que los buscadores con IA puedan
   // responder "dónde comprar / cómo retirar" con datos concretos.
   hasOfferCatalog: {
