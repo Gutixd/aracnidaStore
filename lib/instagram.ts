@@ -25,6 +25,27 @@ const BASE_URL = 'https://graph.instagram.com'
 
 export const isInstagramEnabled = () => Boolean(ACCESS_TOKEN && ACCOUNT_ID)
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
+/** Espera a que el contenedor termine de procesar la imagen antes de publicarlo. */
+async function waitUntilMediaReady(mediaId: string): Promise<void> {
+  for (let attempt = 0; attempt < 15; attempt++) {
+    const res = await fetch(
+      `${BASE_URL}/${API_VERSION}/${mediaId}?fields=status_code&access_token=${ACCESS_TOKEN}`
+    )
+    const data = await res.json()
+
+    if (data.status_code === 'FINISHED') return
+    if (data.status_code === 'ERROR') {
+      throw new Error(`El contenedor falló al procesar la imagen: ${JSON.stringify(data)}`)
+    }
+    // IN_PROGRESS o PUBLISHED (raro en este punto): seguir esperando/reintentar publicar igual.
+    await sleep(2000)
+  }
+  // Se agotó la espera; se intenta publicar de todos modos — si de verdad no
+  // está lista, media_publish devolverá el mismo error 9007 con un mensaje claro.
+}
+
 /** Publica una imagen con su descripción. Devuelve el id del post en Instagram. */
 export async function publishToInstagram(imageUrl: string, caption: string): Promise<string> {
   if (!isInstagramEnabled()) {
@@ -48,6 +69,12 @@ export async function publishToInstagram(imageUrl: string, caption: string): Pro
   if (!createRes.ok || !created.id) {
     throw new Error(`Error creando el contenedor: ${JSON.stringify(created.error ?? created)}`)
   }
+
+  // Instagram procesa la imagen de forma asíncrona: publicar de inmediato
+  // suele fallar con "Media ID is not available" (código 9007) porque el
+  // contenedor todavía no queda en estado FINISHED. Se espera hasta 30s,
+  // consultando cada 2s, antes de intentar publicar.
+  await waitUntilMediaReady(created.id)
 
   // 2) Publicar el contenedor ya creado
   const publishRes = await fetch(
