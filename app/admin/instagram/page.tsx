@@ -1,7 +1,9 @@
 import { getInstagramPosts } from '@/lib/actions/instagram'
 import { AdminInstagramForm } from '@/components/admin/AdminInstagramForm'
+import { AdminInstagramBulkUpload } from '@/components/admin/AdminInstagramBulkUpload'
 import { AdminInstagramQueue } from '@/components/admin/AdminInstagramQueue'
 import { isInstagramEnabled } from '@/lib/instagram'
+import { isClaudeEnabled } from '@/lib/claude'
 import { Camera, AlertTriangle } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
@@ -40,6 +42,8 @@ export default async function AdminInstagramPage() {
           </div>
         </div>
       )}
+
+      {isClaudeEnabled() && <AdminInstagramBulkUpload />}
 
       <div className="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-6">
         <AdminInstagramForm />
