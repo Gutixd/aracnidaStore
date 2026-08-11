@@ -1,0 +1,9 @@
+{
+  "crons": [
+    {
+      "comment": "Publica en Instagram lo programado para hoy. 16:00 UTC ≈ 12:00-13:00 en Chile (según horario de verano). El plan Hobby solo permite 1 ejecución diaria por cron.",
+      "path": "/api/cron/publish-instagram",
+      "schedule": "0 16 * * *"
+    }
+  ]
+}
