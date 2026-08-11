@@ -43,30 +43,43 @@ export function AdminInstagramForm() {
       setMessage({ type: 'error', text: 'Elige una imagen' })
       return
     }
+    // 10 MB en archivo ⇒ ~13.3 MB en base64, ya en el límite del servidor.
+    // Se corta antes para no dejar al usuario esperando un rechazo del servidor.
+    if (file.size > 8 * 1024 * 1024) {
+      setMessage({ type: 'error', text: 'La imagen pesa demasiado (máximo 8 MB). Compruébala e intenta con una más liviana.' })
+      return
+    }
     setLoading(true)
     setMessage(null)
 
-    const { base64, type } = await fileToBase64(file)
-    const res = await scheduleInstagramPost({
-      imageBase64: base64,
-      imageType: type,
-      caption,
-      scheduledFor,
-    })
+    // Nunca dejar el botón pegado: cualquier falla (de red, del servidor,
+    // lo que sea) tiene que volver a habilitar el formulario.
+    try {
+      const { base64, type } = await fileToBase64(file)
+      const res = await scheduleInstagramPost({
+        imageBase64: base64,
+        imageType: type,
+        caption,
+        scheduledFor,
+      })
 
-    setLoading(false)
-    if (res?.error) {
-      setMessage({ type: 'error', text: res.error })
-      return
+      if (res?.error) {
+        setMessage({ type: 'error', text: res.error })
+        return
+      }
+
+      setMessage({ type: 'ok', text: 'Publicación programada' })
+      setFile(null)
+      setPreview(null)
+      setCaption('')
+      setScheduledFor(todayISO())
+      if (fileInput.current) fileInput.current.value = ''
+      router.refresh()
+    } catch {
+      setMessage({ type: 'error', text: 'No se pudo programar la publicación. Intenta de nuevo.' })
+    } finally {
+      setLoading(false)
     }
-
-    setMessage({ type: 'ok', text: 'Publicación programada' })
-    setFile(null)
-    setPreview(null)
-    setCaption('')
-    setScheduledFor(todayISO())
-    if (fileInput.current) fileInput.current.value = ''
-    router.refresh()
   }
 
   return (

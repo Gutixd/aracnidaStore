@@ -42,6 +42,16 @@ const DUPLICATE_HOSTS = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // Por defecto Next.js limita el body de una Server Action a 1 MB. La
+  // publicación de Instagram sube la imagen como base64 (pesa ~33% más que
+  // el archivo original) a través de una Server Action, y esas imágenes
+  // suelen pesar varios MB — con el límite por defecto la subida fallaba
+  // en silencio y el botón se quedaba pegado en "Programando...".
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '10mb',
+    },
+  },
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'images.unsplash.com' },
