@@ -18,10 +18,14 @@ import { MIN_SHIPPING_COST } from '@/lib/shipping'
  */
 
 const API_KEY = process.env.GEMINI_API_KEY
-// gemini-3.6-flash existe pero su nivel gratis es de solo 20 peticiones AL
-// DÍA (no por minuto) — inutilizable para un chat en producción. 2.5-flash
-// tiene el nivel gratis estándar (miles de peticiones al día).
-const MODEL = 'gemini-2.5-flash'
+// El nivel gratis de esta cuenta solo da acceso a gemini-3.6-flash, con
+// tope de 20 peticiones AL DÍA (no por minuto). gemini-2.5-flash y
+// gemini-2.0-flash ya no están disponibles para cuentas nuevas. Al agotarse
+// el tope, getChatReply lanza error y el chat se degrada avisando WhatsApp
+// (decisión consciente: mantener el nivel gratis en vez de activar
+// facturación, aunque eso implique que el chat deje de responder si se
+// agotan los 20 mensajes en un mismo día).
+const MODEL = 'gemini-3.6-flash'
 const WHATSAPP = '+56 9 7882 9942'
 
 export const isChatAssistantEnabled = () => Boolean(API_KEY)
