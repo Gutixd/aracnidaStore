@@ -98,10 +98,12 @@ export async function getChatReply(history: ChatMessage[]): Promise<string> {
           parts: [{ text: `${SYSTEM_INSTRUCTIONS}\n\n${context}` }],
         },
         contents: history.map((m) => ({ role: m.role, parts: [{ text: m.text }] })),
-        // thinkingBudget: 0 evita que el modelo gaste tokens "pensando" antes
-        // de responder — sin esto, gemini-3.6-flash cortaba respuestas cortas
-        // a mitad de frase porque el razonamiento interno consumía el límite.
-        generationConfig: { maxOutputTokens: 800, temperature: 0.4, thinkingConfig: { thinkingBudget: 0 } },
+        // thinkingBudget: 0 debería evitar que el modelo gaste tokens
+        // "pensando" antes de responder, pero gemini-3.6-flash igual consume
+        // parte del límite en razonamiento interno aunque se pida 0 — por
+        // eso el límite queda bien alto, para que siempre sobre espacio
+        // para la respuesta real después de ese consumo.
+        generationConfig: { maxOutputTokens: 4000, temperature: 0.4, thinkingConfig: { thinkingBudget: 0 } },
       }),
     }
   )
@@ -109,6 +111,11 @@ export async function getChatReply(history: ChatMessage[]): Promise<string> {
   const data = await res.json()
   if (!res.ok) {
     throw new Error(`Error de Gemini: ${JSON.stringify(data.error ?? data)}`)
+  }
+
+  const finishReason = data.candidates?.[0]?.finishReason
+  if (finishReason === 'MAX_TOKENS') {
+    console.error('[Chat] Respuesta cortada por MAX_TOKENS', JSON.stringify(data.usageMetadata))
   }
 
   const text = data.candidates?.[0]?.content?.parts
