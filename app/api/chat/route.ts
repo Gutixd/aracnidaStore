@@ -5,6 +5,10 @@ import { checkRateLimit } from '@/lib/rate-limit'
 const MAX_MESSAGES_PER_TURN = 20 // tope de historial que se manda a Gemini
 const MAX_MESSAGE_LENGTH = 1000
 
+// El límite por defecto (10s en el plan Hobby) se queda corto para un modelo
+// con razonamiento interno como gemini-3.6-flash.
+export const maxDuration = 60
+
 export async function POST(request: NextRequest) {
   if (!isChatAssistantEnabled()) {
     return NextResponse.json({ error: 'El chat no está disponible en este momento.' }, { status: 503 })
