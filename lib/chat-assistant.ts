@@ -18,7 +18,7 @@ import { MIN_SHIPPING_COST } from '@/lib/shipping'
  */
 
 const API_KEY = process.env.GEMINI_API_KEY
-const MODEL = 'gemini-2.0-flash'
+const MODEL = 'gemini-3.6-flash'
 const WHATSAPP = '+56 9 7882 9942'
 
 export const isChatAssistantEnabled = () => Boolean(API_KEY)
