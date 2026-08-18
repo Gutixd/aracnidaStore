@@ -98,12 +98,10 @@ export async function getChatReply(history: ChatMessage[]): Promise<string> {
           parts: [{ text: `${SYSTEM_INSTRUCTIONS}\n\n${context}` }],
         },
         contents: history.map((m) => ({ role: m.role, parts: [{ text: m.text }] })),
-        // thinkingBudget: 0 debería evitar que el modelo gaste tokens
-        // "pensando" antes de responder, pero gemini-3.6-flash igual consume
-        // parte del límite en razonamiento interno aunque se pida 0 — por
-        // eso el límite queda bien alto, para que siempre sobre espacio
-        // para la respuesta real después de ese consumo.
-        generationConfig: { maxOutputTokens: 4000, temperature: 0.4, thinkingConfig: { thinkingBudget: 0 } },
+        // thinkingConfig no es válido para este modelo (400 INVALID_ARGUMENT),
+        // así que el límite queda alto para dejar espacio de sobra al
+        // razonamiento interno que el modelo haga antes de responder.
+        generationConfig: { maxOutputTokens: 4000, temperature: 0.4 },
       }),
     }
   )
