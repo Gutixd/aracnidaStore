@@ -98,7 +98,10 @@ export async function getChatReply(history: ChatMessage[]): Promise<string> {
           parts: [{ text: `${SYSTEM_INSTRUCTIONS}\n\n${context}` }],
         },
         contents: history.map((m) => ({ role: m.role, parts: [{ text: m.text }] })),
-        generationConfig: { maxOutputTokens: 400, temperature: 0.4 },
+        // thinkingBudget: 0 evita que el modelo gaste tokens "pensando" antes
+        // de responder — sin esto, gemini-3.6-flash cortaba respuestas cortas
+        // a mitad de frase porque el razonamiento interno consumía el límite.
+        generationConfig: { maxOutputTokens: 800, temperature: 0.4, thinkingConfig: { thinkingBudget: 0 } },
       }),
     }
   )
@@ -108,7 +111,9 @@ export async function getChatReply(history: ChatMessage[]): Promise<string> {
     throw new Error(`Error de Gemini: ${JSON.stringify(data.error ?? data)}`)
   }
 
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text
+  const text = data.candidates?.[0]?.content?.parts
+    ?.map((p: { text?: string }) => p.text ?? '')
+    .join('')
   if (!text) {
     // Bloqueo por seguridad de Gemini u otra respuesta vacía: se degrada con
     // gracia en vez de romper el chat.
