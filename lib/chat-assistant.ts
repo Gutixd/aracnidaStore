@@ -18,7 +18,10 @@ import { MIN_SHIPPING_COST } from '@/lib/shipping'
  */
 
 const API_KEY = process.env.GEMINI_API_KEY
-const MODEL = 'gemini-3.6-flash'
+// gemini-3.6-flash existe pero su nivel gratis es de solo 20 peticiones AL
+// DÍA (no por minuto) — inutilizable para un chat en producción. 2.5-flash
+// tiene el nivel gratis estándar (miles de peticiones al día).
+const MODEL = 'gemini-2.5-flash'
 const WHATSAPP = '+56 9 7882 9942'
 
 export const isChatAssistantEnabled = () => Boolean(API_KEY)
