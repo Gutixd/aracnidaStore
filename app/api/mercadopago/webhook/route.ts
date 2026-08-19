@@ -3,7 +3,7 @@ import crypto from 'crypto'
 import { createAdminClient } from '@/lib/supabase/server'
 import { getPaymentClient } from '@/lib/mercadopago'
 import { notifyNewOrder, notifyStockConflict } from '@/lib/telegram'
-import { sendOrderReceipt } from '@/lib/email'
+import { sendOrderReceipt, sendAdminOrderNotification } from '@/lib/email'
 import { reclaimStockForPaidOrder } from '@/lib/actions/orders'
 
 const WEBHOOK_SECRET = process.env.MP_WEBHOOK_SECRET
@@ -137,6 +137,7 @@ export async function POST(req: NextRequest) {
       if (fullOrder) {
         await notifyNewOrder(fullOrder)
         await sendOrderReceipt(fullOrder)
+        await sendAdminOrderNotification(fullOrder)
         if (stockIncompleto) {
           await notifyStockConflict(fullOrder)
         }

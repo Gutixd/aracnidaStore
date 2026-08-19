@@ -4,7 +4,7 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { isAdmin } from '@/lib/auth/admin'
 import { upsertMarketingContact } from '@/lib/actions/marketing'
 import { notifyNewOrder, notifyLowStock, notifyOutOfStock } from '@/lib/telegram'
-import { sendOrderReceipt } from '@/lib/email'
+import { sendOrderReceipt, sendAdminOrderNotification } from '@/lib/email'
 import { createPickupEvent, deletePickupEvent } from '@/lib/calendar'
 import { CheckoutFormData } from '@/lib/validations'
 import { CartItem } from '@/types'
@@ -177,6 +177,7 @@ export async function createOrder(
   if (fullOrder && formData.delivery_method === 'retiro') {
     await notifyNewOrder(fullOrder)
     await sendOrderReceipt(fullOrder)
+    await sendAdminOrderNotification(fullOrder)
 
     // Reserva la hora en Google Calendar. Solo el retiro tiene una hora real
     // que bloquear; el envío no. Si falla (sin credenciales, o Google caído),
