@@ -101,46 +101,68 @@ export async function POST(req: NextRequest) {
     }
     const newPaymentStatus = paymentStatusMap[status ?? ''] ?? 'pendiente'
 
-    const alreadyPaid = order.payment_status === 'pagado'
     const approved = status === 'approved'
 
-    // El pedido pudo haberse cancelado automáticamente por no pagar a tiempo.
-    // Si el pago finalmente llega, recuperamos la reserva de stock y lo revivimos.
-    let stockIncompleto = false
-    if (approved && !alreadyPaid && order.status === 'cancelado') {
-      stockIncompleto = !(await reclaimStockForPaidOrder(orderId))
+    if (!approved) {
+      await supabase
+        .from('orders')
+        .update({
+          payment_status: newPaymentStatus,
+          payment_id: String(paymentId),
+          payment_method: payment.payment_method_id ?? null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', orderId)
+      return NextResponse.json({ ok: true })
     }
 
-    const nextStatus =
-      approved && (order.status === 'pendiente' || order.status === 'cancelado')
-        ? 'confirmado'
-        : order.status
-
-    await supabase
+    // Mercado Pago manda varios avisos por el mismo pago (reintentos y tópicos
+    // distintos). Este UPDATE condicional hace de candado: el `neq` sobre
+    // payment_status es atómico en Postgres, así que si dos webhooks llegan a
+    // la vez solo uno recibe la fila de vuelta. Antes ambos leían "todavía no
+    // está pagado" antes de que el otro escribiera, y el cliente recibía el
+    // comprobante duplicado.
+    const { data: claimed } = await supabase
       .from('orders')
       .update({
-        payment_status: newPaymentStatus,
+        payment_status: 'pagado',
         payment_id: String(paymentId),
         payment_method: payment.payment_method_id ?? null,
-        status: nextStatus,
+        status:
+          order.status === 'pendiente' || order.status === 'cancelado'
+            ? 'confirmado'
+            : order.status,
         updated_at: new Date().toISOString(),
       })
       .eq('id', orderId)
+      .neq('payment_status', 'pagado')
+      .select('id')
 
-    if (approved && !alreadyPaid) {
-      // Re-fetch con items actualizados por si acaso
-      const { data: fullOrder } = await supabase
-        .from('orders')
-        .select('*, items:order_items(*)')
-        .eq('id', orderId)
-        .single()
-      if (fullOrder) {
-        await notifyNewOrder(fullOrder)
-        await sendOrderReceipt(fullOrder)
-        await sendAdminOrderNotification(fullOrder)
-        if (stockIncompleto) {
-          await notifyStockConflict(fullOrder)
-        }
+    // Sin filas: otro webhook ya confirmó este pago y ya mandó los avisos.
+    if (!claimed || claimed.length === 0) {
+      return NextResponse.json({ ok: true })
+    }
+
+    // El pedido pudo haberse cancelado automáticamente por no pagar a tiempo.
+    // Si el pago finalmente llega, recuperamos la reserva de stock y lo
+    // revivimos. Va después del candado para no descontar stock dos veces.
+    let stockIncompleto = false
+    if (order.status === 'cancelado') {
+      stockIncompleto = !(await reclaimStockForPaidOrder(orderId))
+    }
+
+    // Re-fetch con items actualizados por si acaso
+    const { data: fullOrder } = await supabase
+      .from('orders')
+      .select('*, items:order_items(*)')
+      .eq('id', orderId)
+      .single()
+    if (fullOrder) {
+      await notifyNewOrder(fullOrder)
+      await sendOrderReceipt(fullOrder)
+      await sendAdminOrderNotification(fullOrder)
+      if (stockIncompleto) {
+        await notifyStockConflict(fullOrder)
       }
     }
 
