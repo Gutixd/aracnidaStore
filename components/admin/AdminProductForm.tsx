@@ -111,7 +111,7 @@ export function AdminProductForm({ product, categories }: Props) {
 
         <div>
           <label className={labelClass} style={labelStyle}>Precio base (CLP) *</label>
-          <input value={form.price} onChange={(e) => update('price', e.target.value)} type="number" className="input-field" placeholder="24990" />
+          <input value={form.price} onChange={(e) => update('price', e.target.value)} type="number" className="input-field" placeholder="28000" />
         </div>
 
         <div>

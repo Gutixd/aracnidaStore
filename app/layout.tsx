@@ -70,7 +70,7 @@ const jsonLd = {
   url: SITE_URL,
   image: `${SITE_URL}/logo.jpeg`,
   logo: `${SITE_URL}/logo.jpeg`,
-  priceRange: '$20.000 - $39.990',
+  priceRange: '$9.000 - $90.000',
   currenciesAccepted: 'CLP',
   paymentAccepted: 'Mercado Pago, Tarjetas de crédito y débito, Transferencia, Efectivo',
   areaServed: { '@type': 'Country', name: 'Chile' },

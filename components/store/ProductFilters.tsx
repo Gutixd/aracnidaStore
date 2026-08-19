@@ -205,10 +205,10 @@ export function ProductFilters({ categories, currentParams }: ProductFiltersProp
           <span className={filterLabel} style={filterStyle}>Precio</span>
           <div className="space-y-1">
             {[
-              { label: 'Hasta $25.000', min: undefined, max: '25000' },
-              { label: '$25.000 - $45.000', min: '25000', max: '45000' },
-              { label: '$45.000 - $70.000', min: '45000', max: '70000' },
-              { label: 'Más de $70.000', min: '70000', max: undefined },
+              { label: 'Hasta $20.000', min: undefined, max: '20000' },
+              { label: '$20.000 - $30.000', min: '20000', max: '30000' },
+              { label: '$30.000 - $45.000', min: '30000', max: '45000' },
+              { label: 'Más de $45.000', min: '45000', max: undefined },
             ].map((range) => {
               const isActive = currentParams.min === range.min && currentParams.max === range.max
               return (
