@@ -6,8 +6,18 @@ import { AdminChrome } from './AdminChrome'
 // El panel nunca debe aparecer en buscadores, ni siquiera si alguien enlaza
 // una URL interna desde fuera. robots.txt pide no rastrear; esto además pide
 // no indexar aunque llegue por otro camino.
+//
+// El manifest y los ajustes "apple" solo se declaran aquí (no en el layout
+// raíz) para que la tienda pública no ofrezca "instalar como app" — eso
+// queda reservado al panel, que es lo único pensado para abrirse así.
 export const metadata: Metadata = {
   robots: { index: false, follow: false, nocache: true },
+  manifest: '/admin-manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'Aracnida Admin',
+  },
 }
 
 /**
