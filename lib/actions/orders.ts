@@ -5,6 +5,7 @@ import { isAdmin } from '@/lib/auth/admin'
 import { upsertMarketingContact } from '@/lib/actions/marketing'
 import { notifyNewOrder, notifyLowStock, notifyOutOfStock } from '@/lib/telegram'
 import { sendOrderReceipt, sendAdminOrderNotification } from '@/lib/email'
+import { sendPushToAdmins } from '@/lib/push'
 import { createPickupEvent, deletePickupEvent } from '@/lib/calendar'
 import { CheckoutFormData } from '@/lib/validations'
 import { CartItem } from '@/types'
@@ -178,6 +179,10 @@ export async function createOrder(
     await notifyNewOrder(fullOrder)
     await sendOrderReceipt(fullOrder)
     await sendAdminOrderNotification(fullOrder)
+    await sendPushToAdmins(
+      '🕷️ Nuevo pedido',
+      `${fullOrder.customer_name} — $${Number(fullOrder.total).toLocaleString('es-CL')}`
+    )
 
     // Reserva la hora en Google Calendar. Solo el retiro tiene una hora real
     // que bloquear; el envío no. Si falla (sin credenciales, o Google caído),

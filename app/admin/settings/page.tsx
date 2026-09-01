@@ -1,5 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import { AdminSettingsForm } from '@/components/admin/AdminSettingsForm'
+import { AdminPushToggle } from '@/components/admin/AdminPushToggle'
 
 async function getSettings() {
   const supabase = await createAdminClient()
@@ -17,7 +18,8 @@ export default async function AdminSettingsPage() {
         <p className="text-sm mt-1" style={{ color: 'var(--gray-600)' }}>Ajustes generales de la tienda</p>
       </div>
 
-      <div className="max-w-2xl">
+      <div className="max-w-2xl space-y-6">
+        <AdminPushToggle />
         <AdminSettingsForm settings={settings} />
       </div>
     </div>

@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { getPaymentClient } from '@/lib/mercadopago'
 import { notifyNewOrder, notifyStockConflict } from '@/lib/telegram'
 import { sendOrderReceipt, sendAdminOrderNotification } from '@/lib/email'
+import { sendPushToAdmins } from '@/lib/push'
 import { reclaimStockForPaidOrder } from '@/lib/actions/orders'
 
 const WEBHOOK_SECRET = process.env.MP_WEBHOOK_SECRET
@@ -161,6 +162,10 @@ export async function POST(req: NextRequest) {
       await notifyNewOrder(fullOrder)
       await sendOrderReceipt(fullOrder)
       await sendAdminOrderNotification(fullOrder)
+      await sendPushToAdmins(
+        '🕷️ Nuevo pedido',
+        `${fullOrder.customer_name} — $${Number(fullOrder.total).toLocaleString('es-CL')}`
+      )
       if (stockIncompleto) {
         await notifyStockConflict(fullOrder)
       }
