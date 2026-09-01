@@ -1,7 +1,9 @@
+import { Suspense } from 'react'
 import { createClient } from '@/lib/supabase/server'
 import { Product, Category } from '@/types'
 import { ProductCard } from '@/components/store/ProductCard'
 import { ProductFilters } from '@/components/store/ProductFilters'
+import { ProductsGridSkeleton } from '@/components/store/ProductsGridSkeleton'
 import { Package, Store } from 'lucide-react'
 import { PICKUP_PLACE } from '@/lib/pickup'
 import { MIN_SHIPPING_COST } from '@/lib/shipping'
@@ -103,12 +105,7 @@ async function getCategories(): Promise<Category[]> {
   return data ?? []
 }
 
-export default async function ProductsPage({
-  searchParams,
-}: {
-  searchParams: Promise<SearchParams>
-}) {
-  const params = await searchParams
+async function ProductsContent({ params }: { params: SearchParams }) {
   const [products, categories] = await Promise.all([getProducts(params), getCategories()])
 
   const inStock = products.filter(p => p.stock > 0).length
@@ -118,7 +115,7 @@ export default async function ProductsPage({
   const categorySeo = params.category ? CATEGORY_SEO[params.category] : undefined
 
   return (
-    <div style={{ background: 'var(--gray-50)', minHeight: '100vh' }}>
+    <div style={{ background: 'var(--gray-50)', minHeight: '100vh' }} className="animate-fade-in">
       {/* Page header */}
       <div style={{ background: 'linear-gradient(135deg, #1a2744 0%, #0f1e3d 100%)' }} className="pt-28 pb-14 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
         <div className="web-pattern" />
@@ -178,5 +175,31 @@ export default async function ProductsPage({
         </div>
       </div>
     </div>
+  )
+}
+
+export default async function ProductsPage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>
+}) {
+  const params = await searchParams
+
+  // "Máscaras" y "Disfraces" son la MISMA ruta (/products con ?category=
+  // distinto), no páginas separadas. Next.js trata ese cambio como una
+  // transición sobre el mismo árbol y por defecto mantiene el contenido
+  // ANTERIOR a la vista mientras carga el nuevo — el loading.tsx de la ruta
+  // no alcanza a activarse (solo cubre la primera entrada a /products).
+  //
+  // La clave está en darle a este Suspense una `key` que cambie con los
+  // filtros: así React ve cada combinación como una instancia nueva, sin
+  // árbol previo que mostrar de reemplazo, y muestra el esqueleto de
+  // inmediato en vez de dejar la categoría vieja pegada en pantalla.
+  const suspenseKey = JSON.stringify(params)
+
+  return (
+    <Suspense key={suspenseKey} fallback={<ProductsGridSkeleton />}>
+      <ProductsContent params={params} />
+    </Suspense>
   )
 }

@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { useCart } from '@/store/cart'
 import { ShoppingCart, Menu, X, Search, Shirt, Drama, Sparkles, PawPrint, ChevronRight } from 'lucide-react'
 import { useState, useEffect } from 'react'
+import { NavLink } from './NavLink'
 
 const MOBILE_LINKS = [
   { href: '/products', label: 'Todo el catálogo', icon: Sparkles },
@@ -59,7 +60,7 @@ export function Navbar() {
               { href: '/products?category=mascaras', label: 'Máscaras' },
               { href: '/products?category=peluches', label: 'Peluches' },
             ].map((link) => (
-              <Link
+              <NavLink
                 key={link.href}
                 href={link.href}
                 className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
@@ -74,7 +75,7 @@ export function Navbar() {
                 }}
               >
                 {link.label}
-              </Link>
+              </NavLink>
             ))}
           </nav>
 
@@ -137,7 +138,7 @@ export function Navbar() {
 
             <nav className="px-3 pt-3 pb-2 grid grid-cols-1 gap-1.5">
               {MOBILE_LINKS.map(({ href, label, icon: Icon }) => (
-                <Link
+                <NavLink
                   key={href}
                   href={href}
                   className="flex items-center gap-3 px-3 py-3.5 rounded-2xl text-[15px] font-semibold transition-all active:scale-[0.98]"
@@ -152,7 +153,7 @@ export function Navbar() {
                   </span>
                   {label}
                   <ChevronRight size={16} className="ml-auto" style={{ color: '#d4d3cf' }} />
-                </Link>
+                </NavLink>
               ))}
             </nav>
 

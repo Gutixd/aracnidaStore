@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import { createClient } from '@/lib/supabase/server'
 import { Product, ProductVariant } from '@/types'
 import { notFound } from 'next/navigation'
@@ -19,7 +20,10 @@ import type { Metadata } from 'next'
 
 const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://aracnidastore.com'
 
-async function getProduct(slug: string): Promise<Product | null> {
+// cache() memoiza por request: generateMetadata() y la página llaman a
+// getProduct() con el mismo slug, y sin esto cada uno disparaba su propio
+// viaje a Supabase — el doble de espera para traer el mismo producto.
+const getProduct = cache(async (slug: string): Promise<Product | null> => {
   const supabase = await createClient()
   const { data } = await supabase
     .from('products')
@@ -28,7 +32,7 @@ async function getProduct(slug: string): Promise<Product | null> {
     .eq('active', true)
     .single()
   return data
-}
+})
 
 async function getGalleryImages(productId: string) {
   const supabase = await createClient()
@@ -195,7 +199,7 @@ export default async function ProductPage({
       ]
 
   return (
-    <div style={{ background: 'var(--gray-50)', minHeight: '100vh' }}>
+    <div style={{ background: 'var(--gray-50)', minHeight: '100vh' }} className="animate-fade-in">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumbJsonLd) }} />
 

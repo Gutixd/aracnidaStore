@@ -2,8 +2,9 @@
 
 import { Category } from '@/types'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useCallback, useEffect, useRef, useState, useTransition } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Search, X, Loader2, SlidersHorizontal, ChevronDown } from 'lucide-react'
+import { useNavigationProgress } from './NavigationProgress'
 
 interface ProductFiltersProps {
   categories: Category[]
@@ -15,17 +16,21 @@ const SIZES = ['100','110','120','130','140','150','160','170','180','190','Úni
 export function ProductFilters({ categories, currentParams }: ProductFiltersProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [isPending, startTransition] = useTransition()
+  // Comparte la barra de progreso y el difuminado con el resto de la
+  // navegación (menú, tarjetas de producto) en vez de un useTransition
+  // propio — antes solo se atenuaba este sidebar; la grilla de productos
+  // se quedaba fija sin ningún aviso mientras el filtro cargaba.
+  const { isPending, withTransition } = useNavigationProgress()
 
   // Navegación suave: sin salto de scroll, sin llenar el historial, sin congelar la UI
   const navigate = useCallback(
     (params: URLSearchParams) => {
       const qs = params.toString()
-      startTransition(() => {
+      withTransition(() => {
         router.replace(qs ? `/products?${qs}` : '/products', { scroll: false })
       })
     },
-    [router]
+    [router, withTransition]
   )
 
   const updateParam = useCallback(
