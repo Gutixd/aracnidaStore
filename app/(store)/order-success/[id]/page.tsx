@@ -2,7 +2,7 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { formatPrice } from '@/lib/utils'
 import { CheckCircle2, Package, Truck, MapPin, Clock, Store } from 'lucide-react'
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 
 async function getOrder(id: string) {
   const supabase = await createAdminClient()
@@ -21,6 +21,13 @@ export default async function OrderSuccessPage({
   const { pago } = await searchParams
   const order = await getOrder(id)
   if (!order) notFound()
+
+  // Una reserva tiene abono, saldo y estados propios que esta página no
+  // sabe mostrar (hablaría de "en reparto" y de un total ya pagado que en
+  // realidad es solo el 50%). Tiene su propia vista.
+  if (order.is_reservation) {
+    redirect(`/reserva/${id}${pago ? `?pago=${pago}` : ''}`)
+  }
 
   const paymentBanner =
     order.payment_status === 'pagado' || pago === 'ok'

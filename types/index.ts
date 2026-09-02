@@ -9,8 +9,12 @@ export type OrderStatus =
   | 'en_reparto'
   | 'entregado'
   | 'cancelado'
+  // Solo los usan las reservas anticipadas
+  | 'producto_recibido'
+  | 'lista_entrega'
 
-export type DeliveryMethod = 'delivery' | 'retiro'
+/** 'por_definir' = reserva cuyo método de entrega se coordina cuando llega el producto. */
+export type DeliveryMethod = 'delivery' | 'retiro' | 'por_definir'
 
 export type InventoryMovementType =
   | 'increase'
@@ -90,7 +94,8 @@ export interface Order {
   delivery_commune: string
   delivery_reference: string
   status: OrderStatus
-  payment_status: 'pendiente' | 'pagado' | 'rechazado' | 'reembolsado'
+  /** 'abonado' = pagó el 50% de una reserva y queda saldo por cobrar. */
+  payment_status: 'pendiente' | 'pagado' | 'rechazado' | 'reembolsado' | 'abonado'
   payment_provider?: string | null
   payment_id?: string | null
   payment_method?: string | null
@@ -105,6 +110,16 @@ export interface Order {
   created_at: string
   updated_at: string
   items?: OrderItem[]
+
+  // ── Reserva anticipada ──
+  /** Distingue una reserva de un pedido normal. Ambos viven en `orders`. */
+  is_reservation?: boolean
+  /** Fecha para la que el cliente necesita el producto (YYYY-MM-DD). */
+  needed_by?: string | null
+  /** Abono del 50% pagado por adelantado. */
+  deposit_amount?: number
+  /** Saldo que queda por cobrar contra entrega. */
+  balance_due?: number
 }
 
 export interface OrderItem {

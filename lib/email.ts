@@ -408,3 +408,202 @@ export async function sendAdminOrderNotification(order: Order): Promise<void> {
     console.error('[Email] Excepción avisando al admin:', err)
   }
 }
+
+/* ────────────────────────────────────────────────────────────────────────
+   Reserva anticipada
+   ──────────────────────────────────────────────────────────────────────── */
+
+/** Desglose de montos, el bloque más importante del correo de reserva. */
+function reservationAmountsBlock(order: Order): string {
+  const deposit = Number(order.deposit_amount ?? 0)
+  const balance = Number(order.balance_due ?? 0)
+  return `
+      <table style="width:100%;border-collapse:collapse;margin-bottom:24px;">
+        <tr><td style="padding:6px 0;color:#555;">Precio normal</td><td style="padding:6px 0;text-align:right;color:#888;text-decoration:line-through;">${money(order.subtotal)}</td></tr>
+        <tr><td style="padding:6px 0;color:#555;">Descuento por reservar (15%)</td><td style="padding:6px 0;text-align:right;color:#15803d;font-weight:600;">−${money(order.discount)}</td></tr>
+        <tr>
+          <td style="padding:10px 0;border-top:1px solid #eee;font-weight:700;color:#1a2744;">Precio con reserva</td>
+          <td style="padding:10px 0;border-top:1px solid #eee;text-align:right;font-weight:800;color:#1a2744;font-size:17px;">${money(order.total)}</td>
+        </tr>
+        <tr>
+          <td style="padding:10px 0;border-top:2px solid #1a2744;font-weight:800;color:#15803d;">Abono pagado (50%)</td>
+          <td style="padding:10px 0;border-top:2px solid #1a2744;text-align:right;font-weight:900;color:#15803d;font-size:19px;">${money(deposit)}</td>
+        </tr>
+        <tr>
+          <td style="padding:6px 0;font-weight:700;color:#b45309;">Saldo contra entrega</td>
+          <td style="padding:6px 0;text-align:right;font-weight:800;color:#b45309;font-size:17px;">${money(balance)}</td>
+        </tr>
+      </table>`
+}
+
+function buildReservationHtml(order: Order): string {
+  const shortId = order.id.slice(0, 8).toUpperCase()
+
+  const itemRows = (order.items ?? [])
+    .map(
+      (i) => `
+      <tr>
+        <td style="padding:12px 0;border-bottom:1px solid #eee;">
+          <div style="font-weight:600;color:#1a2744;">${esc(i.product_name)}</div>
+          <div style="font-size:13px;color:#888;">Talla ${esc(i.size)} · Cantidad ${i.quantity}</div>
+        </td>
+      </tr>`
+    )
+    .join('')
+
+  return `<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f5f5f4;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  <div style="max-width:600px;margin:0 auto;padding:24px 16px;">
+
+    <div style="background:linear-gradient(135deg,#1a2744,#0f1e3d);border-radius:16px 16px 0 0;padding:32px 28px;text-align:center;">
+      <h1 style="margin:0;color:#fff;font-size:24px;font-weight:900;letter-spacing:-.5px;">
+        Aracnida<span style="color:#e74c3c;">Store</span>
+      </h1>
+      <p style="margin:8px 0 0;color:rgba(255,255,255,.6);font-size:14px;">Reserva confirmada</p>
+    </div>
+
+    <div style="background:#fff;padding:28px;border-radius:0 0 16px 16px;">
+      <p style="margin:0 0 4px;font-size:16px;color:#1a2744;">Hola <strong>${esc(order.customer_name)}</strong>,</p>
+      <p style="margin:0 0 24px;color:#555;line-height:1.6;">
+        ¡Tu reserva quedó confirmada! Recibimos tu abono y ya estamos gestionando tu producto.
+      </p>
+
+      <div style="display:inline-block;padding:8px 16px;background:#f5f5f4;border-radius:999px;margin-bottom:24px;">
+        <span style="font-size:12px;color:#888;">Reserva</span>
+        <strong style="font-family:monospace;color:#1a2744;margin-left:6px;">#${shortId}</strong>
+      </div>
+
+      <table style="width:100%;border-collapse:collapse;margin-bottom:8px;">
+        <thead>
+          <tr><th style="text-align:left;padding-bottom:8px;font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#aaa;border-bottom:2px solid #1a2744;">Producto reservado</th></tr>
+        </thead>
+        <tbody>${itemRows}</tbody>
+      </table>
+
+      <div style="margin:20px 0;padding:14px 16px;background:#f4f7ff;border:1px solid #d9e2ff;border-radius:12px;">
+        <p style="margin:0;font-size:13px;color:#555;">Lo necesitas para el</p>
+        <p style="margin:2px 0 0;font-weight:700;color:#1a2744;font-size:16px;">${esc(order.needed_by ?? 'Por confirmar')}</p>
+      </div>
+
+      ${reservationAmountsBlock(order)}
+
+      <div style="padding:16px;background:#fafafa;border-radius:12px;margin-bottom:8px;">
+        <p style="margin:0 0 10px;font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#aaa;">Qué sigue</p>
+        <p style="margin:0 0 8px;color:#555;line-height:1.6;font-size:14px;">
+          1. Gestionamos y recibimos tu producto.<br>
+          2. Te avisamos apenas llegue.<br>
+          3. Coordinas si lo quieres con <strong>envío a domicilio</strong> o <strong>retiro en ${PICKUP_PLACE}</strong>.<br>
+          4. Pagas el saldo de <strong>${money(Number(order.balance_due ?? 0))}</strong> al momento de la entrega.
+        </p>
+      </div>
+
+      <div style="text-align:center;margin:28px 0 8px;">
+        <a href="${STORE_URL}/order-success/${order.id}"
+           style="display:inline-block;background:linear-gradient(135deg,#c0392b,#e74c3c);color:#fff;text-decoration:none;padding:14px 32px;border-radius:12px;font-weight:700;">
+          Ver estado de mi reserva
+        </a>
+      </div>
+
+      <p style="margin:24px 0 0;text-align:center;color:#888;font-size:13px;line-height:1.6;">
+        ¿Dudas con tu reserva?<br>
+        Escríbenos por <a href="https://wa.me/${WHATSAPP}?text=${encodeURIComponent(`Hola! Consulta sobre mi reserva #${shortId}`)}" style="color:#c0392b;font-weight:600;">WhatsApp</a>
+      </p>
+    </div>
+
+    <p style="text-align:center;color:#aaa;font-size:12px;margin:20px 0 0;">
+      AracnidaStore · Santiago, Chile<br>
+      Este es un comprobante automático de tu reserva.
+    </p>
+  </div>
+</body></html>`
+}
+
+/** Comprobante de la reserva al cliente, una vez confirmado el abono. */
+export async function sendReservationReceipt(order: Order): Promise<void> {
+  if (!API_KEY || !order.customer_email) return
+
+  try {
+    const resend = new Resend(API_KEY)
+    const { error } = await resend.emails.send({
+      from: FROM,
+      to: order.customer_email,
+      subject: `✅ Reserva confirmada #${order.id.slice(0, 8).toUpperCase()} — AracnidaStore`,
+      html: buildReservationHtml(order),
+    })
+    if (error) console.error('[Email] Error enviando comprobante de reserva:', error)
+  } catch (err) {
+    console.error('[Email] Excepción enviando comprobante de reserva:', err)
+  }
+}
+
+/** Aviso al dueño de que entró una reserva con el abono ya pagado. */
+export async function sendAdminReservationNotification(order: Order): Promise<void> {
+  if (!API_KEY) return
+
+  const shortId = order.id.slice(0, 8).toUpperCase()
+  const items = (order.items ?? [])
+    .map((i) => `${esc(i.product_name)} · Talla ${esc(i.size)} × ${i.quantity}`)
+    .join('<br>')
+
+  const html = `<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f5f5f4;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  <div style="max-width:600px;margin:0 auto;padding:24px 16px;">
+    <div style="background:linear-gradient(135deg,#1a2744,#0f1e3d);border-radius:16px 16px 0 0;padding:28px;text-align:center;">
+      <h1 style="margin:0;color:#fff;font-size:22px;font-weight:900;">Aracnida<span style="color:#e74c3c;">Store</span></h1>
+      <p style="margin:8px 0 0;color:rgba(255,255,255,.65);font-size:14px;">📅 Nueva reserva anticipada</p>
+    </div>
+    <div style="background:#fff;padding:28px;border-radius:0 0 16px 16px;">
+      <table style="width:100%;border-collapse:collapse;margin-bottom:24px;">
+        <tr>
+          <td style="vertical-align:top;">
+            <div style="font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#aaa;">Reserva</div>
+            <div style="font-family:monospace;font-size:20px;font-weight:800;color:#1a2744;">#${shortId}</div>
+          </td>
+          <td style="vertical-align:top;text-align:right;">
+            <div style="font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#aaa;">Abono recibido</div>
+            <div style="font-size:24px;font-weight:900;color:#15803d;">${money(Number(order.deposit_amount ?? 0))}</div>
+          </td>
+        </tr>
+      </table>
+
+      <div style="font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#aaa;border-bottom:2px solid #1a2744;padding-bottom:8px;margin-bottom:10px;">Cliente</div>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:24px;">
+        ${infoRow('Nombre', esc(order.customer_name))}
+        ${infoRow('Email', `<a href="mailto:${esc(order.customer_email)}" style="color:#c0392b;text-decoration:none;">${esc(order.customer_email)}</a>`)}
+        ${order.customer_phone ? infoRow('Teléfono', `<a href="https://wa.me/${esc(String(order.customer_phone).replace(/\D/g, ''))}" style="color:#c0392b;text-decoration:none;">${esc(order.customer_phone)}</a>`) : ''}
+        ${infoRow('Lo necesita para', `<strong>${esc(order.needed_by ?? '—')}</strong>`)}
+        ${infoRow('Pagó con', order.payment_method === 'transferencia' ? 'Transferencia' : 'Mercado Pago')}
+      </table>
+
+      <div style="font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#aaa;border-bottom:2px solid #1a2744;padding-bottom:8px;margin-bottom:10px;">Producto a conseguir</div>
+      <p style="margin:0 0 24px;color:#1a2744;font-size:15px;font-weight:600;line-height:1.6;">${items || '—'}</p>
+
+      ${reservationAmountsBlock(order)}
+
+      <div style="text-align:center;margin-top:8px;">
+        <a href="${STORE_URL}/admin/reservations"
+           style="display:inline-block;background:linear-gradient(135deg,#c0392b,#e74c3c);color:#fff;text-decoration:none;padding:14px 32px;border-radius:12px;font-weight:700;font-size:15px;">
+          Ver reservas en el panel
+        </a>
+      </div>
+    </div>
+    <p style="text-align:center;color:#aaa;font-size:12px;margin:20px 0 0;">Aviso automático de AracnidaStore</p>
+  </div>
+</body></html>`
+
+  try {
+    const resend = new Resend(API_KEY)
+    const { error } = await resend.emails.send({
+      from: FROM,
+      to: ADMIN_EMAIL,
+      replyTo: order.customer_email || undefined,
+      subject: `📅 Nueva reserva #${shortId} — abono ${money(Number(order.deposit_amount ?? 0))}`,
+      html,
+    })
+    if (error) console.error('[Email] Error avisando reserva al admin:', error)
+  } catch (err) {
+    console.error('[Email] Excepción avisando reserva al admin:', err)
+  }
+}

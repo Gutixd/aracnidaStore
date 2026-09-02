@@ -84,6 +84,40 @@ ${order.notes ? `📝 <b>Notas:</b> ${order.notes}` : ''}
   await sendMessage(text)
 }
 
+/** Reserva anticipada con el abono ya confirmado. */
+export async function notifyNewReservation(order: Order): Promise<void> {
+  const items =
+    order.items
+      ?.map((i) => `  • ${i.product_name} (T: ${i.size}) x${i.quantity}`)
+      .join('\n') ?? 'Sin detalle'
+
+  const text = `
+📅 <b>NUEVA RESERVA #${order.id.slice(0, 8).toUpperCase()}</b>
+
+👤 <b>Cliente:</b> ${order.customer_name}
+📞 <b>Teléfono:</b> ${order.customer_phone}
+📧 <b>Email:</b> ${order.customer_email}
+
+🛍️ <b>Producto:</b>
+${items}
+
+📆 <b>Lo necesita para:</b> ${order.needed_by ?? '—'}
+
+💰 <b>Precio normal:</b> ${formatPrice(order.subtotal)}
+🎁 <b>Descuento (15%):</b> -${formatPrice(order.discount)}
+💵 <b>Total con descuento:</b> ${formatPrice(order.total)}
+✅ <b>Abono pagado:</b> ${formatPrice(order.deposit_amount ?? 0)}
+⏳ <b>Saldo pendiente:</b> ${formatPrice(order.balance_due ?? 0)}
+
+💳 <b>Pago:</b> ${order.payment_method === 'transferencia' ? '🏦 Transferencia' : '💳 Mercado Pago'}
+📦 <b>Entrega:</b> por coordinar cuando llegue el producto
+
+🕐 <b>Fecha:</b> ${formatDate(order.created_at)}
+`.trim()
+
+  await sendMessage(text)
+}
+
 export async function notifyPaymentApproved(
   order: Order,
   amount: number

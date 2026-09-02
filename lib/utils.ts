@@ -45,6 +45,9 @@ export const ORDER_STATUS_LABELS: Record<string, string> = {
   en_reparto: 'En reparto',
   entregado: 'Entregado',
   cancelado: 'Cancelado',
+  // Solo aparecen en reservas anticipadas
+  producto_recibido: 'Producto recibido',
+  lista_entrega: 'Lista para entrega',
 }
 
 export const ORDER_STATUS_COLORS: Record<string, string> = {
@@ -54,6 +57,8 @@ export const ORDER_STATUS_COLORS: Record<string, string> = {
   en_reparto: 'bg-orange-50 text-orange-700 border-orange-200',
   entregado: 'bg-green-50 text-green-700 border-green-200',
   cancelado: 'bg-red-50 text-red-700 border-red-200',
+  producto_recibido: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+  lista_entrega: 'bg-teal-50 text-teal-700 border-teal-200',
 }
 
 export const PAYMENT_STATUS_LABELS: Record<string, string> = {
@@ -61,6 +66,8 @@ export const PAYMENT_STATUS_LABELS: Record<string, string> = {
   pagado: 'Pagado',
   rechazado: 'Pago rechazado',
   reembolsado: 'Reembolsado',
+  // Reserva: pagó el 50% y queda saldo contra entrega
+  abonado: 'Abono pagado',
 }
 
 export const PAYMENT_STATUS_COLORS: Record<string, string> = {
@@ -68,10 +75,12 @@ export const PAYMENT_STATUS_COLORS: Record<string, string> = {
   pagado: 'bg-emerald-50 text-emerald-700 border-emerald-200',
   rechazado: 'bg-red-50 text-red-700 border-red-200',
   reembolsado: 'bg-gray-100 text-gray-600 border-gray-200',
+  abonado: 'bg-sky-50 text-sky-700 border-sky-200',
 }
 
 export const PAYMENT_METHOD_LABELS: Record<string, string> = {
   transferencia: 'Transferencia',
   efectivo: 'Efectivo',
+  mercadopago: 'Mercado Pago',
 }
 

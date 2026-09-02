@@ -3,9 +3,10 @@
 import { Product, ProductVariant } from '@/types'
 import { useCart } from '@/store/cart'
 import { formatPrice } from '@/lib/utils'
-import { ShoppingCart, Check, Minus, Plus, TrendingUp } from 'lucide-react'
+import { ShoppingCart, Check, Minus, Plus, TrendingUp, CalendarDays, Tag } from 'lucide-react'
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
+import { calcReservation, RESERVATION_MIN_DAYS } from '@/lib/reservations'
 
 interface Props {
   product: Product
@@ -46,11 +47,16 @@ export function ProductPurchase({ product, variants }: Props) {
 
   if (totalStock === 0) {
     return (
-      <button disabled
-        className="w-full py-4 rounded-xl font-bold cursor-not-allowed"
-        style={{ background: 'var(--gray-100)', color: 'var(--gray-400)' }}>
-        Agotado temporalmente
-      </button>
+      <div className="space-y-4">
+        <button disabled
+          className="w-full py-4 rounded-xl font-bold cursor-not-allowed"
+          style={{ background: 'var(--gray-100)', color: 'var(--gray-400)' }}>
+          Agotado temporalmente
+        </button>
+        {/* Justo el caso donde la reserva vale más: no hay stock, pero el
+            cliente igual puede encargarlo con descuento. */}
+        <ReserveCta slug={product.slug} price={product.price} emphasis />
+      </div>
     )
   }
 
@@ -165,6 +171,47 @@ export function ProductPurchase({ product, variants }: Props) {
           </Link>
         )}
       </div>
+
+      <ReserveCta slug={product.slug} price={currentPrice} />
     </div>
+  )
+}
+
+/**
+ * Invitación a reservar. Muestra el ahorro concreto en pesos en vez de solo
+ * "15% de descuento": el número real convence más que el porcentaje.
+ */
+function ReserveCta({ slug, price, emphasis = false }: { slug: string; price: number; emphasis?: boolean }) {
+  const { discount, final } = calcReservation(price, 1)
+
+  return (
+    <Link
+      href={`/reservar/${slug}`}
+      className="block rounded-xl p-4 transition-all hover:shadow-md"
+      style={{
+        border: emphasis ? '1.5px solid #15803d' : '1.5px dashed var(--gray-200)',
+        background: emphasis ? 'rgba(22,163,74,.05)' : '#fff',
+      }}
+    >
+      <div className="flex items-start gap-3">
+        <span className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+          style={{ background: 'rgba(22,163,74,.1)', color: '#15803d' }}>
+          <CalendarDays size={17} />
+        </span>
+        <div className="min-w-0">
+          <p className="font-bold text-sm flex items-center gap-1.5" style={{ color: 'var(--text)' }}>
+            Resérvalo y paga {formatPrice(final)}
+            <span className="inline-flex items-center gap-1 text-xs font-bold px-1.5 py-0.5 rounded"
+              style={{ background: '#15803d', color: '#fff' }}>
+              <Tag size={10} /> -15%
+            </span>
+          </p>
+          <p className="text-xs mt-1 leading-relaxed" style={{ color: 'var(--gray-600)' }}>
+            Ahorras {formatPrice(discount)} reservando con {RESERVATION_MIN_DAYS} días de anticipación.
+            Abonas la mitad ahora y el resto contra entrega.
+          </p>
+        </div>
+      </div>
+    </Link>
   )
 }

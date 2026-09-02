@@ -6,6 +6,7 @@ import { notifyNewOrder, notifyStockConflict } from '@/lib/telegram'
 import { sendOrderReceipt, sendAdminOrderNotification } from '@/lib/email'
 import { sendPushToAdmins } from '@/lib/push'
 import { reclaimStockForPaidOrder } from '@/lib/actions/orders'
+import { notifyReservationPaid } from '@/lib/actions/reservations'
 
 const WEBHOOK_SECRET = process.env.MP_WEBHOOK_SECRET
 
@@ -117,6 +118,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true })
     }
 
+    // En una reserva lo que se paga es el abono del 50%, no el total: marcarla
+    // como "pagado" diría que el cliente ya cubrió todo, y quedaría un saldo
+    // cobrado sin registro. Por eso pasa a "abonado".
+    const esReserva = order.is_reservation === true
+    const estadoPagoFinal = esReserva ? 'abonado' : 'pagado'
+
     // Mercado Pago manda varios avisos por el mismo pago (reintentos y tópicos
     // distintos). Este UPDATE condicional hace de candado: el `neq` sobre
     // payment_status es atómico en Postgres, así que si dos webhooks llegan a
@@ -126,7 +133,7 @@ export async function POST(req: NextRequest) {
     const { data: claimed } = await supabase
       .from('orders')
       .update({
-        payment_status: 'pagado',
+        payment_status: estadoPagoFinal,
         payment_id: String(paymentId),
         payment_method: payment.payment_method_id ?? null,
         status:
@@ -136,11 +143,18 @@ export async function POST(req: NextRequest) {
         updated_at: new Date().toISOString(),
       })
       .eq('id', orderId)
-      .neq('payment_status', 'pagado')
+      .neq('payment_status', estadoPagoFinal)
       .select('id')
 
     // Sin filas: otro webhook ya confirmó este pago y ya mandó los avisos.
     if (!claimed || claimed.length === 0) {
+      return NextResponse.json({ ok: true })
+    }
+
+    // Una reserva no reserva stock (es un encargo de algo que aún no tenemos),
+    // así que no hay nada que recuperar ni conflicto de inventario que avisar.
+    if (esReserva) {
+      await notifyReservationPaid(orderId)
       return NextResponse.json({ ok: true })
     }
 

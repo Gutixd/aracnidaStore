@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { PICKUP_PLACE, PICKUP_LEAD_HOURS } from '@/lib/pickup'
 import { MIN_SHIPPING_COST } from '@/lib/shipping'
+import { RESERVATION_MIN_DAYS } from '@/lib/reservations'
 
 /**
  * Asistente de chat del sitio, con Gemini (nivel gratis de Google AI Studio).
@@ -62,6 +63,13 @@ ENVÍOS Y RETIRO:
 PAGO:
 - Envío a domicilio: Mercado Pago (tarjetas de crédito, débito o transferencia dentro de esa plataforma).
 - Retiro en persona: efectivo o transferencia bancaria directa al momento del retiro.
+
+RESERVA ANTICIPADA (sirve incluso para productos AGOTADOS):
+- Se reserva desde la ficha del producto, botón "Resérvalo".
+- Requiere al menos ${RESERVATION_MIN_DAYS} días de anticipación respecto a la fecha en que lo necesita.
+- Tiene 15% de descuento sobre el precio normal.
+- Se paga el 50% como abono para confirmar (Mercado Pago o transferencia) y el saldo contra entrega.
+- El producto se consigue y, cuando llega, el cliente elige envío a domicilio o retiro en ${PICKUP_PLACE}.
 
 CAMBIOS Y DEVOLUCIONES:
 - 7 días corridos desde la recepción, producto sin usar, con etiquetas, en su embalaje original, y con el número de orden. El cliente cubre el envío de la devolución.

@@ -51,6 +51,26 @@ export const checkoutSchema = z.object({
 
 export type CheckoutFormData = z.infer<typeof checkoutSchema>
 
+/**
+ * Reserva anticipada. No pide dirección ni datos de entrega a propósito:
+ * eso se coordina cuando el producto llega, no al reservar.
+ */
+export const reservationSchema = z.object({
+  variant_id: z.string().uuid('Selecciona una talla'),
+  quantity: z.coerce.number().int().min(1, 'Cantidad inválida').max(10, 'Máximo 10 unidades por reserva'),
+  /** Fecha para la que necesita el producto, YYYY-MM-DD */
+  needed_by: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Selecciona una fecha válida'),
+  customer_name: z.string().min(2, 'Nombre requerido'),
+  customer_email: z.string().email('Email inválido'),
+  customer_phone: z.string().min(8, 'Teléfono inválido'),
+  // Ambos son en línea: la reserva solo se confirma con el abono pagado.
+  payment_method: z.enum(['mercadopago', 'transferencia']),
+  notes: z.string().max(500, 'Nota demasiado larga').optional(),
+  marketing_opt_in: z.boolean().optional(),
+})
+
+export type ReservationFormData = z.infer<typeof reservationSchema>
+
 export const productEditSchema = z.object({
   name: z.string().min(2, 'Nombre requerido'),
   description: z.string().min(10, 'Descripción muy corta'),

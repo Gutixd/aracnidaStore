@@ -94,3 +94,73 @@ export async function createMercadoPagoPreference(orderId: string) {
     return { error: 'No se pudo iniciar el pago. Intenta nuevamente.' }
   }
 }
+
+/**
+ * Preferencia de pago para una RESERVA. Cobra únicamente el abono del 50%,
+ * no el total: el saldo se paga contra entrega. Por eso no reutiliza
+ * createMercadoPagoPreference, que cobra order.total.
+ */
+export async function createReservationPreference(reservationId: string) {
+  if (!isMercadoPagoEnabled()) {
+    return { error: 'El pago en línea no está disponible en este momento.' }
+  }
+
+  const supabase = await createAdminClient()
+
+  const { data: reservation } = await supabase
+    .from('orders')
+    .select('*, items:order_items(*)')
+    .eq('id', reservationId)
+    .eq('is_reservation', true)
+    .single()
+
+  if (!reservation) return { error: 'Reserva no encontrada' }
+
+  const deposit = Number(reservation.deposit_amount ?? 0)
+  if (deposit <= 0) return { error: 'El monto del abono no es válido' }
+
+  const baseUrl = await getBaseUrl()
+  const productName = reservation.items?.[0]?.product_name ?? 'Producto'
+
+  try {
+    const preference = await getPreferenceClient().create({
+      body: {
+        items: [
+          {
+            id: reservationId,
+            // El título deja explícito que es un abono, para que el cliente
+            // vea en Mercado Pago que no está pagando el total.
+            title: `Abono 50% reserva — ${productName}`,
+            quantity: 1,
+            unit_price: deposit,
+            currency_id: 'CLP',
+          },
+        ],
+        external_reference: reservationId,
+        payer: {
+          name: reservation.customer_name,
+          email: reservation.customer_email,
+        },
+        back_urls: {
+          success: `${baseUrl}/order-success/${reservationId}?pago=ok`,
+          pending: `${baseUrl}/order-success/${reservationId}?pago=pendiente`,
+          failure: `${baseUrl}/order-success/${reservationId}?pago=error`,
+        },
+        auto_return: 'approved',
+        notification_url: `${baseUrl}/api/mercadopago/webhook`,
+        statement_descriptor: 'ARACNIDASTORE',
+        metadata: { order_id: reservationId, is_reservation: true },
+      },
+    })
+
+    await supabase
+      .from('orders')
+      .update({ mp_preference_id: preference.id })
+      .eq('id', reservationId)
+
+    return { url: preference.init_point as string }
+  } catch (err) {
+    console.error('[MercadoPago] Error creando preferencia de reserva:', err)
+    return { error: 'No se pudo iniciar el pago. Intenta nuevamente.' }
+  }
+}
