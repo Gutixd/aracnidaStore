@@ -63,7 +63,7 @@ export const reservationSchema = z.object({
   customer_name: z.string().min(2, 'Nombre requerido'),
   customer_email: z.string().email('Email inválido'),
   customer_phone: z.string().min(8, 'Teléfono inválido'),
-  // Ambos son en línea: la reserva solo se confirma con el abono pagado.
+  // Ambos son en línea: la reserva solo se confirma con el pago completo.
   payment_method: z.enum(['mercadopago', 'transferencia']),
   notes: z.string().max(500, 'Nota demasiado larga').optional(),
   marketing_opt_in: z.boolean().optional(),

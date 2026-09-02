@@ -278,8 +278,8 @@ export async function releaseExpiredOrders() {
     .eq('status', 'pendiente')
     .eq('payment_status', 'pendiente')
     .eq('delivery_method', 'delivery')
-    // Una reserva no reserva stock y su abono puede tardar días (sobre todo
-    // por transferencia): cancelarla a los 45 minutos borraría ventas reales.
+    // Una reserva no reserva stock y su pago por transferencia puede tardar
+    // días: cancelarla a los 45 minutos borraría ventas reales.
     // El filtro por delivery_method ya las deja fuera, pero dejarlo explícito
     // evita que un cambio futuro en ese campo las arrastre por accidente.
     .eq('is_reservation', false)

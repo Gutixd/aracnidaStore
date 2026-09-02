@@ -11,34 +11,21 @@ export const RESERVATION_MIN_DAYS = 15
 /** Descuento por reservar con anticipación. */
 export const RESERVATION_DISCOUNT_RATE = 0.15
 
-/** Porcentaje del total que se paga por adelantado para confirmar. */
-export const RESERVATION_DEPOSIT_RATE = 0.5
-
 export interface ReservationBreakdown {
   /** Precio de lista, sin descuento */
   normal: number
   /** Monto descontado (15%) */
   discount: number
-  /** Precio final con el descuento aplicado */
+  /** Precio final con el descuento aplicado — se paga 100% al reservar. */
   final: number
-  /** Abono a pagar ahora (50% del final) */
-  deposit: number
-  /** Saldo que queda por pagar contra entrega */
-  balance: number
 }
 
-/**
- * Todos los montos en pesos enteros. `balance` se deriva restando para que
- * abono + saldo siempre dé exactamente el total, sin descuadres de un peso
- * por redondeo.
- */
+/** Todos los montos en pesos enteros. */
 export function calcReservation(unitPrice: number, quantity: number): ReservationBreakdown {
   const normal = Math.round(unitPrice * quantity)
   const discount = Math.round(normal * RESERVATION_DISCOUNT_RATE)
   const final = normal - discount
-  const deposit = Math.round(final * RESERVATION_DEPOSIT_RATE)
-  const balance = final - deposit
-  return { normal, discount, final, deposit, balance }
+  return { normal, discount, final }
 }
 
 /** Primera fecha válida para reservar (hoy + los días mínimos), en YYYY-MM-DD. */

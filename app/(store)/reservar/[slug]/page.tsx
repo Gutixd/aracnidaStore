@@ -30,7 +30,7 @@ export async function generateMetadata({
 
   return {
     title: `Reservar ${product.name} con 15% de descuento`,
-    description: `Reserva ${product.name} con ${RESERVATION_MIN_DAYS} días de anticipación y obtén 15% de descuento. Pagas 50% ahora y el saldo contra entrega.`,
+    description: `Reserva ${product.name} con ${RESERVATION_MIN_DAYS} días de anticipación y obtén 15% de descuento. Pagas el total ahora.`,
     // La reserva es un paso del embudo, no una página que deba competir en
     // buscadores con la ficha del producto.
     robots: { index: false, follow: true },
@@ -86,7 +86,7 @@ export default async function ReservarPage({
           <h1 className="text-3xl md:text-4xl font-black text-white">Reservar {product.name}</h1>
           <p className="mt-2 text-sm max-w-2xl" style={{ color: 'rgba(255,255,255,.6)' }}>
             Reservando con al menos {RESERVATION_MIN_DAYS} días de anticipación pagas un 15% menos.
-            Abonas el 50% ahora para confirmar y el saldo al recibir tu producto.
+            Pagas el total ahora para confirmar tu reserva.
           </p>
         </div>
       </div>

@@ -208,7 +208,7 @@ function ReserveCta({ slug, price, emphasis = false }: { slug: string; price: nu
           </p>
           <p className="text-xs mt-1 leading-relaxed" style={{ color: 'var(--gray-600)' }}>
             Ahorras {formatPrice(discount)} reservando con {RESERVATION_MIN_DAYS} días de anticipación.
-            Abonas la mitad ahora y el resto contra entrega.
+            Pagas todo ahora y listo.
           </p>
         </div>
       </div>

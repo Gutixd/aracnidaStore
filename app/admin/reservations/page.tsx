@@ -35,11 +35,9 @@ export default async function AdminReservationsPage() {
 
   const activas = reservations.filter((r) => r.status !== 'cancelado' && r.status !== 'entregado')
   const porConfirmar = reservations.filter((r) => r.payment_status === 'pendiente' && r.status !== 'cancelado')
-  const saldoPorCobrar = reservations.filter((r) => r.payment_status === 'abonado' && r.status !== 'cancelado')
-  const totalSaldo = saldoPorCobrar.reduce((s, r) => s + Number(r.balance_due ?? 0), 0)
-  const totalAbonado = reservations
-    .filter((r) => r.status !== 'cancelado' && (r.payment_status === 'abonado' || r.payment_status === 'pagado'))
-    .reduce((s, r) => s + Number(r.deposit_amount ?? 0), 0)
+  const totalRecaudado = reservations
+    .filter((r) => r.status !== 'cancelado' && r.payment_status === 'pagado')
+    .reduce((s, r) => s + Number(r.total ?? 0), 0)
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
@@ -53,8 +51,8 @@ export default async function AdminReservationsPage() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
         {[
           { label: 'Activas', value: String(activas.length), color: 'var(--blue)' },
-          { label: 'Abonos recibidos', value: formatPrice(totalAbonado), color: '#15803d' },
-          { label: 'Saldo por cobrar', value: formatPrice(totalSaldo), color: '#b45309' },
+          { label: 'Total recaudado', value: formatPrice(totalRecaudado), color: '#15803d' },
+          { label: 'Reservas', value: String(reservations.length), color: 'var(--text)' },
           { label: 'Por confirmar', value: String(porConfirmar.length), color: porConfirmar.length ? 'var(--red)' : 'var(--gray-400)' },
         ].map((kpi) => (
           <div key={kpi.label} className="stat-card">
@@ -69,7 +67,7 @@ export default async function AdminReservationsPage() {
           <AlertTriangle size={18} className="text-amber-600 shrink-0" />
           <p className="text-sm text-amber-800">
             <strong>{porConfirmar.length}</strong>{' '}
-            {porConfirmar.length === 1 ? 'reserva espera' : 'reservas esperan'} confirmación del abono.
+            {porConfirmar.length === 1 ? 'reserva espera' : 'reservas esperan'} confirmación del pago.
           </p>
         </div>
       )}
@@ -168,15 +166,11 @@ export default async function AdminReservationsPage() {
                       <span className="tabular-nums" style={{ color: '#15803d' }}>−{formatPrice(r.discount)}</span>
                     </div>
                     <div className="flex justify-between font-semibold">
-                      <span style={{ color: '#15803d' }}>Abono</span>
-                      <span className="tabular-nums" style={{ color: '#15803d' }}>
-                        {formatPrice(Number(r.deposit_amount ?? 0))}
+                      <span style={{ color: '#15803d' }}>
+                        {r.payment_status === 'pagado' ? 'Total pagado' : 'Total a pagar'}
                       </span>
-                    </div>
-                    <div className="flex justify-between font-semibold">
-                      <span style={{ color: '#b45309' }}>Saldo</span>
-                      <span className="tabular-nums" style={{ color: '#b45309' }}>
-                        {formatPrice(Number(r.balance_due ?? 0))}
+                      <span className="tabular-nums" style={{ color: '#15803d' }}>
+                        {formatPrice(r.total)}
                       </span>
                     </div>
                   </div>

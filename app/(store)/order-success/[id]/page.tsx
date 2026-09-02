@@ -22,9 +22,8 @@ export default async function OrderSuccessPage({
   const order = await getOrder(id)
   if (!order) notFound()
 
-  // Una reserva tiene abono, saldo y estados propios que esta página no
-  // sabe mostrar (hablaría de "en reparto" y de un total ya pagado que en
-  // realidad es solo el 50%). Tiene su propia vista.
+  // Una reserva tiene estados propios que esta página no sabe mostrar
+  // (hablaría de "en reparto", que no aplica). Tiene su propia vista.
   if (order.is_reservation) {
     redirect(`/reserva/${id}${pago ? `?pago=${pago}` : ''}`)
   }

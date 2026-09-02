@@ -68,7 +68,7 @@ RESERVA ANTICIPADA (sirve incluso para productos AGOTADOS):
 - Se reserva desde la ficha del producto, botón "Resérvalo".
 - Requiere al menos ${RESERVATION_MIN_DAYS} días de anticipación respecto a la fecha en que lo necesita.
 - Tiene 15% de descuento sobre el precio normal.
-- Se paga el 50% como abono para confirmar (Mercado Pago o transferencia) y el saldo contra entrega.
+- Se paga el 100% al reservar (Mercado Pago o transferencia); no queda saldo pendiente.
 - El producto se consigue y, cuando llega, el cliente elige envío a domicilio o retiro en ${PICKUP_PLACE}.
 
 CAMBIOS Y DEVOLUCIONES:

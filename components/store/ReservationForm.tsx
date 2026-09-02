@@ -239,7 +239,7 @@ export function ReservationForm({ product, variants }: Props) {
         <div className="card p-5">
           <div className="flex items-center gap-3 mb-4">
             <span className={stepCls} style={stepStyle}>5</span>
-            <h2 className="font-bold" style={{ color: 'var(--text)' }}>¿Cómo pagas el abono?</h2>
+            <h2 className="font-bold" style={{ color: 'var(--text)' }}>¿Cómo pagas?</h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {([
@@ -291,25 +291,11 @@ export function ReservationForm({ product, variants }: Props) {
                 </td>
               </tr>
               <tr>
-                <td className="pt-3 font-bold" style={{ color: 'var(--text)', borderTop: '1px solid var(--gray-100)' }}>
-                  Precio con reserva
-                </td>
-                <td className="pt-3 text-right font-black tabular-nums" style={{ color: 'var(--text)', borderTop: '1px solid var(--gray-100)' }}>
-                  {formatPrice(amounts.final)}
-                </td>
-              </tr>
-              <tr>
                 <td className="pt-3 font-bold" style={{ color: '#15803d', borderTop: '2px solid var(--text)' }}>
-                  Abono ahora (50%)
+                  Total a pagar ahora
                 </td>
                 <td className="pt-3 text-right font-black tabular-nums text-lg" style={{ color: '#15803d', borderTop: '2px solid var(--text)' }}>
-                  {formatPrice(amounts.deposit)}
-                </td>
-              </tr>
-              <tr>
-                <td className="py-1.5 font-semibold" style={{ color: '#b45309' }}>Saldo contra entrega</td>
-                <td className="py-1.5 text-right font-bold tabular-nums" style={{ color: '#b45309' }}>
-                  {formatPrice(amounts.balance)}
+                  {formatPrice(amounts.final)}
                 </td>
               </tr>
             </tbody>
@@ -328,7 +314,7 @@ export function ReservationForm({ product, variants }: Props) {
           >
             {loading
               ? <><Loader2 size={18} className="animate-spin" /> Procesando...</>
-              : <>Pagar abono de {formatPrice(amounts.deposit)}</>}
+              : <>Pagar {formatPrice(amounts.final)}</>}
           </button>
 
           {!dateOk && (
@@ -340,9 +326,9 @@ export function ReservationForm({ product, variants }: Props) {
 
         <div className="rounded-xl p-4 text-xs leading-relaxed"
           style={{ background: 'var(--gray-50)', color: 'var(--gray-600)' }}>
-          <strong style={{ color: 'var(--text)' }}>Cómo funciona:</strong> pagas el 50% ahora,
-          conseguimos tu producto, te avisamos cuando llegue y ahí eliges envío a domicilio o
-          retiro presencial. El saldo lo pagas al momento de la entrega.
+          <strong style={{ color: 'var(--text)' }}>Cómo funciona:</strong> pagas el total ahora con
+          15% de descuento, conseguimos tu producto, te avisamos cuando llegue y ahí eliges envío
+          a domicilio o retiro presencial. No queda nada por pagar en ese momento.
         </div>
       </div>
     </form>

@@ -415,23 +415,13 @@ export async function sendAdminOrderNotification(order: Order): Promise<void> {
 
 /** Desglose de montos, el bloque más importante del correo de reserva. */
 function reservationAmountsBlock(order: Order): string {
-  const deposit = Number(order.deposit_amount ?? 0)
-  const balance = Number(order.balance_due ?? 0)
   return `
       <table style="width:100%;border-collapse:collapse;margin-bottom:24px;">
         <tr><td style="padding:6px 0;color:#555;">Precio normal</td><td style="padding:6px 0;text-align:right;color:#888;text-decoration:line-through;">${money(order.subtotal)}</td></tr>
         <tr><td style="padding:6px 0;color:#555;">Descuento por reservar (15%)</td><td style="padding:6px 0;text-align:right;color:#15803d;font-weight:600;">−${money(order.discount)}</td></tr>
         <tr>
-          <td style="padding:10px 0;border-top:1px solid #eee;font-weight:700;color:#1a2744;">Precio con reserva</td>
-          <td style="padding:10px 0;border-top:1px solid #eee;text-align:right;font-weight:800;color:#1a2744;font-size:17px;">${money(order.total)}</td>
-        </tr>
-        <tr>
-          <td style="padding:10px 0;border-top:2px solid #1a2744;font-weight:800;color:#15803d;">Abono pagado (50%)</td>
-          <td style="padding:10px 0;border-top:2px solid #1a2744;text-align:right;font-weight:900;color:#15803d;font-size:19px;">${money(deposit)}</td>
-        </tr>
-        <tr>
-          <td style="padding:6px 0;font-weight:700;color:#b45309;">Saldo contra entrega</td>
-          <td style="padding:6px 0;text-align:right;font-weight:800;color:#b45309;font-size:17px;">${money(balance)}</td>
+          <td style="padding:10px 0;border-top:2px solid #1a2744;font-weight:800;color:#15803d;">Total pagado</td>
+          <td style="padding:10px 0;border-top:2px solid #1a2744;text-align:right;font-weight:900;color:#15803d;font-size:19px;">${money(order.total)}</td>
         </tr>
       </table>`
 }
@@ -466,7 +456,7 @@ function buildReservationHtml(order: Order): string {
     <div style="background:#fff;padding:28px;border-radius:0 0 16px 16px;">
       <p style="margin:0 0 4px;font-size:16px;color:#1a2744;">Hola <strong>${esc(order.customer_name)}</strong>,</p>
       <p style="margin:0 0 24px;color:#555;line-height:1.6;">
-        ¡Tu reserva quedó confirmada! Recibimos tu abono y ya estamos gestionando tu producto.
+        ¡Tu reserva quedó confirmada! Recibimos tu pago y ya estamos gestionando tu producto.
       </p>
 
       <div style="display:inline-block;padding:8px 16px;background:#f5f5f4;border-radius:999px;margin-bottom:24px;">
@@ -493,13 +483,12 @@ function buildReservationHtml(order: Order): string {
         <p style="margin:0 0 8px;color:#555;line-height:1.6;font-size:14px;">
           1. Gestionamos y recibimos tu producto.<br>
           2. Te avisamos apenas llegue.<br>
-          3. Coordinas si lo quieres con <strong>envío a domicilio</strong> o <strong>retiro en ${PICKUP_PLACE}</strong>.<br>
-          4. Pagas el saldo de <strong>${money(Number(order.balance_due ?? 0))}</strong> al momento de la entrega.
+          3. Coordinas si lo quieres con <strong>envío a domicilio</strong> o <strong>retiro en ${PICKUP_PLACE}</strong>. Tu reserva ya está pagada por completo, así que no queda nada por pagar en ese momento.
         </p>
       </div>
 
       <div style="text-align:center;margin:28px 0 8px;">
-        <a href="${STORE_URL}/order-success/${order.id}"
+        <a href="${STORE_URL}/reserva/${order.id}"
            style="display:inline-block;background:linear-gradient(135deg,#c0392b,#e74c3c);color:#fff;text-decoration:none;padding:14px 32px;border-radius:12px;font-weight:700;">
           Ver estado de mi reserva
         </a>
@@ -519,7 +508,7 @@ function buildReservationHtml(order: Order): string {
 </body></html>`
 }
 
-/** Comprobante de la reserva al cliente, una vez confirmado el abono. */
+/** Comprobante de la reserva al cliente, una vez confirmado el pago. */
 export async function sendReservationReceipt(order: Order): Promise<void> {
   if (!API_KEY || !order.customer_email) return
 
@@ -537,7 +526,7 @@ export async function sendReservationReceipt(order: Order): Promise<void> {
   }
 }
 
-/** Aviso al dueño de que entró una reserva con el abono ya pagado. */
+/** Aviso al dueño de que entró una reserva con el pago ya confirmado. */
 export async function sendAdminReservationNotification(order: Order): Promise<void> {
   if (!API_KEY) return
 
@@ -562,8 +551,8 @@ export async function sendAdminReservationNotification(order: Order): Promise<vo
             <div style="font-family:monospace;font-size:20px;font-weight:800;color:#1a2744;">#${shortId}</div>
           </td>
           <td style="vertical-align:top;text-align:right;">
-            <div style="font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#aaa;">Abono recibido</div>
-            <div style="font-size:24px;font-weight:900;color:#15803d;">${money(Number(order.deposit_amount ?? 0))}</div>
+            <div style="font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#aaa;">Total pagado</div>
+            <div style="font-size:24px;font-weight:900;color:#15803d;">${money(order.total)}</div>
           </td>
         </tr>
       </table>
@@ -599,7 +588,7 @@ export async function sendAdminReservationNotification(order: Order): Promise<vo
       from: FROM,
       to: ADMIN_EMAIL,
       replyTo: order.customer_email || undefined,
-      subject: `📅 Nueva reserva #${shortId} — abono ${money(Number(order.deposit_amount ?? 0))}`,
+      subject: `📅 Nueva reserva #${shortId} — ${money(order.total)}`,
       html,
     })
     if (error) console.error('[Email] Error avisando reserva al admin:', error)

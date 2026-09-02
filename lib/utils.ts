@@ -66,7 +66,8 @@ export const PAYMENT_STATUS_LABELS: Record<string, string> = {
   pagado: 'Pagado',
   rechazado: 'Pago rechazado',
   reembolsado: 'Reembolsado',
-  // Reserva: pagó el 50% y queda saldo contra entrega
+  // Ya no se genera (las reservas ahora se pagan 100% al reservar), pero se
+  // deja mapeado por si queda alguna fila antigua con este estado.
   abonado: 'Abono pagado',
 }
 

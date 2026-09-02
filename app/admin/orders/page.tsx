@@ -6,11 +6,13 @@ import {
   PAYMENT_METHOD_LABELS,
 } from '@/lib/utils'
 import { PICKUP_SLOT_LABELS, PICKUP_PLACE, formatPickupDate } from '@/lib/pickup'
+import { formatReservationDate } from '@/lib/reservations'
 import { Order } from '@/types'
 import { AdminOrderStatusChanger } from '@/components/admin/AdminOrderStatusChanger'
 import { AdminPaymentStatusChanger } from '@/components/admin/AdminPaymentStatusChanger'
 import { releaseExpiredOrders } from '@/lib/actions/orders'
-import { ShoppingCart, Truck, Store, Calendar, Clock, Banknote, AlertTriangle } from 'lucide-react'
+import Link from 'next/link'
+import { ShoppingCart, Truck, Store, Calendar, Clock, Banknote, AlertTriangle, CalendarDays, ArrowRight } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
@@ -82,15 +84,25 @@ export default async function AdminOrdersPage() {
               <div>
                 <div className="flex items-center gap-3 mb-1">
                   <span className="font-mono text-xs" style={{ color: 'var(--gray-400)' }}>#{order.id.slice(0, 8).toUpperCase()}</span>
+                  {/* Sin esto, una reserva se ve idéntica a un pedido normal en esta
+                      lista — y con delivery_method "por_definir" incluso mostraba
+                      datos de retiro falsos ("Día no indicado", "Hora no indicada"). */}
+                  {order.is_reservation && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold border bg-indigo-50 text-indigo-700 border-indigo-200">
+                      <CalendarDays size={12} /> Reserva
+                    </span>
+                  )}
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border ${ORDER_STATUS_COLORS[order.status]}`}>
                     {ORDER_STATUS_LABELS[order.status]}
                   </span>
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border ${PAYMENT_STATUS_COLORS[order.payment_status]}`}>
                     {PAYMENT_STATUS_LABELS[order.payment_status]}
                   </span>
-                  <span className="text-xs px-2 py-0.5 rounded inline-flex items-center gap-1" style={{ background: 'var(--gray-50)', color: 'var(--gray-600)' }}>
-                    {order.delivery_method === 'delivery' ? <><Truck size={12} /> Delivery</> : <><Store size={12} /> Retiro</>}
-                  </span>
+                  {!order.is_reservation && (
+                    <span className="text-xs px-2 py-0.5 rounded inline-flex items-center gap-1" style={{ background: 'var(--gray-50)', color: 'var(--gray-600)' }}>
+                      {order.delivery_method === 'delivery' ? <><Truck size={12} /> Delivery</> : <><Store size={12} /> Retiro</>}
+                    </span>
+                  )}
                 </div>
                 <p className="font-bold" style={{ color: 'var(--text)' }}>{order.customer_name}</p>
                 <div className="flex items-center gap-3 text-xs mt-0.5" style={{ color: 'var(--gray-400)' }}>
@@ -118,7 +130,26 @@ export default async function AdminOrdersPage() {
                 </div>
               </div>
 
-              {order.delivery_method === 'delivery' ? (
+              {order.is_reservation ? (
+                <div>
+                  <p className="text-xs uppercase tracking-wider mb-3 font-bold" style={{ color: 'var(--gray-400)' }}>Reserva</p>
+                  <div className="text-sm space-y-2" style={{ color: 'var(--gray-600)' }}>
+                    <p className="flex items-center gap-2">
+                      <CalendarDays size={14} style={{ color: 'var(--gray-400)' }} />
+                      <span>Lo necesita el{' '}
+                        <strong className="capitalize" style={{ color: 'var(--text)' }}>
+                          {order.needed_by ? formatReservationDate(order.needed_by) : 'sin fecha'}
+                        </strong>
+                      </span>
+                    </p>
+                    <p style={{ color: 'var(--gray-400)' }}>Entrega por definir cuando llegue el producto</p>
+                    <Link href="/admin/reservations" className="inline-flex items-center gap-1 text-xs font-semibold hover:underline"
+                      style={{ color: 'var(--red)' }}>
+                      Gestionar en Reservas <ArrowRight size={12} />
+                    </Link>
+                  </div>
+                </div>
+              ) : order.delivery_method === 'delivery' ? (
                 <div>
                   <p className="text-xs uppercase tracking-wider mb-3 font-bold" style={{ color: 'var(--gray-400)' }}>Entrega</p>
                   <div className="text-sm space-y-1" style={{ color: 'var(--gray-600)' }}>
@@ -168,14 +199,27 @@ export default async function AdminOrdersPage() {
                 </p>
               )}
               <div className="ml-auto flex flex-wrap items-center gap-3">
-                <div>
-                  <p className="text-xs mb-1 font-semibold" style={{ color: 'var(--gray-400)' }}>Pago</p>
-                  <AdminPaymentStatusChanger orderId={order.id} currentStatus={order.payment_status} />
-                </div>
-                <div>
-                  <p className="text-xs mb-1 font-semibold" style={{ color: 'var(--gray-400)' }}>Estado</p>
-                  <AdminOrderStatusChanger orderId={order.id} currentStatus={order.status} />
-                </div>
+                {order.is_reservation ? (
+                  // Los cambios de estado de una reserva no pasan por acá:
+                  // updateOrderStatus() devuelve/descuenta stock al cancelar o
+                  // reactivar, y una reserva nunca descontó stock — usarlo
+                  // aquí inflaría el inventario por error. /admin/reservations
+                  // tiene su propio control, sin ese efecto secundario.
+                  <Link href="/admin/reservations" className="btn-ghost text-xs py-2 px-3 inline-flex items-center gap-1.5">
+                    Gestionar estado en Reservas <ArrowRight size={12} />
+                  </Link>
+                ) : (
+                  <>
+                    <div>
+                      <p className="text-xs mb-1 font-semibold" style={{ color: 'var(--gray-400)' }}>Pago</p>
+                      <AdminPaymentStatusChanger orderId={order.id} currentStatus={order.payment_status} />
+                    </div>
+                    <div>
+                      <p className="text-xs mb-1 font-semibold" style={{ color: 'var(--gray-400)' }}>Estado</p>
+                      <AdminOrderStatusChanger orderId={order.id} currentStatus={order.status} />
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>

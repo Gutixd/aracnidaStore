@@ -118,11 +118,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true })
     }
 
-    // En una reserva lo que se paga es el abono del 50%, no el total: marcarla
-    // como "pagado" diría que el cliente ya cubrió todo, y quedaría un saldo
-    // cobrado sin registro. Por eso pasa a "abonado".
+    // Una reserva se paga 100% al reservar, así que queda "pagado" igual que
+    // un pedido normal — no queda saldo pendiente que registrar aparte.
     const esReserva = order.is_reservation === true
-    const estadoPagoFinal = esReserva ? 'abonado' : 'pagado'
+    const estadoPagoFinal = 'pagado'
 
     // Mercado Pago manda varios avisos por el mismo pago (reintentos y tópicos
     // distintos). Este UPDATE condicional hace de candado: el `neq` sobre

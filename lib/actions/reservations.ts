@@ -74,8 +74,9 @@ export async function createReservation(input: ReservationFormData) {
       discount: amounts.discount,
       shipping_cost: 0, // se define al coordinar la entrega
       total: amounts.final,
-      deposit_amount: amounts.deposit,
-      balance_due: amounts.balance,
+      // Se paga 100% al reservar: no queda saldo pendiente.
+      deposit_amount: amounts.final,
+      balance_due: 0,
       needed_by: data.needed_by,
       delivery_method: 'por_definir',
       delivery_address: '',
@@ -127,7 +128,7 @@ export async function createReservation(input: ReservationFormData) {
 }
 
 /**
- * Avisos de reserva nueva. Se llama recién cuando el abono está confirmado
+ * Avisos de reserva nueva. Se llama recién cuando el pago está confirmado
  * (no al crearla), para no avisar de reservas que nunca se pagaron.
  */
 export async function notifyReservationPaid(reservationId: string) {
@@ -145,18 +146,18 @@ export async function notifyReservationPaid(reservationId: string) {
   await sendAdminReservationNotification(reservation)
   await sendPushToAdmins(
     '📅 Nueva reserva',
-    `${reservation.customer_name} — abono $${Number(reservation.deposit_amount).toLocaleString('es-CL')}`,
+    `${reservation.customer_name} — $${Number(reservation.total).toLocaleString('es-CL')}`,
     '/admin/reservations'
   )
 }
 
 /**
- * Confirma manualmente el abono de una reserva pagada por transferencia.
+ * Confirma manualmente el pago de una reserva pagada por transferencia.
  * En transferencia no hay webhook que avise, así que el dueño la marca al
  * ver la plata acreditada — y recién ahí salen los avisos y el comprobante,
  * igual que en el flujo de Mercado Pago.
  */
-export async function confirmReservationDeposit(reservationId: string) {
+export async function confirmReservationPayment(reservationId: string) {
   if (!(await isAdmin())) return { error: 'No autorizado' }
 
   const supabase = await createAdminClient()
@@ -165,7 +166,7 @@ export async function confirmReservationDeposit(reservationId: string) {
   const { data: claimed } = await supabase
     .from('orders')
     .update({
-      payment_status: 'abonado',
+      payment_status: 'pagado',
       status: 'confirmado',
       updated_at: new Date().toISOString(),
     })
@@ -175,7 +176,7 @@ export async function confirmReservationDeposit(reservationId: string) {
     .select('id')
 
   if (!claimed || claimed.length === 0) {
-    return { error: 'Esta reserva ya tenía el abono confirmado.' }
+    return { error: 'Esta reserva ya tenía el pago confirmado.' }
   }
 
   await notifyReservationPaid(reservationId)
@@ -201,23 +202,6 @@ export async function updateReservationStatus(reservationId: string, newStatus: 
     .eq('is_reservation', true)
 
   if (error) return { error: 'No se pudo actualizar la reserva' }
-
-  revalidatePath('/admin/reservations')
-  return { ok: true }
-}
-
-/** Marca el saldo pendiente como cobrado (se paga contra entrega). */
-export async function markReservationBalancePaid(reservationId: string) {
-  if (!(await isAdmin())) return { error: 'No autorizado' }
-
-  const supabase = await createAdminClient()
-  const { error } = await supabase
-    .from('orders')
-    .update({ payment_status: 'pagado', balance_due: 0, updated_at: new Date().toISOString() })
-    .eq('id', reservationId)
-    .eq('is_reservation', true)
-
-  if (error) return { error: 'No se pudo registrar el pago del saldo' }
 
   revalidatePath('/admin/reservations')
   return { ok: true }

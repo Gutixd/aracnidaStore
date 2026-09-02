@@ -96,9 +96,10 @@ export async function createMercadoPagoPreference(orderId: string) {
 }
 
 /**
- * Preferencia de pago para una RESERVA. Cobra únicamente el abono del 50%,
- * no el total: el saldo se paga contra entrega. Por eso no reutiliza
- * createMercadoPagoPreference, que cobra order.total.
+ * Preferencia de pago para una RESERVA. Cobra el 100% del precio con
+ * descuento (no el precio normal): por eso no reutiliza
+ * createMercadoPagoPreference, que cobra order.total de un pedido normal
+ * sin este descuento aplicado a nivel de ítem.
  */
 export async function createReservationPreference(reservationId: string) {
   if (!isMercadoPagoEnabled()) {
@@ -116,8 +117,8 @@ export async function createReservationPreference(reservationId: string) {
 
   if (!reservation) return { error: 'Reserva no encontrada' }
 
-  const deposit = Number(reservation.deposit_amount ?? 0)
-  if (deposit <= 0) return { error: 'El monto del abono no es válido' }
+  const total = Number(reservation.total ?? 0)
+  if (total <= 0) return { error: 'El monto de la reserva no es válido' }
 
   const baseUrl = await getBaseUrl()
   const productName = reservation.items?.[0]?.product_name ?? 'Producto'
@@ -128,11 +129,9 @@ export async function createReservationPreference(reservationId: string) {
         items: [
           {
             id: reservationId,
-            // El título deja explícito que es un abono, para que el cliente
-            // vea en Mercado Pago que no está pagando el total.
-            title: `Abono 50% reserva — ${productName}`,
+            title: `Reserva (15% dcto.) — ${productName}`,
             quantity: 1,
-            unit_price: deposit,
+            unit_price: total,
             currency_id: 'CLP',
           },
         ],

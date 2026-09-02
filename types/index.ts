@@ -94,7 +94,7 @@ export interface Order {
   delivery_commune: string
   delivery_reference: string
   status: OrderStatus
-  /** 'abonado' = pagó el 50% de una reserva y queda saldo por cobrar. */
+  /** 'abonado' ya no se genera (las reservas se pagan 100% al reservar); se mantiene por compatibilidad con filas antiguas. */
   payment_status: 'pendiente' | 'pagado' | 'rechazado' | 'reembolsado' | 'abonado'
   payment_provider?: string | null
   payment_id?: string | null
@@ -116,9 +116,9 @@ export interface Order {
   is_reservation?: boolean
   /** Fecha para la que el cliente necesita el producto (YYYY-MM-DD). */
   needed_by?: string | null
-  /** Abono del 50% pagado por adelantado. */
+  /** Monto pagado al reservar (= total, se paga 100% al reservar). */
   deposit_amount?: number
-  /** Saldo que queda por cobrar contra entrega. */
+  /** Siempre 0: se mantiene la columna por si en el futuro se vuelve a permitir pago parcial. */
   balance_due?: number
 }
 

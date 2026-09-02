@@ -46,10 +46,8 @@ export default async function ReservaPage({
   if (!reservation) notFound()
 
   const shortId = reservation.id.slice(0, 8).toUpperCase()
-  const deposit = Number(reservation.deposit_amount ?? 0)
-  const balance = Number(reservation.balance_due ?? 0)
   const esTransferencia = reservation.payment_method === 'transferencia'
-  const abonoPagado = reservation.payment_status === 'abonado' || reservation.payment_status === 'pagado'
+  const pagoConfirmado = reservation.payment_status === 'pagado'
 
   const steps = [
     { key: 'pendiente', label: 'Reserva recibida', icon: <Clock size={16} /> },
@@ -61,9 +59,9 @@ export default async function ReservaPage({
   ]
   const currentIdx = steps.findIndex((s) => s.key === reservation.status)
 
-  const banner = abonoPagado
+  const banner = pagoConfirmado
     ? { bg: 'rgba(22,163,74,.1)', border: 'rgba(22,163,74,.25)', color: '#15803d',
-        text: '¡Abono confirmado! Ya estamos gestionando tu producto.' }
+        text: '¡Pago confirmado! Ya estamos gestionando tu producto.' }
     : esTransferencia
       ? { bg: 'rgba(234,179,8,.1)', border: 'rgba(234,179,8,.3)', color: '#a16207',
           text: 'Tu reserva quedará confirmada apenas recibamos la transferencia.' }
@@ -86,7 +84,7 @@ export default async function ReservaPage({
             <CalendarDays size={38} style={{ color: '#16a34a' }} />
           </div>
           <h1 className="text-3xl font-black mb-3" style={{ color: 'var(--text)' }}>
-            {abonoPagado ? '¡Reserva confirmada!' : 'Reserva registrada'}
+            {pagoConfirmado ? '¡Reserva confirmada!' : 'Reserva registrada'}
           </h1>
           <p style={{ color: 'var(--gray-600)' }}>
             Gracias <strong style={{ color: 'var(--text)' }}>{reservation.customer_name}</strong>.
@@ -107,8 +105,8 @@ export default async function ReservaPage({
           {banner.text}
         </div>
 
-        {/* Datos para transferir, mientras el abono no esté confirmado */}
-        {esTransferencia && !abonoPagado && (
+        {/* Datos para transferir, mientras el pago no esté confirmado */}
+        {esTransferencia && !pagoConfirmado && (
           <div className="card p-6 mb-6" style={{ borderColor: 'rgba(234,179,8,.35)' }}>
             <h2 className={sectionTitle} style={sectionStyle}>
               <Landmark size={14} className="inline mr-1.5" />
@@ -128,12 +126,12 @@ export default async function ReservaPage({
               ))}
               <div className="flex justify-between gap-4 pt-3" style={{ borderTop: '1px solid var(--gray-100)' }}>
                 <span className="font-bold" style={{ color: 'var(--text)' }}>Monto a transferir</span>
-                <span className="font-black tabular-nums" style={{ color: '#15803d' }}>{formatPrice(deposit)}</span>
+                <span className="font-black tabular-nums" style={{ color: '#15803d' }}>{formatPrice(reservation.total)}</span>
               </div>
             </div>
             <p className="text-xs mt-4 rounded-lg p-3" style={{ background: '#fff8e1', color: '#8a6d1a' }}>
               Envíanos el comprobante por WhatsApp indicando tu número de reserva <strong>#{shortId}</strong>.
-              Tu reserva se confirma cuando verifiquemos el abono.
+              Tu reserva se confirma cuando verifiquemos el pago.
             </p>
           </div>
         )}
@@ -207,23 +205,11 @@ export default async function ReservaPage({
                 </td>
               </tr>
               <tr>
-                <td className="pt-3 font-bold" style={{ color: 'var(--text)', borderTop: '1px solid var(--gray-100)' }}>Total con descuento</td>
-                <td className="pt-3 text-right font-black tabular-nums" style={{ color: 'var(--text)', borderTop: '1px solid var(--gray-100)' }}>
-                  {formatPrice(reservation.total)}
-                </td>
-              </tr>
-              <tr>
                 <td className="pt-3 font-bold" style={{ color: '#15803d', borderTop: '2px solid var(--text)' }}>
-                  Abono {abonoPagado ? 'pagado' : 'a pagar'} (50%)
+                  {pagoConfirmado ? 'Total pagado' : 'Total a pagar'}
                 </td>
                 <td className="pt-3 text-right font-black tabular-nums text-lg" style={{ color: '#15803d', borderTop: '2px solid var(--text)' }}>
-                  {formatPrice(deposit)}
-                </td>
-              </tr>
-              <tr>
-                <td className="py-1.5 font-semibold" style={{ color: '#b45309' }}>Saldo contra entrega</td>
-                <td className="py-1.5 text-right font-bold tabular-nums" style={{ color: '#b45309' }}>
-                  {formatPrice(balance)}
+                  {formatPrice(reservation.total)}
                 </td>
               </tr>
               <tr>
@@ -242,7 +228,9 @@ export default async function ReservaPage({
             Cuando tu producto llegue te contactamos para coordinar cómo lo prefieres:{' '}
             <strong style={{ color: 'var(--text)' }}>envío a domicilio</strong> o{' '}
             <strong style={{ color: 'var(--text)' }}>retiro gratis en {PICKUP_PLACE}</strong>.
-            El saldo de {formatPrice(balance)} se paga en ese momento.
+            {pagoConfirmado
+              ? ' Tu reserva ya está pagada en su totalidad, así que no queda nada pendiente al recibirla.'
+              : ' Al pagarse el 100% al reservar, una vez confirmado tu pago no queda nada pendiente al recibirla.'}
           </p>
         </div>
 
