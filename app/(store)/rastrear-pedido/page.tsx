@@ -29,7 +29,7 @@ export default function TrackOrderPage() {
 
   return (
     <div style={{ background: 'var(--gray-50)', minHeight: '100vh' }}
-      className="flex items-center justify-center px-4 pt-24 pb-16">
+      className="flex items-center justify-center px-4 pt-28 pb-16">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5"

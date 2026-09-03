@@ -61,6 +61,24 @@ body {
   to   { transform: rotate(360deg); }
 }
 
+/* Barra de anuncio en loop. El track lleva la lista duplicada, así que
+   desplazarlo -50% deja el punto de reinicio invisible. */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.marquee {
+  width: max-content;
+  animation: marquee 32s linear infinite;
+}
+.marquee:hover { animation-play-state: paused; }
+
+/* Texto en movimiento constante marea a quien tenga sensibilidad
+   vestibular; si el sistema pide menos movimiento, se queda quieto. */
+@media (prefers-reduced-motion: reduce) {
+  .marquee { animation: none; }
+}
+
 .animate-fade-up    { animation: fadeUp 0.6s cubic-bezier(.22,1,.36,1) both; }
 .animate-fade-in    { animation: fadeIn 0.5s ease both; }
 .animate-scale-in   { animation: scaleIn 0.4s cubic-bezier(.22,1,.36,1) both; }

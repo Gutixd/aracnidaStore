@@ -228,6 +228,33 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* ===== STATS ===== */}
+      {/* Números grandes, pero todos comprobables: entregas acumuladas,
+          plazos que de verdad cumplimos y condiciones que están escritas en
+          los Términos. A propósito no hay porcentajes de satisfacción
+          inventados (98%, 97%...): con las reseñas que hay hoy, cualquier
+          cifra así sería un número sacado del aire. */}
+      <section className="py-16 px-4 sm:px-6 lg:px-8" style={{ background: '#0f1e3d' }}>
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 text-center">
+            {[
+              { n: '+500', l: 'Disfraces y máscaras entregados', s: `Desde ${STORE_FOUNDED_YEAR} en todo Chile` },
+              { n: '24-48h', l: 'Despacho', s: 'Días hábiles, por Blue Express' },
+              { n: '15%', l: 'De descuento reservando', s: 'Con 15 días de anticipación' },
+              { n: '7 días', l: 'Para cambios', s: 'Desde que recibes tu pedido' },
+            ].map((s, i) => (
+              <ScrollReveal key={s.l} delay={i * 100}>
+                <div>
+                  <p className="text-4xl md:text-5xl font-black" style={{ color: '#e74c3c' }}>{s.n}</p>
+                  <p className="text-sm font-bold mt-2 text-white">{s.l}</p>
+                  <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,.45)' }}>{s.s}</p>
+                </div>
+              </ScrollReveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ===== REVIEWS ===== */}
       <section className="py-24 px-4 sm:px-6 lg:px-8" style={{ background: 'var(--gray-50)' }}>
         <div className="max-w-6xl mx-auto">

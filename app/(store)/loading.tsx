@@ -5,7 +5,7 @@
  */
 export default function Loading() {
   return (
-    <div style={{ background: '#fff', minHeight: '100vh' }} className="pt-16">
+    <div style={{ background: '#fff', minHeight: '100vh' }} className="pt-28">
       <div className="animate-pulse" style={{ height: '90vh', background: 'linear-gradient(135deg, #1a2744 0%, #0f1e3d 100%)' }} />
     </div>
   )

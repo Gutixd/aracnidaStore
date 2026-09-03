@@ -6,7 +6,7 @@
  */
 export default function Loading() {
   return (
-    <div className="pt-24 pb-16 px-4 sm:px-6 lg:px-8" style={{ background: 'var(--gray-50)', minHeight: '100vh' }}>
+    <div className="pt-28 pb-16 px-4 sm:px-6 lg:px-8" style={{ background: 'var(--gray-50)', minHeight: '100vh' }}>
       <div className="max-w-7xl mx-auto animate-pulse">
         <div className="h-4 w-64 rounded mb-6" style={{ background: 'var(--gray-100)' }} />
 

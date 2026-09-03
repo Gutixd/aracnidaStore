@@ -7,6 +7,7 @@ import { formatPrice } from '@/lib/utils'
 import { useCart } from '@/store/cart'
 import { ShoppingCart, Check, SlidersHorizontal } from 'lucide-react'
 import { useState } from 'react'
+import { calcReservation } from '@/lib/reservations'
 
 interface ProductCardProps {
   product: Product
@@ -27,6 +28,7 @@ export function ProductCard({ product }: ProductCardProps) {
   const risesTo =
     product.future_price && product.future_price > minPrice ? product.future_price : null
 
+  const reservePrice = calcReservation(minPrice, 1).final
   const isOutOfStock = totalStock === 0
   const isLowStock = totalStock > 0 && totalStock <= 3
   const inCart = isSingle && variants[0] ? items.some((i) => i.variant.id === variants[0].id) : false
@@ -134,6 +136,12 @@ export function ProductCard({ product }: ProductCardProps) {
                   Sube a {formatPrice(risesTo)}
                 </span>
               )}
+              {/* Segundo precio REAL (el de reserva anticipada). Da el mismo
+                  golpe visual que un "antes/ahora" sin inventar un precio
+                  anterior que nunca se cobró. */}
+              <span className="block text-[11px] font-bold mt-1" style={{ color: '#15803d' }}>
+                {formatPrice(reservePrice)} reservando · −15%
+              </span>
             </span>
             {inCart && !added && (
               <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: 'rgba(22,163,74,.1)', color: '#15803d' }}>

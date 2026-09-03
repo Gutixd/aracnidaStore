@@ -1,3 +1,4 @@
+import { AnnouncementBar } from '@/components/store/AnnouncementBar'
 import { Navbar } from '@/components/store/Navbar'
 import { Footer } from '@/components/store/Footer'
 import { SiteIntro } from '@/components/store/SiteIntro'
@@ -14,6 +15,7 @@ export default function StoreLayout({ children }: { children: React.ReactNode })
     // de destino carga.
     <NavigationProgressProvider>
       <SiteIntro />
+      <AnnouncementBar />
       <Navbar />
       <main className="min-h-screen">
         <PageTransitionOverlay>{children}</PageTransitionOverlay>

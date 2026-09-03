@@ -28,7 +28,8 @@ export function Navbar() {
 
   return (
     <header
-      className="fixed top-0 left-0 right-0 z-50 transition-all duration-400"
+      // top-9 (36px) = alto de la AnnouncementBar, que va fija encima.
+      className="fixed top-9 left-0 right-0 z-50 transition-all duration-400"
       style={scrolled ? {
         background: 'rgba(255,255,255,0.95)',
         backdropFilter: 'blur(20px)',
