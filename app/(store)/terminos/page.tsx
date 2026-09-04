@@ -46,7 +46,8 @@ export default function TerminosPage() {
             <p><strong>Envío a domicilio</strong> por Blue Express: los pedidos se despachan dentro de 24 a 48 horas hábiles desde la confirmación del pago. Tiempos de entrega estimados:</p>
             <ul className="list-disc pl-5 mt-2 space-y-1">
               <li>Región Metropolitana: 1 a 3 días hábiles</li>
-              <li>Resto de Chile: 3 a 7 días hábiles</li>
+              <li>Zona centro y sur (Valparaíso a La Araucanía): 3 a 7 días hábiles</li>
+              <li>Zonas extremas (Arica, Tarapacá, Antofagasta, Atacama, Los Ríos, Los Lagos, Aysén y Magallanes): 7 a 12 días hábiles</li>
             </ul>
             <p className="mt-2">El costo de envío varía según tu región y se muestra antes de pagar. AracnidaStore no se responsabiliza por retrasos causados por la empresa de transporte o eventos de fuerza mayor.</p>
             <p className="mt-2"><strong>Retiro gratuito en Metro Plaza de Maipú:</strong> disponible los días martes (13:00 a 16:00) y sábado (11:00 a 15:00), coordinando con al menos 24 horas de anticipación. Debes confirmar tu retiro por WhatsApp o Instagram.</p>
