@@ -39,11 +39,18 @@ function isValidSignature(req: NextRequest, dataId: string | null): boolean {
   const v1 = parts['v1']
   if (!ts || !v1) return false
 
-  const manifest = `id:${dataId.toLowerCase()};request-id:${requestId};ts:${ts};`
+  // El manifiesto arma los segmentos que Mercado Pago firmó. Si una
+  // notificación viene sin x-request-id, ese segmento se omite: interpolar
+  // "request-id:null" produciría un HMAC distinto y toda firma sería inválida.
+  const manifest =
+    `id:${dataId.toLowerCase()};` +
+    (requestId ? `request-id:${requestId};` : '') +
+    `ts:${ts};`
   const hmac = crypto.createHmac('sha256', WEBHOOK_SECRET).update(manifest).digest('hex')
   try {
     return crypto.timingSafeEqual(Buffer.from(hmac), Buffer.from(v1))
   } catch {
+    // Longitudes distintas (v1 malformado) hacen que timingSafeEqual lance.
     return false
   }
 }
@@ -55,22 +62,28 @@ function isValidSignature(req: NextRequest, dataId: string | null): boolean {
 export async function POST(req: NextRequest) {
   try {
     const url = new URL(req.url)
-    let paymentId = url.searchParams.get('data.id') || url.searchParams.get('id')
     const type = url.searchParams.get('type') || url.searchParams.get('topic')
 
-    // Validar firma antes de procesar (si hay secreto configurado)
+    // El id del pago puede venir en la URL o dentro del body, según el tipo de
+    // notificación. Hay que resolverlo ANTES de validar la firma: el manifiesto
+    // que firma Mercado Pago incluye ese id, así que validando solo con lo que
+    // trae la URL, toda notificación que lo mande en el body fallaría la firma
+    // y el pago quedaría sin confirmar. El body se lee una sola vez porque el
+    // stream de la petición no se puede consumir dos veces.
+    let paymentId = url.searchParams.get('data.id') || url.searchParams.get('id')
+    let body: { data?: { id?: string | number }; type?: string } | null = null
+    if (!paymentId) {
+      body = await req.json().catch(() => null)
+      if (body?.data?.id) paymentId = String(body.data.id)
+    }
+
     if (!isValidSignature(req, paymentId)) {
       console.warn('[MercadoPago Webhook] Firma inválida')
       return NextResponse.json({ error: 'Firma inválida' }, { status: 401 })
     }
 
-    // Algunas notificaciones llegan en el body
-    if (!paymentId) {
-      const body = await req.json().catch(() => null)
-      if (body?.data?.id) paymentId = String(body.data.id)
-      if (!paymentId && body?.type !== 'payment' && type !== 'payment') {
-        return NextResponse.json({ ok: true })
-      }
+    if (!paymentId && body?.type !== 'payment' && type !== 'payment') {
+      return NextResponse.json({ ok: true })
     }
 
     if (type && type !== 'payment') {
