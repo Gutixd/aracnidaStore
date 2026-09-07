@@ -13,7 +13,9 @@ export const checkoutSchema = z.object({
   pickup_time: z.string().optional(),
   /** Fecha concreta del retiro en formato YYYY-MM-DD */
   pickup_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Fecha inválida').optional(),
-  payment_method: z.enum(['transferencia', 'efectivo']).optional(),
+  // 'mercadopago' y 'transferencia' aplican al envío; 'transferencia' y
+  // 'efectivo' al retiro. La combinación válida se verifica más abajo.
+  payment_method: z.enum(['transferencia', 'efectivo', 'mercadopago']).optional(),
   notes: z.string().optional(),
   /**
    * Consentimiento para recibir ofertas por correo. Desmarcado por defecto a
@@ -42,11 +44,18 @@ export const checkoutSchema = z.object({
   },
   { message: 'Selecciona una hora de retiro', path: ['pickup_time'] }
 ).refine(
-  (data) => {
-    if (data.delivery_method === 'retiro') return !!data.payment_method
-    return true
-  },
+  (data) => !!data.payment_method,
   { message: 'Selecciona método de pago', path: ['payment_method'] }
+).refine(
+  (data) => {
+    // El efectivo solo existe si el cliente aparece en persona; y no tiene
+    // sentido mandar a alguien a Mercado Pago para un retiro que paga ahí.
+    if (data.delivery_method === 'delivery') {
+      return data.payment_method === 'mercadopago' || data.payment_method === 'transferencia'
+    }
+    return data.payment_method === 'transferencia' || data.payment_method === 'efectivo'
+  },
+  { message: 'Ese método de pago no está disponible para la entrega elegida', path: ['payment_method'] }
 )
 
 export type CheckoutFormData = z.infer<typeof checkoutSchema>

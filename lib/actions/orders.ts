@@ -283,6 +283,14 @@ export async function releaseExpiredOrders() {
     // El filtro por delivery_method ya las deja fuera, pero dejarlo explícito
     // evita que un cambio futuro en ese campo las arrastre por accidente.
     .eq('is_reservation', false)
+    // Los 45 minutos son la ventana de un checkout de Mercado Pago. Una
+    // transferencia se hace desde el banco y puede tardar horas o quedar para
+    // el día siguiente: cancelarla en 45 minutos mataría la venta y liberaría
+    // el stock mientras el cliente todavía está pagando. Esas se cancelan a
+    // mano desde el panel si nunca llega la plata.
+    // Los pedidos antiguos tienen payment_method en null (nunca se preguntaba
+    // en delivery), así que ese caso sí se sigue expirando.
+    .or('payment_method.is.null,payment_method.neq.transferencia')
     .lt('created_at', cutoff)
 
   if (!expired?.length) return { released: 0 }

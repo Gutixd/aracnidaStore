@@ -12,7 +12,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { checkCart } from '@/lib/actions/cart'
 import Link from 'next/link'
 import Image from 'next/image'
-import { ShoppingBag, Loader2, MapPin, ChevronDown, Truck, Calendar, Banknote, Copy, Check, Clock, AlertCircle } from 'lucide-react'
+import { ShoppingBag, Loader2, MapPin, ChevronDown, Truck, Calendar, Banknote, Copy, Check, Clock, AlertCircle, CreditCard } from 'lucide-react'
 import { REGIONES_CHILE, getShippingInfo, FREE_SHIPPING_THRESHOLD, MIN_SHIPPING_COST } from '@/lib/shipping'
 import {
   PICKUP_SLOTS, PICKUP_PLACE, PICKUP_LEAD_HOURS,
@@ -149,7 +149,10 @@ export default function CheckoutPage() {
       }
       clearCart()
 
-      if (!isRetiro) {
+      // Solo se redirige a Mercado Pago si el cliente eligió pagar ahí. Con
+      // transferencia el pedido queda pendiente y se confirma a mano cuando
+      // llega la plata.
+      if (data.payment_method === 'mercadopago') {
         const payment = await createMercadoPagoPreference(result.orderId!)
         if (payment.url) {
           window.location.href = payment.url
@@ -421,16 +424,31 @@ export default function CheckoutPage() {
                       })()}
                     </div>
 
-                    {/* Método de pago */}
+                  </div>
+                )}
+
+                {/* Método de pago. Va fuera de los bloques de entrega porque
+                    aplica a los dos, solo cambian las opciones: en envío no
+                    existe el efectivo (nadie recibe la plata en la puerta), y
+                    en retiro no tiene sentido mandar al cliente a Mercado Pago
+                    si va a pagar en persona. La transferencia sirve en ambos y
+                    es el plan B cuando Mercado Pago rechaza una tarjeta. */}
+                <div className="mt-5 space-y-5">
                     <div>
                       <label className="block text-sm font-semibold mb-3" style={{ color: 'var(--gray-600)' }}>
                         Método de pago *
                       </label>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {[
-                          { id: 'transferencia' as const, label: 'Transferencia bancaria', sub: 'Pago previo por transferencia' },
-                          { id: 'efectivo' as const, label: 'Efectivo', sub: 'Pago en el momento del retiro' },
-                        ].map((opt) => (
+                        {(isRetiro
+                          ? [
+                              { id: 'transferencia' as const, label: 'Transferencia bancaria', sub: 'Pago previo por transferencia', icon: Banknote },
+                              { id: 'efectivo' as const, label: 'Efectivo', sub: 'Pago en el momento del retiro', icon: Banknote },
+                            ]
+                          : [
+                              { id: 'mercadopago' as const, label: 'Mercado Pago', sub: 'Tarjeta de crédito o débito', icon: CreditCard },
+                              { id: 'transferencia' as const, label: 'Transferencia bancaria', sub: 'Te damos los datos al confirmar', icon: Banknote },
+                            ]
+                        ).map((opt) => (
                           <label
                             key={opt.id}
                             className="flex items-start gap-3 p-4 rounded-2xl cursor-pointer transition-all"
@@ -447,7 +465,7 @@ export default function CheckoutPage() {
                             />
                             <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
                               style={{ background: paymentMethod === opt.id ? 'rgba(192,57,43,.1)' : 'var(--gray-50)', color: paymentMethod === opt.id ? 'var(--red)' : 'var(--gray-400)' }}>
-                              <Banknote size={17} />
+                              <opt.icon size={17} />
                             </div>
                             <div>
                               <p className="font-bold text-sm" style={{ color: 'var(--text)' }}>{opt.label}</p>
@@ -488,13 +506,14 @@ export default function CheckoutPage() {
                         ))}
                         <div className="pt-3 mt-1" style={{ borderTop: '1px solid rgba(192,57,43,.15)' }}>
                           <p className="text-xs" style={{ color: 'var(--gray-400)' }}>
-                            Envía el comprobante por Instagram o WhatsApp al confirmar el retiro.
+                            {isRetiro
+                              ? 'Envía el comprobante por Instagram o WhatsApp al confirmar el retiro.'
+                              : 'Tu pedido queda reservado. Envíanos el comprobante por WhatsApp y lo despachamos apenas confirmemos la transferencia.'}
                           </p>
                         </div>
                       </div>
                     )}
-                  </div>
-                )}
+                </div>
               </div>
 
               {/* Notas */}
@@ -603,15 +622,17 @@ export default function CheckoutPage() {
                 <button type="submit" disabled={loading} className="btn-primary w-full justify-center py-4">
                   {loading
                     ? <><Loader2 size={18} className="animate-spin" />Procesando...</>
-                    : isRetiro
-                      ? 'Confirmar pedido'
-                      : 'Pagar con Mercado Pago'
+                    : paymentMethod === 'mercadopago'
+                      ? 'Pagar con Mercado Pago'
+                      : 'Confirmar pedido'
                   }
                 </button>
                 <p className="text-xs text-center mt-4" style={{ color: 'var(--gray-400)' }}>
                   {isRetiro
                     ? 'Tu pedido quedará pendiente hasta coordinar el retiro'
-                    : 'Pago seguro · tarjetas, débito y transferencia'}
+                    : paymentMethod === 'transferencia'
+                      ? 'Tu pedido queda reservado hasta que confirmemos la transferencia'
+                      : 'Pago seguro · tarjetas y débito'}
                 </p>
               </div>
             </div>

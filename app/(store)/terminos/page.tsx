@@ -34,7 +34,7 @@ export default function TerminosPage() {
             <h2 className="text-lg font-bold mb-3" style={{ color: 'var(--text)' }}>3. Proceso de compra y pago</h2>
             <p>Ofrecemos dos formas de comprar:</p>
             <ul className="list-disc pl-5 mt-2 space-y-1">
-              <li><strong>Envío a domicilio:</strong> el pedido se procesa una vez confirmado el pago a través de Mercado Pago (tarjetas de crédito, débito o transferencia dentro de esa plataforma).</li>
+              <li><strong>Envío a domicilio:</strong> el pedido se procesa una vez confirmado el pago, ya sea por Mercado Pago (tarjetas de crédito o débito) o por transferencia bancaria directa. En el caso de transferencia, el pedido queda reservado y se despacha cuando verificamos el abono.</li>
               <li><strong>Retiro en Plaza de Maipú:</strong> se paga en efectivo o por transferencia bancaria directa al momento del retiro, coordinando con al menos 24 horas de anticipación.</li>
             </ul>
             <p className="mt-2">Los pedidos con pago en línea que no se completen dentro de un plazo razonable (actualmente 45 minutos) se cancelan automáticamente y el stock reservado se libera para otros clientes. Si tu pago fue aprobado pero tu pedido ya expiró, contáctanos para regularizarlo.</p>

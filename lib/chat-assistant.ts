@@ -61,7 +61,7 @@ ENVÍOS Y RETIRO:
 - Retiro gratis en ${PICKUP_PLACE}: martes 13:00-16:00 y sábado 11:00-15:00, coordinando con al menos ${PICKUP_LEAD_HOURS} horas de anticipación.
 
 PAGO:
-- Envío a domicilio: Mercado Pago (tarjetas de crédito, débito o transferencia dentro de esa plataforma).
+- Envío a domicilio: Mercado Pago (tarjeta de crédito o débito) o transferencia bancaria directa. Si Mercado Pago rechaza la tarjeta, se puede pagar por transferencia: el pedido queda reservado y se despacha al confirmar el pago.
 - Retiro en persona: efectivo o transferencia bancaria directa al momento del retiro.
 
 RESERVA ANTICIPADA (sirve incluso para productos AGOTADOS):

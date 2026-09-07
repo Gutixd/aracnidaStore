@@ -73,6 +73,39 @@ export default async function OrderSuccessPage({
           </div>
         )}
 
+        {/* Datos para transferir. Sin esto, quien elige transferencia queda sin
+            saber a qué cuenta pagar: en ese flujo no hay redirección a ningún
+            procesador, así que esta pantalla es donde tiene que verlos. */}
+        {order.payment_method === 'transferencia' && order.payment_status !== 'pagado' && (
+          <div className="card p-6 mb-6" style={{ borderColor: 'rgba(234,179,8,.35)' }}>
+            <h2 className={sectionTitle} style={sectionStyle}>Datos para transferir</h2>
+            <div className="space-y-2 text-sm">
+              {[
+                ['Banco', 'Banco Estado'],
+                ['Tipo de cuenta', 'Cuenta RUT'],
+                ['Nombre', 'Diego Gutierrez'],
+                ['RUT', '21.481.177-4'],
+              ].map(([k, v]) => (
+                <div key={k} className="flex justify-between gap-4">
+                  <span style={{ color: 'var(--gray-600)' }}>{k}</span>
+                  <span className="font-semibold text-right" style={{ color: 'var(--text)' }}>{v}</span>
+                </div>
+              ))}
+              <div className="flex justify-between gap-4 pt-3" style={{ borderTop: '1px solid var(--gray-100)' }}>
+                <span className="font-bold" style={{ color: 'var(--text)' }}>Monto a transferir</span>
+                <span className="font-black tabular-nums" style={{ color: '#15803d' }}>{formatPrice(order.total)}</span>
+              </div>
+            </div>
+            <p className="text-xs mt-4 rounded-lg p-3" style={{ background: '#fff8e1', color: '#8a6d1a' }}>
+              Envíanos el comprobante por WhatsApp indicando tu número de pedido{' '}
+              <strong>#{order.id.slice(0, 8).toUpperCase()}</strong>.{' '}
+              {order.delivery_method === 'retiro'
+                ? 'Coordinamos tu retiro al confirmar el pago.'
+                : 'Despachamos tu pedido apenas confirmemos la transferencia.'}
+            </p>
+          </div>
+        )}
+
         <div className="card p-6 mb-6">
           <h2 className={sectionTitle} style={sectionStyle}>Estado del pedido</h2>
           <div className="flex items-center gap-0">

@@ -64,8 +64,10 @@ function buildHtml(order: Order, reviewSlug?: string | null): string {
       <p style="margin:0 0 4px;color:#555;">${esc(order.delivery_commune)}${order.delivery_region ? `, ${esc(order.delivery_region)}` : ''}</p>
       ${order.delivery_reference ? `<p style="margin:0;color:#888;font-size:13px;">Referencia: ${esc(order.delivery_reference)}</p>` : ''}`
 
+  // La transferencia ya no es exclusiva del retiro: también se puede elegir
+  // en pedidos con envío, así que el bloque depende solo del método de pago.
   const transferBlock =
-    isRetiro && order.payment_method === 'transferencia'
+    order.payment_method === 'transferencia' && order.payment_status !== 'pagado'
       ? `
       <div style="margin:24px 0;padding:16px;background:#f4f7ff;border:1px solid #d9e2ff;border-radius:12px;">
         <p style="margin:0 0 10px;font-weight:700;color:#1a2744;">Datos para transferir</p>
