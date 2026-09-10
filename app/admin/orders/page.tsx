@@ -11,6 +11,7 @@ import { Order } from '@/types'
 import { AdminOrderStatusChanger } from '@/components/admin/AdminOrderStatusChanger'
 import { AdminPaymentStatusChanger } from '@/components/admin/AdminPaymentStatusChanger'
 import { releaseExpiredOrders } from '@/lib/actions/orders'
+import { after } from 'next/server'
 import Link from 'next/link'
 import { ShoppingCart, Truck, Store, Calendar, Clock, Banknote, AlertTriangle, CalendarDays, ArrowRight } from 'lucide-react'
 
@@ -26,8 +27,17 @@ async function getOrders(): Promise<Order[]> {
 }
 
 export default async function AdminOrdersPage() {
-  // Libera stock de checkouts abandonados antes de mostrar el listado
-  await releaseExpiredOrders()
+  // La limpieza de checkouts abandonados es mantención, no información que
+  // el listado necesite para dibujarse: antes se esperaba a que terminara
+  // (una consulta más, y una escritura por cada pedido expirado) ANTES de
+  // mostrar nada. Con `after()` se ejecuta una vez despachada la respuesta,
+  // así la página aparece de inmediato.
+  //
+  // El costo es que un pedido que vence justo en este instante se ve como
+  // "pendiente" hasta la próxima carga. Es un cambio de un refresco de
+  // diferencia, a cambio de sacar la escritura del camino crítico.
+  after(releaseExpiredOrders)
+
   const orders = await getOrders()
 
   const porCobrar = orders.filter(

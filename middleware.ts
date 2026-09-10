@@ -36,25 +36,28 @@ export async function middleware(request: NextRequest) {
   // base con la service role key (que ignora RLS), así que si dejáramos pasar
   // a cualquier cuenta autenticada quedarían expuestos pedidos, datos de
   // clientes y gastos. Se exige pertenecer a `admin_users`.
-  let admin = false
-  if (user) {
-    const { data } = await supabase.rpc('is_admin')
-    admin = data === true
-  }
-
-  if (isAdminRoute && !isLoginPage && !admin) {
-    // Una sesión válida pero sin permisos se cierra, para no dejar dando
-    // vueltas una cookie que el usuario cree que sirve para entrar.
-    if (user) await supabase.auth.signOut()
+  //
+  // Esa comprobación (`rpc is_admin`) es un viaje extra a la base, y
+  // app/admin/layout.tsx la repite en CADA navegación del panel — ahí es
+  // donde de verdad protege, porque es lo último antes de leer datos con la
+  // service role key. Hacerla también acá duplicaba la latencia sin agregar
+  // seguridad, así que queda solo donde cambia el comportamiento: en el
+  // login, para no mostrarle el formulario a alguien que ya entró.
+  if (isLoginPage) {
+    if (user) {
+      const { data } = await supabase.rpc('is_admin')
+      if (data === true) {
+        const url = request.nextUrl.clone()
+        url.pathname = '/admin'
+        return NextResponse.redirect(url)
+      }
+    }
+  } else if (isAdminRoute && !user) {
+    // Sin sesión no hay nada que consultar: al login directo. Si hay sesión
+    // pero no es admin, el layout lo devuelve al login con este mismo aviso.
     const url = request.nextUrl.clone()
     url.pathname = '/admin/login'
     url.searchParams.set('error', 'sin-permisos')
-    return NextResponse.redirect(url)
-  }
-
-  if (isLoginPage && admin) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/admin'
     return NextResponse.redirect(url)
   }
 
