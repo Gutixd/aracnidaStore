@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { createClient } from '@/lib/supabase/server'
+import { createPublicClient } from '@/lib/supabase/server'
 import { Product } from '@/types'
 import { ProductCard } from '@/components/store/ProductCard'
 import { Shield, Truck, Package, Zap, Star, MapPin, RotateCcw, ChevronRight, ShoppingBag } from 'lucide-react'
@@ -26,12 +26,19 @@ const FAQS = [
   { q: '¿Cómo hago seguimiento de mi pedido?', a: 'Al confirmar tu compra recibes un correo con el comprobante y tu número de pedido. Puedes revisar el estado en la página del pedido o escribirnos por WhatsApp al +56 9 7882 9942.' },
 ]
 
+// La portada es igual para todos: se genera una vez y la CDN la sirve a
+// cada visitante durante 5 minutos, en vez de consultar Supabase por cada
+// uno. Un cambio de stock o una reseña nueva aparece en ≤5 min; el stock
+// real se vuelve a validar en el servidor al pagar, así que no se vende
+// nada que no exista.
+export const revalidate = 300
+
 /** Dato real del negocio, usado en la prueba social y en los datos estructurados. */
 export const STORE_FOUNDED_YEAR = 2025
 export const CUSTOMERS_SERVED = 500
 
 async function getLatestReviews() {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
   const { data } = await supabase
     .from('reviews')
     .select('id, customer_name, rating, comment, verified')
@@ -43,7 +50,7 @@ async function getLatestReviews() {
 }
 
 async function getFeaturedProducts(): Promise<Product[]> {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
   const { data } = await supabase
     .from('products')
     .select('*, category:categories(id,name,slug), variants:product_variants(*)')

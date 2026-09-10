@@ -1,5 +1,5 @@
 import { cache } from 'react'
-import { createClient } from '@/lib/supabase/server'
+import { createPublicClient } from '@/lib/supabase/server'
 import { Product, ProductVariant } from '@/types'
 import { notFound } from 'next/navigation'
 import { ProductPurchase } from '@/components/store/ProductPurchase'
@@ -20,11 +20,24 @@ import type { Metadata } from 'next'
 
 const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://aracnidastore.com'
 
+// Cada ficha se genera una vez y se sirve cacheada 60 s. Más corto que la
+// portada porque aquí se eligen tallas: un agotado se refleja en ≤1 min, y
+// igual el checkout revalida el stock en el servidor antes de cobrar.
+export const revalidate = 60
+
+// Sin esto Next.js trata /products/[slug] como dinámica aunque tenga
+// `revalidate`. Las fichas activas se generan en el build; un producto
+// creado después se genera en su primera visita y desde ahí queda cacheado.
+export async function generateStaticParams() {
+  const { data } = await createPublicClient().from('products').select('slug').eq('active', true)
+  return (data ?? []).map((p) => ({ slug: p.slug as string }))
+}
+
 // cache() memoiza por request: generateMetadata() y la página llaman a
 // getProduct() con el mismo slug, y sin esto cada uno disparaba su propio
 // viaje a Supabase — el doble de espera para traer el mismo producto.
 const getProduct = cache(async (slug: string): Promise<Product | null> => {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
   const { data } = await supabase
     .from('products')
     .select('*, category:categories(id,name,slug), variants:product_variants(*)')
@@ -35,7 +48,7 @@ const getProduct = cache(async (slug: string): Promise<Product | null> => {
 })
 
 async function getGalleryImages(productId: string) {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
   const { data } = await supabase
     .from('product_images')
     .select('url, alt, order')
@@ -45,7 +58,7 @@ async function getGalleryImages(productId: string) {
 }
 
 async function getRelated(categoryId: string, productId: string): Promise<Product[]> {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
   const { data } = await supabase
     .from('products')
     .select('*, category:categories(id,name,slug), variants:product_variants(*)')

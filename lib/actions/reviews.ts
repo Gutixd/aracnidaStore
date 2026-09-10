@@ -1,6 +1,6 @@
 'use server'
 
-import { createAdminClient, createClient } from '@/lib/supabase/server'
+import { createAdminClient, createPublicClient } from '@/lib/supabase/server'
 import { isAdmin } from '@/lib/auth/admin'
 import { revalidatePath } from 'next/cache'
 import { checkRateLimit } from '@/lib/rate-limit'
@@ -16,7 +16,8 @@ export interface ReviewSummary {
  * debe mostrar ninguna calificación.
  */
 export async function getReviewSummary(productId: string): Promise<ReviewSummary> {
-  const supabase = await createClient()
+  // Sin cookies: se usa en la ficha de producto, que se sirve cacheada.
+  const supabase = createPublicClient()
   const { data } = await supabase
     .from('reviews')
     .select('rating')
@@ -31,7 +32,7 @@ export async function getReviewSummary(productId: string): Promise<ReviewSummary
 }
 
 export async function getProductReviews(productId: string) {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
   const { data } = await supabase
     .from('reviews')
     .select('id, customer_name, rating, comment, verified, created_at')

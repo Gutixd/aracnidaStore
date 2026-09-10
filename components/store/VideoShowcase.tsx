@@ -42,7 +42,11 @@ export function VideoShowcase() {
         muted
         loop
         playsInline
-        preload="metadata"
+        // Solo empieza a bajar cuando la sección entra en pantalla (el
+        // IntersectionObserver de arriba llama a play()); hasta entonces se
+        // ve el póster.
+        preload="none"
+        poster="/video-inicio-poster.jpg"
         className="absolute inset-0 w-full h-full object-cover"
       />
 

@@ -60,7 +60,16 @@ const nextConfig: NextConfig = {
     ],
   },
   async headers() {
-    return [{ source: '/:path*', headers: securityHeaders }]
+    return [
+      { source: '/:path*', headers: securityHeaders },
+      // Los archivos de /public salían con `max-age=0, must-revalidate`: el
+      // navegador volvía a preguntar por el video en cada visita. Se cachean
+      // 7 días; si se reemplaza un video, conviene cambiarle el nombre.
+      {
+        source: '/:file(video-.*\\.mp4|video-.*-poster\\.jpg)',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=604800, stale-while-revalidate=86400' }],
+      },
+    ]
   },
   async redirects() {
     return DUPLICATE_HOSTS.map((host) => ({

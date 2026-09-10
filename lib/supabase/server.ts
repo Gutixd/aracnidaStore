@@ -26,6 +26,26 @@ export async function createClient() {
 }
 
 /**
+ * Cliente anónimo SIN cookies, para lecturas públicas de la tienda
+ * (catálogo, reseñas aprobadas).
+ *
+ * createClient() lee cookies(), y con eso Next.js marca la página entera
+ * como dinámica: se renderiza de nuevo para cada visitante y nunca se
+ * cachea (medido: `x-vercel-cache: MISS` + `no-store` en todas las páginas).
+ * Con 100 personas a la vez eso eran 100 renders y ~250 consultas a
+ * Supabase para mostrarles exactamente lo mismo. Estas lecturas usan la
+ * anon key igual que antes — mismas políticas RLS — pero al no tocar
+ * cookies la página puede cachearse y servirse desde la CDN.
+ */
+export function createPublicClient() {
+  return createRawClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  )
+}
+
+/**
  * Cliente con privilegios de service_role (ignora RLS por completo).
  *
  * A propósito NO usa createServerClient de @supabase/ssr ni pasa cookies:

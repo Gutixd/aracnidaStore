@@ -29,7 +29,11 @@ export function HeroVideo() {
         muted
         loop
         playsInline
-        preload="auto"
+        // "auto" hacía que el navegador bajara el video casi entero apenas
+        // cargaba la página. El póster (53 KB) se ve al instante y el video
+        // (ya comprimido de 15 MB a 3 MB) entra por streaming al reproducir.
+        preload="metadata"
+        poster="/video-hero-poster.jpg"
         className="absolute inset-0 w-full h-full object-cover"
         style={{ zIndex: 0 }}
       />
