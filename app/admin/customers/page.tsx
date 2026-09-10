@@ -1,7 +1,7 @@
 import { getCustomers } from '@/lib/actions/marketing'
 import { AdminCustomersExport } from '@/components/admin/AdminCustomersExport'
-import { formatPrice } from '@/lib/utils'
-import { Users, Mail, MailX, ShoppingBag } from 'lucide-react'
+import { AdminCustomersList } from '@/components/admin/AdminCustomersList'
+import { Users, Mail, ShoppingBag } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
@@ -59,55 +59,7 @@ export default async function AdminCustomersPage() {
           <p className="font-semibold" style={{ color: 'var(--text)' }}>Aún no hay clientes con pedidos pagados</p>
         </div>
       ) : (
-        <div className="card overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr style={{ borderBottom: '1px solid var(--gray-200)' }}>
-                  {['Cliente', 'Contacto', 'Pedidos', 'Total gastado', 'Última compra', 'Ofertas'].map((h) => (
-                    <th key={h} className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wide whitespace-nowrap"
-                      style={{ color: 'var(--gray-400)' }}>
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {customers.map((c) => (
-                  <tr key={c.email} style={{ borderBottom: '1px solid var(--gray-100)' }}>
-                    <td className="px-4 py-3 font-semibold whitespace-nowrap" style={{ color: 'var(--text)' }}>
-                      {c.name || '—'}
-                    </td>
-                    <td className="px-4 py-3" style={{ color: 'var(--gray-600)' }}>
-                      <span className="block">{c.email}</span>
-                      <span className="block text-xs" style={{ color: 'var(--gray-400)' }}>{c.phone || '—'}</span>
-                    </td>
-                    <td className="px-4 py-3 tabular-nums" style={{ color: 'var(--gray-600)' }}>{c.pedidos}</td>
-                    <td className="px-4 py-3 font-bold tabular-nums whitespace-nowrap" style={{ color: 'var(--text)' }}>
-                      {formatPrice(c.total_gastado)}
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap" style={{ color: 'var(--gray-600)' }}>
-                      {new Date(c.ultima_compra).toLocaleDateString('es-CL')}
-                    </td>
-                    <td className="px-4 py-3">
-                      {c.acepta_ofertas ? (
-                        <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full whitespace-nowrap"
-                          style={{ background: 'rgba(22,163,74,.1)', color: '#15803d' }}>
-                          <Mail size={11} /> Sí
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full whitespace-nowrap"
-                          style={{ background: 'var(--gray-100)', color: 'var(--gray-400)' }}>
-                          <MailX size={11} /> No
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <AdminCustomersList customers={customers} />
       )}
 
       <p className="text-xs mt-4 leading-relaxed" style={{ color: 'var(--gray-400)' }}>

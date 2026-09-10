@@ -86,7 +86,7 @@ export function AdminSettingsForm({ settings }: Props) {
 
       <section className="pt-6" style={{ borderTop: '1px solid var(--gray-100)' }}>
         <h2 className={sectionTitle} style={sectionStyle}>Envíos</h2>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className={labelClass}>Costo de envío (CLP)</label>
             <input

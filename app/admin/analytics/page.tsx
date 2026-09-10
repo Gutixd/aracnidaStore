@@ -140,7 +140,7 @@ export default async function AdminAnalyticsPage() {
 
         <div className="xl:col-span-2 card p-6">
           <h2 className="text-sm font-bold mb-5" style={{ color: 'var(--text)' }}>Valorización de inventario</h2>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <p className="text-xs mb-1" style={{ color: 'var(--gray-400)' }}>Costo total</p>
               <p className="text-lg font-black tabular-nums" style={{ color: 'var(--text)' }}>{formatPrice(data.inventoryCost)}</p>
@@ -154,7 +154,7 @@ export default async function AdminAnalyticsPage() {
               <p className="text-lg font-black tabular-nums" style={{ color: data.inventoryMargin >= 0 ? '#15803d' : 'var(--red)' }}>{data.inventoryMargin.toFixed(1)}%</p>
             </div>
           </div>
-          <div className="mt-6 grid grid-cols-2 gap-3">
+          <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="rounded-xl p-4" style={{ background: 'var(--gray-50)' }}>
               <p className="text-xs mb-1" style={{ color: 'var(--gray-400)' }}>Gastos totales</p>
               <p className="text-base font-bold tabular-nums" style={{ color: 'var(--red)' }}>{formatPrice(data.totalExpenses)}</p>

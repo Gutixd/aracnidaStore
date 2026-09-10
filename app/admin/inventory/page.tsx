@@ -49,7 +49,33 @@ export default async function AdminInventoryPage() {
           <div className="p-5" style={{ borderBottom: '1px solid var(--gray-100)' }}>
             <h2 className="text-sm font-bold" style={{ color: 'var(--text)' }}>Stock por producto</h2>
           </div>
-          <div className="overflow-x-auto">
+          {/* Cuatro columnas numéricas no caben en un celular: bajo `lg` cada
+              producto se muestra apilado, sin scroll lateral. */}
+          <div className="lg:hidden">
+            {products.map((p) => (
+              <div key={p.id} className="p-4 flex items-start justify-between gap-3" style={{ borderTop: '1px solid var(--gray-50)' }}>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold leading-snug" style={{ color: 'var(--text)' }}>{p.name}</p>
+                  <p className="text-xs capitalize" style={{ color: 'var(--gray-400)' }}>{p.category?.name}</p>
+                  <p className="text-xs mt-1 tabular-nums" style={{ color: 'var(--gray-600)' }}>
+                    {formatPrice(p.cost_price)} c/u · {formatPrice(p.cost_price * p.stock)} en total
+                  </p>
+                  <Link href={`/admin/products/${p.id}`} className="text-xs font-semibold inline-block mt-2" style={{ color: 'var(--red)' }}>
+                    Gestionar
+                  </Link>
+                </div>
+                <div className="text-right shrink-0">
+                  <p className="text-2xl font-black tabular-nums leading-none"
+                    style={{ color: p.stock === 0 ? 'var(--red)' : p.stock <= 3 ? '#b45309' : '#15803d' }}>
+                    {p.stock}
+                  </p>
+                  <p className="text-xs mt-1" style={{ color: 'var(--gray-400)' }}>en stock</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="hidden lg:block overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--gray-50)' }}>
