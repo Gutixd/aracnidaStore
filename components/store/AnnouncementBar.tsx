@@ -22,10 +22,26 @@ const MESSAGES = [
   'CAMBIOS DENTRO DE 7 DÍAS',
 ]
 
+// El Black Friday parte el viernes 27 de noviembre de 2026. Antes de esa
+// fecha el aviso es solo "se viene"; desde ese día se muestra como vigente.
+// Se apaga solo el 1 de diciembre para no dejar un aviso viejo pegado en
+// enero — si se decide extenderlo, basta con mover BLACK_FRIDAY_END.
+const BLACK_FRIDAY_START = new Date('2026-11-27T00:00:00-03:00')
+const BLACK_FRIDAY_END = new Date('2026-12-01T00:00:00-03:00')
+
+function getBlackFridayMessage(now: Date): string | null {
+  if (now >= BLACK_FRIDAY_END) return null
+  if (now >= BLACK_FRIDAY_START) return '🔥 BLACK FRIDAY YA ESTÁ AQUÍ: PRECIOS ESPECIALES POR TIEMPO LIMITADO'
+  return '🔥 SE VIENE EL BLACK FRIDAY: DESDE EL VIERNES 27 DE NOVIEMBRE'
+}
+
 export function AnnouncementBar() {
+  const blackFriday = getBlackFridayMessage(new Date())
+  const messages = blackFriday ? [blackFriday, ...MESSAGES] : MESSAGES
+
   // La lista se duplica para que el loop no muestre un vacío al reiniciar:
   // la animación desplaza exactamente la mitad del ancho total.
-  const track = [...MESSAGES, ...MESSAGES]
+  const track = [...messages, ...messages]
 
   return (
     <div
@@ -42,7 +58,7 @@ export function AnnouncementBar() {
             style={{ color: '#fff' }}
             // La segunda mitad es puramente decorativa (repetición visual):
             // se oculta a los lectores de pantalla para no leerlo dos veces.
-            aria-hidden={i >= MESSAGES.length}
+            aria-hidden={i >= messages.length}
           >
             {msg}
             <span style={{ color: 'rgba(255,255,255,.45)' }}>✦</span>

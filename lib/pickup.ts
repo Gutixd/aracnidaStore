@@ -6,7 +6,7 @@ export const PICKUP_PLACE = 'Metro Plaza de Maipú'
 export const PICKUP_LEAD_HOURS = 24
 
 export interface PickupSlot {
-  id: 'martes' | 'sabado'
+  id: 'sabado'
   label: string
   /** Plural en minúscula para frases tipo "los sábados de 11 a 15" */
   plural: string
@@ -16,15 +16,11 @@ export interface PickupSlot {
   times: string[]
 }
 
+// Desde noviembre de 2026 el retiro es solo los sábados (antes también
+// había martes). Se deja como arreglo de un elemento, no como valor suelto,
+// para no tener que tocar el checkout, el chat ni los correos si el negocio
+// vuelve a sumar otro día más adelante.
 export const PICKUP_SLOTS: PickupSlot[] = [
-  {
-    id: 'martes',
-    label: 'Martes',
-    plural: 'martes',
-    weekday: 2,
-    hours: '13:00 – 16:00',
-    times: ['13:00', '13:30', '14:00', '14:30', '15:00', '15:30'],
-  },
   {
     id: 'sabado',
     label: 'Sábado',

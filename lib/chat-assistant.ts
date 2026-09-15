@@ -58,7 +58,7 @@ Si está entre dos tallas, recomendar la mayor. Las máscaras son talla única e
 ENVÍOS Y RETIRO:
 - Envío a domicilio por Blue Express a todo Chile, desde $${MIN_SHIPPING_COST.toLocaleString('es-CL')} según la región (se calcula y muestra en el checkout).
 - Región Metropolitana: 1 a 3 días hábiles. Zona centro y sur (Valparaíso a La Araucanía): 3 a 7 días hábiles. Zonas extremas (Arica, Tarapacá, Antofagasta, Atacama, Los Ríos, Los Lagos, Aysén, Magallanes): 7 a 12 días hábiles.
-- Retiro gratis en ${PICKUP_PLACE}: martes 13:00-16:00 y sábado 11:00-15:00, coordinando con al menos ${PICKUP_LEAD_HOURS} horas de anticipación.
+- Retiro gratis en ${PICKUP_PLACE}: solo sábado 11:00-15:00, coordinando con al menos ${PICKUP_LEAD_HOURS} horas de anticipación.
 
 PAGO:
 - Envío a domicilio: Mercado Pago (tarjeta de crédito o débito) o transferencia bancaria directa. Si Mercado Pago rechaza la tarjeta, se puede pagar por transferencia: el pedido queda reservado y se despacha al confirmar el pago.
