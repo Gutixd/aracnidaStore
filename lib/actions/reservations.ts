@@ -9,6 +9,8 @@ import { calcReservation, hasEnoughNotice, RESERVATION_MIN_DAYS } from '@/lib/re
 import { notifyNewReservation } from '@/lib/telegram'
 import { sendPushToAdmins } from '@/lib/push'
 import { sendReservationReceipt, sendAdminReservationNotification } from '@/lib/email'
+import { notifyOrderStarted } from '@/lib/alerts'
+import type { Order } from '@/types'
 import { revalidatePath } from 'next/cache'
 
 /**
@@ -124,6 +126,13 @@ export async function createReservation(input: ReservationFormData) {
     })
   }
 
+  // Aviso inmediato: el de "reserva pagada" solo sale al confirmarse el pago,
+  // y una reserva por transferencia puede quedar días sin que nadie la vea.
+  await notifyOrderStarted({
+    ...order,
+    items: [{ product_name: product.name, size: variant.size, quantity: data.quantity }],
+  } as unknown as Order)
+
   return { reservationId: order.id as string, amounts }
 }
 
@@ -145,7 +154,7 @@ export async function notifyReservationPaid(reservationId: string) {
   await sendReservationReceipt(reservation)
   await sendAdminReservationNotification(reservation)
   await sendPushToAdmins(
-    '📅 Nueva reserva',
+    '💰 Reserva pagada',
     `${reservation.customer_name} — $${Number(reservation.total).toLocaleString('es-CL')}`,
     '/admin/reservations'
   )

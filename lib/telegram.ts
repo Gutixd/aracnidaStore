@@ -4,7 +4,7 @@ import { formatPickupDate, PICKUP_SLOT_LABELS } from '@/lib/pickup'
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN!
 const CHAT_ID = process.env.TELEGRAM_CHAT_ID!
 
-async function sendMessage(text: string): Promise<void> {
+export async function sendMessage(text: string): Promise<void> {
   if (!BOT_TOKEN || !CHAT_ID) {
     console.warn('[Telegram] Credenciales no configuradas')
     return

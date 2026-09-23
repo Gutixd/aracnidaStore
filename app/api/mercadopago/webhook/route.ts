@@ -189,7 +189,7 @@ export async function POST(req: NextRequest) {
       await sendOrderReceipt(fullOrder)
       await sendAdminOrderNotification(fullOrder)
       await sendPushToAdmins(
-        '🕷️ Nuevo pedido',
+        '💰 Pedido pagado',
         `${fullOrder.customer_name} — $${Number(fullOrder.total).toLocaleString('es-CL')}`
       )
       if (stockIncompleto) {

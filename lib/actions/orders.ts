@@ -6,6 +6,7 @@ import { upsertMarketingContact } from '@/lib/actions/marketing'
 import { notifyNewOrder, notifyLowStock, notifyOutOfStock } from '@/lib/telegram'
 import { sendOrderReceipt, sendAdminOrderNotification } from '@/lib/email'
 import { sendPushToAdmins } from '@/lib/push'
+import { notifyOrderStarted } from '@/lib/alerts'
 import { createPickupEvent, deletePickupEvent } from '@/lib/calendar'
 import { CheckoutFormData } from '@/lib/validations'
 import { CartItem } from '@/types'
@@ -195,6 +196,11 @@ export async function createOrder(
     } catch (err) {
       console.error('[Calendar] No se pudo crear el evento de retiro:', err)
     }
+  } else if (fullOrder) {
+    // Envío a domicilio: el aviso de "pedido nuevo" sale al confirmarse el
+    // pago, pero eso puede tardar (transferencia) o no ocurrir nunca (el
+    // cliente abandona). Se avisa igual de que alguien lo inició.
+    await notifyOrderStarted(fullOrder)
   }
 
   return { orderId: order.id }
