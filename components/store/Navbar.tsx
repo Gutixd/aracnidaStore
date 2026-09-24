@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { useCart } from '@/store/cart'
 import { ShoppingCart, Menu, X, Search, Shirt, Drama, Sparkles, PawPrint, ChevronRight } from 'lucide-react'
 import { useState, useEffect } from 'react'
+import { usePathname } from 'next/navigation'
 import { NavLink } from './NavLink'
 
 const MOBILE_LINKS = [
@@ -17,24 +18,31 @@ const MOBILE_LINKS = [
 export function Navbar() {
   const { getTotalItems } = useCart()
   const [menuOpen, setMenuOpen] = useState(false)
-  const [scrolled, setScrolled] = useState(false)
+  const [scrolledPast, setScrolledPast] = useState(false)
+  const pathname = usePathname()
   const totalItems = getTotalItems()
 
+  // La barra transparente con texto blanco solo tiene sentido sobre el video
+  // oscuro de la portada. En el resto de las páginas el fondo es claro, y
+  // "Aracnida" en blanco quedaba invisible: ahí va sólida desde el inicio.
+  const scrolled = scrolledPast || pathname !== '/'
+
   useEffect(() => {
-    const handler = () => setScrolled(window.scrollY > 40)
-    window.addEventListener('scroll', handler)
+    const handler = () => setScrolledPast(window.scrollY > 40)
+    handler()
+    window.addEventListener('scroll', handler, { passive: true })
     return () => window.removeEventListener('scroll', handler)
   }, [])
 
   return (
     <header
       // top-9 (36px) = alto de la AnnouncementBar, que va fija encima.
-      className="fixed top-9 left-0 right-0 z-50 transition-all duration-400"
+      className="fixed top-9 left-0 right-0 z-50 transition-colors duration-300"
       style={scrolled ? {
-        background: 'rgba(255,255,255,0.95)',
-        backdropFilter: 'blur(20px)',
-        boxShadow: '0 2px 20px rgba(0,0,0,.08)',
-        borderBottom: '1px solid rgba(0,0,0,.06)',
+        background: 'rgba(255,255,255,0.92)',
+        backdropFilter: 'saturate(180%) blur(16px)',
+        WebkitBackdropFilter: 'saturate(180%) blur(16px)',
+        borderBottom: '1px solid rgba(16,16,20,.07)',
       } : {
         background: 'transparent',
       }}
@@ -44,11 +52,11 @@ export function Navbar() {
 
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-10 h-10 rounded-xl overflow-hidden transition-transform group-hover:scale-110"
-              style={{ background: '#fff', boxShadow: scrolled ? 'var(--shadow-sm)' : '0 2px 12px rgba(0,0,0,.25)' }}>
-              <Image src="/logo.jpeg" alt="AracnidaStore" width={40} height={40} className="object-cover" priority />
+            <div className="w-9 h-9 rounded-lg overflow-hidden"
+              style={{ background: '#fff', boxShadow: scrolled ? '0 0 0 1px rgba(16,16,20,.08)' : '0 2px 12px rgba(0,0,0,.25)' }}>
+              <Image src="/logo.jpeg" alt="AracnidaStore" width={36} height={36} className="object-cover" priority />
             </div>
-            <span className="text-lg font-black tracking-tight" style={{ color: scrolled ? '#1a1a18' : '#fff' }}>
+            <span className="text-[17px] font-bold tracking-tight" style={{ color: scrolled ? 'var(--text)' : '#fff', letterSpacing: '-.03em' }}>
               Aracnida<span style={{ color: '#c0392b' }}>Store</span>
             </span>
           </Link>

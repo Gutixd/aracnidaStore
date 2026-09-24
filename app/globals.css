@@ -1,24 +1,29 @@
 @import "tailwindcss";
 
+/* Sistema visual. Una sola paleta sobria (tinta, blanco, grises neutros) y
+   el rojo SOLO como acento de acción. Las tiendas que se ven caras no se
+   ven así por los efectos, sino porque todo comparte las mismas reglas. */
 :root {
-  --red: #c0392b;
-  --red-light: #e74c3c;
-  --red-dark: #96281b;
-  --blue: #1a2744;
-  --blue-mid: #2c3e6b;
-  --blue-light: #3d5a9a;
-  --cream: #fafaf8;
-  --gray-50: #f7f7f5;
-  --gray-100: #efefec;
-  --gray-200: #ddddd8;
-  --gray-400: #9b9b93;
-  --gray-600: #5a5a54;
-  --gray-800: #2a2a26;
-  --text: #1a1a18;
-  --shadow-sm: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.06);
-  --shadow: 0 4px 16px rgba(0,0,0,.08), 0 2px 4px rgba(0,0,0,.06);
-  --shadow-lg: 0 12px 40px rgba(0,0,0,.12), 0 4px 12px rgba(0,0,0,.08);
-  --shadow-red: 0 8px 32px rgba(192,57,43,.25);
+  --red: #d0302a;
+  --red-light: #e2453f;
+  --red-dark: #a8231e;
+  --blue: #111114;
+  --blue-mid: #1c1c21;
+  --blue-light: #2a2a31;
+  --cream: #ffffff;
+  --gray-50: #f6f6f4;
+  --gray-100: #ececea;
+  --gray-200: #dcdcd8;
+  --gray-400: #8c8c86;
+  --gray-600: #55554f;
+  --gray-800: #26262a;
+  --text: #111114;
+  --ink: #0b0b0d;
+  --radius: 14px;
+  --shadow-sm: 0 1px 2px rgba(16,16,20,.05);
+  --shadow: 0 2px 10px rgba(16,16,20,.06);
+  --shadow-lg: 0 12px 32px rgba(16,16,20,.10);
+  --shadow-red: 0 6px 20px rgba(208,48,42,.22);
 }
 
 * { box-sizing: border-box; }
@@ -27,9 +32,12 @@ html { scroll-behavior: smooth; }
 body {
   background: var(--cream);
   color: var(--text);
-  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-family: var(--font-geist-sans), system-ui, -apple-system, 'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
+
+h1, h2, h3 { letter-spacing: -0.025em; }
 
 /* ANIMATIONS */
 @keyframes fadeUp {
@@ -91,52 +99,60 @@ body {
 .delay-400 { animation-delay: .4s; }
 .delay-500 { animation-delay: .5s; }
 
-/* CARDS */
+/* CARDS — sin "saltos" al pasar el mouse: el movimiento constante es lo
+   que hace ver una tienda como plantilla. */
 .card {
   background: #fff;
-  border-radius: 16px;
-  box-shadow: var(--shadow);
-  border: 1px solid var(--gray-100);
-  transition: box-shadow .25s, transform .25s;
-}
-.card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
-
-.card-product {
-  background: #fff;
-  border-radius: 20px;
+  border-radius: var(--radius);
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--gray-100);
-  overflow: hidden;
-  transition: all .3s cubic-bezier(.22,1,.36,1);
+  transition: box-shadow .2s ease, border-color .2s ease;
 }
-.card-product:hover {
-  box-shadow: var(--shadow-lg);
-  transform: translateY(-6px);
-  border-color: rgba(192,57,43,.3);
+.card:hover { box-shadow: var(--shadow); }
+
+.card-product {
+  background: transparent;
+  border-radius: var(--radius);
+  overflow: hidden;
 }
 
 /* BUTTONS */
 .btn-primary {
   background: var(--red);
   color: #fff;
-  padding: .75rem 1.75rem;
-  border-radius: 12px;
-  font-weight: 700;
-  font-size: .9rem;
-  letter-spacing: .01em;
+  padding: .85rem 1.6rem;
+  min-height: 48px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: .95rem;
+  letter-spacing: -.005em;
   border: none;
   cursor: pointer;
-  transition: all .2s ease;
+  transition: background .15s ease, box-shadow .15s ease, transform .1s ease;
   display: inline-flex;
   align-items: center;
   gap: .5rem;
 }
-.btn-primary:hover {
-  background: var(--red-light);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-red);
+.btn-primary:hover { background: var(--red-dark); box-shadow: var(--shadow-red); }
+.btn-primary:active { transform: scale(.98); }
+.btn-primary:disabled { opacity: .5; cursor: not-allowed; box-shadow: none; }
+
+/* Botón oscuro: acción secundaria fuerte (ej. "Ver catálogo" sobre fondo claro) */
+.btn-dark {
+  background: var(--ink);
+  color: #fff;
+  padding: .85rem 1.6rem;
+  min-height: 48px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: .95rem;
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  transition: background .15s ease, transform .1s ease;
 }
-.btn-primary:active { transform: translateY(0); }
+.btn-dark:hover { background: #26262b; }
+.btn-dark:active { transform: scale(.98); }
 
 .btn-secondary {
   background: transparent;
@@ -203,27 +219,25 @@ body {
 .badge-yellow { background: rgba(234,179,8,.12); color: #854d0e; }
 .badge-gray   { background: var(--gray-100); color: var(--gray-600); }
 
-/* SECTION TAG */
+/* SECTION TAG — antetítulo editorial: texto pequeño en mayúsculas, sin
+   píldora ni punto parpadeante. */
 .section-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: .5rem;
-  background: rgba(192,57,43,.08);
+  display: block;
   color: var(--red);
-  padding: .35rem 1rem;
-  border-radius: 100px;
-  font-size: .78rem;
-  font-weight: 700;
-  letter-spacing: .06em;
+  font-size: .75rem;
+  font-weight: 600;
+  letter-spacing: .14em;
   text-transform: uppercase;
-  margin-bottom: 1rem;
+  margin-bottom: .75rem;
 }
-.section-tag::before {
-  content: '';
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  background: var(--red);
-  animation: pulse-red 2s ease infinite;
+
+/* Título de sección: una sola escala en todo el sitio */
+.section-title {
+  font-size: clamp(1.75rem, 4.5vw, 2.75rem);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -.035em;
+  color: var(--text);
 }
 
 /* HERO */
@@ -252,7 +266,7 @@ body {
 }
 
 /* PRICE */
-.price-tag { font-size: 1.6rem; font-weight: 900; color: var(--red); letter-spacing: -.02em; }
+.price-tag { font-size: 1.6rem; font-weight: 700; color: var(--text); letter-spacing: -.02em; }
 
 /* SKELETON */
 .skeleton {
@@ -265,22 +279,24 @@ body {
 /* STAT CARD */
 .stat-card {
   background: #fff;
-  border-radius: 16px;
+  border-radius: var(--radius);
   padding: 1.5rem;
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--gray-100);
-  transition: all .25s ease;
 }
-.stat-card:hover { box-shadow: var(--shadow); transform: translateY(-2px); }
 
-/* REVEAL (scroll-driven, ease-out, GPU-friendly) */
-.reveal {
+/* REVEAL — el contenido es VISIBLE por defecto. Antes arrancaba en
+   opacidad 0 y esperaba al JavaScript: en celular eso dejaba la ficha de
+   producto en blanco ~3 s y zonas vacías al hacer scroll. Ahora solo lo
+   que está bajo el pliegue al cargar se marca "pending" (antes de pintar)
+   y entra con un fundido corto y sutil. */
+.reveal.reveal-pending {
   opacity: 0;
-  transform: translateY(28px);
-  transition: opacity .55s cubic-bezier(.16,1,.3,1), transform .55s cubic-bezier(.16,1,.3,1);
-  will-change: opacity, transform;
+  transform: translateY(12px);
 }
-.reveal.visible { opacity: 1; transform: translateY(0); }
+.reveal {
+  transition: opacity .45s cubic-bezier(.16,1,.3,1), transform .45s cubic-bezier(.16,1,.3,1);
+}
 
 /* Ocultar scrollbar (franja de galería horizontal) */
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

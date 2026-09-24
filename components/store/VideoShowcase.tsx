@@ -33,7 +33,7 @@ export function VideoShowcase() {
     <section
       ref={sectionRef}
       className="relative w-full overflow-hidden flex items-center justify-center"
-      style={{ minHeight: '85vh' }}
+      style={{ minHeight: '70svh', background: '#0b0b0d' }}
     >
       {/* Video de fondo a pantalla completa */}
       <video
@@ -53,28 +53,26 @@ export function VideoShowcase() {
       {/* Capas oscuras para legibilidad del texto */}
       <div
         className="absolute inset-0 pointer-events-none"
-        style={{ background: 'linear-gradient(180deg, rgba(15,30,61,.75) 0%, rgba(15,30,61,.35) 40%, rgba(15,30,61,.55) 100%)' }}
-      />
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse 60% 50% at 50% 50%, rgba(192,57,43,.18), transparent 75%)' }}
+        style={{ background: 'linear-gradient(180deg, rgba(8,8,10,.5) 0%, rgba(8,8,10,.4) 50%, rgba(8,8,10,.75) 100%)' }}
       />
 
-      {/* Contenido encima del video */}
+      {/* Contenido encima del video. Siempre visible: antes arrancaba en
+          opacidad 0 y dependía de que el observador lo "encendiera". */}
       <div
-        className="relative z-10 text-center px-4 sm:px-6 lg:px-8 max-w-3xl mx-auto transition-all duration-700"
-        style={{ opacity: visible ? 1 : 0, transform: visible ? 'translateY(0)' : 'translateY(30px)' }}
+        className="relative z-10 text-center px-5 sm:px-6 lg:px-8 max-w-3xl mx-auto transition-transform duration-700"
+        style={{ transform: visible ? 'translateY(0)' : 'translateY(12px)' }}
       >
-        <div className="section-tag" style={{ color: '#f87171' }}>En acción</div>
-        <h2 className="text-4xl md:text-6xl font-black text-white mb-4" style={{ textShadow: '0 4px 30px rgba(0,0,0,.6)' }}>
+        <span className="section-tag" style={{ color: 'rgba(255,255,255,.75)' }}>En acción</span>
+        <h2 className="text-4xl md:text-6xl font-bold text-white mb-4" style={{ letterSpacing: '-.04em', lineHeight: 1.02 }}>
           Míralos en movimiento
         </h2>
-        <p className="text-base md:text-xl max-w-xl mx-auto mb-10" style={{ color: 'rgba(255,255,255,.8)', textShadow: '0 2px 12px rgba(0,0,0,.5)' }}>
+        <p className="text-base md:text-lg max-w-md mx-auto mb-9" style={{ color: 'rgba(255,255,255,.8)' }}>
           Así se ven nuestros trajes y máscaras de Spider-Man en la vida real.
         </p>
-        <Link href="/products" className="btn-primary text-base px-8 py-4">
+        <Link href="/products" className="inline-flex items-center gap-2 min-h-[48px] px-7 rounded-[10px] text-[15px] font-semibold bg-white transition-colors hover:bg-white/90"
+          style={{ color: 'var(--text)' }}>
           <ShoppingBag size={18} />
-          Ver catálogo completo
+          Ver catálogo
         </Link>
       </div>
     </section>

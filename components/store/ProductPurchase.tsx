@@ -65,14 +65,10 @@ export function ProductPurchase({ product, variants }: Props) {
       {/* Precio de la variante seleccionada */}
       <div>
         <div className="flex items-baseline gap-3">
-          <span className="text-4xl font-black" style={{ color: 'var(--red)' }}>
+          <span className="text-[1.9rem] font-semibold tabular-nums" style={{ color: 'var(--text)', letterSpacing: '-.035em' }}>
             {formatPrice(currentPrice)}
           </span>
-          {!isSingle && (
-            <span className="text-sm" style={{ color: 'var(--gray-400)' }}>
-              Talla {selected?.size}
-            </span>
-          )}
+          <span className="text-xs" style={{ color: 'var(--gray-400)' }}>IVA incluido</span>
         </div>
 
         {/* Anuncio de alza. A propósito NO es un precio tachado: este
@@ -95,12 +91,13 @@ export function ProductPurchase({ product, variants }: Props) {
       {/* Selector de tallas (solo si hay más de una) */}
       {!isSingle && (
         <div>
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-sm font-semibold uppercase tracking-widest" style={{ color: 'var(--gray-600)', fontSize: '11px' }}>
-              Selecciona tu talla (cm)
+          <div className="flex items-baseline justify-between mb-3">
+            <span className="text-sm font-semibold" style={{ color: 'var(--text)' }}>
+              Talla {selected ? <span style={{ color: 'var(--gray-600)', fontWeight: 400 }}>· {selected.size} cm</span> : null}
             </span>
           </div>
-          <div className="flex flex-wrap gap-2">
+          {/* Cuadrícula pareja de botones grandes: fácil de tocar con el pulgar */}
+          <div className="grid grid-cols-5 gap-2">
             {variants.map((v) => {
               const out = v.stock === 0
               const active = v.id === selectedId
@@ -109,13 +106,14 @@ export function ProductPurchase({ product, variants }: Props) {
                   key={v.id}
                   disabled={out}
                   onClick={() => { setSelectedId(v.id); setQuantity(1) }}
-                  className="relative min-w-[52px] px-3 py-2.5 rounded-xl text-sm font-bold transition-all"
+                  className="relative h-12 rounded-[10px] text-sm font-semibold tabular-nums transition-colors"
+                  aria-pressed={active}
                   style={
                     out
-                      ? { background: 'var(--gray-50)', color: 'var(--gray-200)', textDecoration: 'line-through', cursor: 'not-allowed', border: '1.5px solid var(--gray-100)' }
+                      ? { background: 'var(--gray-50)', color: 'var(--gray-200)', textDecoration: 'line-through', cursor: 'not-allowed' }
                       : active
-                        ? { background: 'var(--red)', color: '#fff', border: '1.5px solid var(--red)', boxShadow: 'var(--shadow-red)' }
-                        : { background: '#fff', color: 'var(--text)', border: '1.5px solid var(--gray-200)' }
+                        ? { background: 'var(--ink)', color: '#fff' }
+                        : { background: '#fff', color: 'var(--text)', boxShadow: 'inset 0 0 0 1px var(--gray-200)' }
                   }
                 >
                   {v.size}
@@ -125,7 +123,7 @@ export function ProductPurchase({ product, variants }: Props) {
           </div>
           {selected && selected.stock > 0 && selected.stock <= 3 && (
             <p className="text-xs mt-2 font-semibold" style={{ color: '#b45309' }}>
-              Solo quedan {selected.stock} en talla {selected.size}
+              {selected.stock === 1 ? 'Solo queda 1' : `Solo quedan ${selected.stock}`} en talla {selected.size}
             </p>
           )}
         </div>
@@ -134,10 +132,10 @@ export function ProductPurchase({ product, variants }: Props) {
       {/* Cantidad */}
       {selected && selected.stock > 0 && (
         <div className="flex items-center gap-4">
-          <span className="text-sm font-semibold uppercase tracking-widest" style={{ color: 'var(--gray-600)', fontSize: '11px' }}>
+          <span className="text-sm font-semibold" style={{ color: 'var(--text)' }}>
             Cantidad
           </span>
-          <div className="flex items-center gap-1 rounded-xl p-1" style={{ border: '1.5px solid var(--gray-200)' }}>
+          <div className="flex items-center gap-1 rounded-[10px] p-1" style={{ boxShadow: 'inset 0 0 0 1px var(--gray-200)' }}>
             <button onClick={() => setQuantity((q) => Math.max(1, q - 1))}
               className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
               style={{ color: 'var(--gray-600)' }}
@@ -160,8 +158,8 @@ export function ProductPurchase({ product, variants }: Props) {
         <button
           onClick={handleAdd}
           disabled={!selected || selected.stock === 0}
-          className="btn-primary flex-1 justify-center py-4 text-base"
-          style={added ? { background: '#16a34a' } : undefined}
+          className="btn-primary flex-1 justify-center text-base min-h-[54px]"
+          style={added ? { background: '#15803d' } : undefined}
         >
           {added ? <><Check size={18} strokeWidth={3} />¡Agregado!</> : <><ShoppingCart size={18} />Agregar al carrito</>}
         </button>
@@ -187,23 +185,22 @@ function ReserveCta({ slug, price, emphasis = false }: { slug: string; price: nu
   return (
     <Link
       href={`/reservar/${slug}`}
-      className="block rounded-xl p-4 transition-all hover:shadow-md"
+      className="block rounded-[var(--radius)] p-4 transition-colors hover:bg-[#f2f8f4]"
       style={{
-        border: emphasis ? '1.5px solid #15803d' : '1.5px dashed var(--gray-200)',
+        boxShadow: emphasis ? 'inset 0 0 0 1.5px #15803d' : 'inset 0 0 0 1px var(--gray-200)',
         background: emphasis ? 'rgba(22,163,74,.05)' : '#fff',
       }}
     >
       <div className="flex items-start gap-3">
-        <span className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-          style={{ background: 'rgba(22,163,74,.1)', color: '#15803d' }}>
-          <CalendarDays size={17} />
+        <span className="mt-0.5 shrink-0" style={{ color: '#15803d' }}>
+          <CalendarDays size={18} strokeWidth={1.75} />
         </span>
         <div className="min-w-0">
-          <p className="font-bold text-sm flex items-center gap-1.5" style={{ color: 'var(--text)' }}>
+          <p className="font-semibold text-sm flex items-center gap-1.5 flex-wrap" style={{ color: 'var(--text)' }}>
             Resérvalo y paga {formatPrice(final)}
-            <span className="inline-flex items-center gap-1 text-xs font-bold px-1.5 py-0.5 rounded"
-              style={{ background: '#15803d', color: '#fff' }}>
-              <Tag size={10} /> -15%
+            <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-1.5 py-0.5 rounded"
+              style={{ background: 'rgba(22,163,74,.1)', color: '#15803d' }}>
+              <Tag size={10} /> −15%
             </span>
           </p>
           <p className="text-xs mt-1 leading-relaxed" style={{ color: 'var(--gray-600)' }}>

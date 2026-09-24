@@ -1,7 +1,6 @@
 import { AnnouncementBar } from '@/components/store/AnnouncementBar'
 import { Navbar } from '@/components/store/Navbar'
 import { Footer } from '@/components/store/Footer'
-import { SiteIntro } from '@/components/store/SiteIntro'
 import { ChatWidget } from '@/components/store/ChatWidget'
 import { NavigationProgressProvider, PageTransitionOverlay } from '@/components/store/NavigationProgress'
 import { isChatAssistantEnabled } from '@/lib/chat-assistant'
@@ -14,7 +13,6 @@ export default function StoreLayout({ children }: { children: React.ReactNode })
     // para que el menú se mantenga nítido y clickeable mientras la página
     // de destino carga.
     <NavigationProgressProvider>
-      <SiteIntro />
       <AnnouncementBar />
       <Navbar />
       <main className="min-h-screen">

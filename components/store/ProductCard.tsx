@@ -44,36 +44,16 @@ export function ProductCard({ product }: ProductCardProps) {
   return (
     <Link href={`/products/${product.slug}`} className="group block">
       <div className="card-product relative">
-        {/* Badges */}
-        <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
-          {product.featured && (
-            <span className="text-xs font-bold px-2.5 py-1 rounded-full" style={{ background: 'var(--red)', color: '#fff' }}>
-              Destacado
-            </span>
-          )}
-          {isLowStock && (
-            <span className="text-xs font-bold px-2.5 py-1 rounded-full"
-              style={{ background: '#d97706', color: '#fff', boxShadow: '0 2px 6px rgba(217,119,6,.35)' }}>
-              ¡Últimas {totalStock}!
-            </span>
-          )}
-          {isOutOfStock && (
-            <span className="text-xs font-bold px-2.5 py-1 rounded-full"
-              style={{ background: '#6b7280', color: '#fff' }}>
-              Agotado
-            </span>
-          )}
-        </div>
-
-        {/* Imagen */}
-        <div className="relative aspect-square overflow-hidden" style={{ background: '#fff' }}>
+        {/* Imagen sobre fondo neutro parejo: todas las fotos se ven como
+            una colección, no como recortes pegados. */}
+        <div className="relative aspect-square overflow-hidden rounded-[var(--radius)]" style={{ background: 'var(--gray-50)' }}>
           {product.image_url ? (
             <Image
               src={product.image_url}
               alt={`${product.name} - Spider-Man Chile`}
               fill
-              className={`object-contain transition-transform duration-500 group-hover:scale-105 ${isOutOfStock ? 'opacity-50 grayscale' : ''}`}
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+              className={`object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03] ${isOutOfStock ? 'opacity-40 grayscale' : ''}`}
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 25vw"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center" style={{ color: 'var(--gray-200)' }}>
@@ -81,23 +61,31 @@ export function ProductCard({ product }: ProductCardProps) {
             </div>
           )}
 
-          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-            style={{ background: 'linear-gradient(to top, rgba(26,39,68,.6) 0%, transparent 55%)' }} />
+          {/* Una sola etiqueta, y solo si informa algo útil. "Destacado" iba
+              en casi todos los productos, así que no destacaba nada. */}
+          {(isOutOfStock || isLowStock) && (
+            <span className="absolute top-2.5 left-2.5 text-[11px] font-semibold px-2 py-1 rounded-md"
+              style={isOutOfStock
+                ? { background: '#fff', color: 'var(--gray-600)', boxShadow: '0 0 0 1px var(--gray-100)' }
+                : { background: '#fff', color: 'var(--red)', boxShadow: '0 0 0 1px var(--gray-100)' }}>
+              {isOutOfStock ? 'Agotado' : `Últimas ${totalStock}`}
+            </span>
+          )}
 
-          {/* Acción inferior */}
+          {/* Acción rápida (solo escritorio, al pasar el mouse) */}
           {!isOutOfStock && (
             isSingle ? (
               <button
                 onClick={handleQuickAdd}
-                className="absolute bottom-0 left-0 right-0 py-3.5 text-sm font-bold text-white flex items-center justify-center gap-2 transition-transform duration-300 translate-y-full group-hover:translate-y-0"
-                style={added ? { background: '#16a34a' } : { background: 'linear-gradient(135deg, #c0392b, #e74c3c)' }}
+                className="hidden md:flex absolute bottom-2.5 left-2.5 right-2.5 py-2.5 rounded-lg text-sm font-semibold text-white items-center justify-center gap-2 opacity-0 translate-y-1 transition-all duration-200 group-hover:opacity-100 group-hover:translate-y-0"
+                style={{ background: added ? '#15803d' : 'var(--ink)' }}
               >
-                {added ? <><Check size={15} strokeWidth={3} />¡Listo!</> : <><ShoppingCart size={15} />Agregar</>}
+                {added ? <><Check size={15} strokeWidth={3} />Agregado</> : <><ShoppingCart size={15} />Agregar</>}
               </button>
             ) : (
               <span
-                className="absolute bottom-0 left-0 right-0 py-3.5 text-sm font-bold text-white flex items-center justify-center gap-2 transition-transform duration-300 translate-y-full group-hover:translate-y-0"
-                style={{ background: 'linear-gradient(135deg, #1a2744, #2c3e6b)' }}
+                className="hidden md:flex absolute bottom-2.5 left-2.5 right-2.5 py-2.5 rounded-lg text-sm font-semibold items-center justify-center gap-2 opacity-0 translate-y-1 transition-all duration-200 group-hover:opacity-100 group-hover:translate-y-0"
+                style={{ background: '#fff', color: 'var(--text)', boxShadow: '0 0 0 1px var(--gray-200)' }}
               >
                 <SlidersHorizontal size={15} />Elegir talla
               </span>
@@ -106,49 +94,33 @@ export function ProductCard({ product }: ProductCardProps) {
         </div>
 
         {/* Info */}
-        <div className="p-4">
-          <h3 className="text-sm font-semibold leading-snug line-clamp-2 mb-2 transition-colors group-hover:text-red-700" style={{ color: 'var(--text)' }}>
+        <div className="pt-3 px-0.5">
+          <h3 className="text-[13px] sm:text-sm font-medium leading-snug line-clamp-2" style={{ color: 'var(--text)' }}>
             {product.name}
           </h3>
+          <p className="text-xs mt-0.5" style={{ color: 'var(--gray-400)' }}>
+            {variants.length > 1 ? `${variants.length} tallas` : product.color}
+          </p>
 
-          <div className="flex items-center gap-1.5 mb-3">
-            {variants.length > 1 ? (
-              <span className="text-xs px-2 py-0.5 rounded-md font-medium" style={{ background: 'var(--gray-50)', color: 'var(--gray-600)' }}>
-                {variants.length} tallas
-              </span>
-            ) : (
-              product.color && (
-                <span className="text-xs px-2 py-0.5 rounded-md font-medium" style={{ background: 'var(--gray-50)', color: 'var(--gray-600)' }}>
-                  {product.color}
-                </span>
-              )
-            )}
-          </div>
-
-          <div className="flex items-center justify-between">
-            <span className="text-lg font-black" style={{ color: isOutOfStock ? 'var(--gray-400)' : 'var(--red)' }}>
-              {hasMultiplePrices && <span className="text-xs font-semibold mr-1" style={{ color: 'var(--gray-400)' }}>Desde</span>}
+          <div className="mt-2 flex items-baseline gap-1.5 flex-wrap">
+            {hasMultiplePrices && <span className="text-xs" style={{ color: 'var(--gray-400)' }}>Desde</span>}
+            <span className="text-[15px] sm:text-base font-semibold tabular-nums" style={{ color: isOutOfStock ? 'var(--gray-400)' : 'var(--text)' }}>
               {formatPrice(minPrice)}
-              {/* Aviso de alza, no un precio tachado: este producto nunca se
-                  vendió más caro, así que un "antes" sería falso. */}
-              {risesTo && (
-                <span className="block text-[11px] font-semibold mt-0.5" style={{ color: 'var(--gray-400)' }}>
-                  Sube a {formatPrice(risesTo)}
-                </span>
-              )}
-              {/* Segundo precio REAL (el de reserva anticipada). Da el mismo
-                  golpe visual que un "antes/ahora" sin inventar un precio
-                  anterior que nunca se cobró. */}
-              <span className="block text-[11px] font-bold mt-1" style={{ color: '#15803d' }}>
-                {formatPrice(reservePrice)} reservando · −15%
-              </span>
             </span>
             {inCart && !added && (
-              <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: 'rgba(22,163,74,.1)', color: '#15803d' }}>
-                En carrito
-              </span>
+              <span className="text-[11px] font-medium" style={{ color: '#15803d' }}>· En carrito</span>
             )}
           </div>
+          {/* Aviso de alza, no un precio tachado: este producto nunca se
+              vendió más caro, así que un "antes" sería falso. */}
+          {risesTo && (
+            <p className="text-[11px] mt-0.5" style={{ color: 'var(--gray-400)' }}>Sube a {formatPrice(risesTo)}</p>
+          )}
+          {/* Segundo precio REAL (el de reserva anticipada), sin inventar
+              un precio "antes" que nunca se cobró. */}
+          <p className="text-[11px] sm:text-xs mt-0.5 font-medium" style={{ color: '#15803d' }}>
+            {formatPrice(reservePrice)} reservando
+          </p>
         </div>
       </div>
     </Link>

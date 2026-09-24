@@ -212,49 +212,41 @@ export default async function ProductPage({
       ]
 
   return (
-    <div style={{ background: 'var(--gray-50)', minHeight: '100vh' }} className="animate-fade-in">
+    <div style={{ background: '#fff', minHeight: '100vh' }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumbJsonLd) }} />
 
       {/* ── Main product section ── */}
-      <div className="max-w-7xl mx-auto pt-28 pb-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto pt-[108px] sm:pt-28 pb-12 px-5 sm:px-6 lg:px-8">
         {/* Breadcrumb */}
-        <nav className="text-sm mb-10 flex items-center gap-2 flex-wrap" style={{ color: 'var(--gray-400)' }} aria-label="Migas de pan">
-          <Link href="/" className="hover:underline transition-colors hover:text-[var(--red)]">Inicio</Link>
-          <span>/</span>
-          <Link href="/products" className="hover:underline transition-colors hover:text-[var(--red)]">Catálogo</Link>
-          <span>/</span>
+        <nav className="text-xs sm:text-[13px] mb-5 sm:mb-8 flex items-center gap-1.5 flex-wrap" style={{ color: 'var(--gray-400)' }} aria-label="Migas de pan">
+          <Link href="/" className="hover:text-[var(--text)] transition-colors">Inicio</Link>
+          <span aria-hidden>/</span>
+          <Link href="/products" className="hover:text-[var(--text)] transition-colors">Catálogo</Link>
           {product.category && (
             <>
-              <Link href={`/products?category=${product.category.slug}`} className="hover:underline transition-colors hover:text-[var(--red)]">{product.category.name}</Link>
-              <span>/</span>
+              <span aria-hidden>/</span>
+              <Link href={`/products?category=${product.category.slug}`} className="hover:text-[var(--text)] transition-colors">{product.category.name}</Link>
             </>
           )}
-          <span style={{ color: 'var(--gray-600)' }}>{product.name}</span>
         </nav>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 mb-0">
+        <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_1fr] gap-8 lg:gap-16">
 
           {/* ── Imagen principal ── */}
-          <ScrollReveal>
-            <div className="sticky top-28">
-              <div
-                className="relative rounded-3xl overflow-hidden"
-                style={{
-                  aspectRatio: '3/4',
-                  background: '#fff',
-                  boxShadow: '0 25px 60px rgba(0,0,0,.12), 0 8px 20px rgba(0,0,0,.06)',
-                  border: '1.5px solid var(--gray-100)',
-                }}
-              >
+          <div>
+            <div className="lg:sticky lg:top-28">
+              {/* En celular la foto va de borde a borde: es lo primero que
+                  mira el cliente y no debe verse como una tarjeta chica. */}
+              <div className="relative -mx-5 sm:mx-0 sm:rounded-[20px] overflow-hidden" style={{ aspectRatio: '1/1', background: 'var(--gray-50)' }}>
                 {product.image_url ? (
                   <Image
                     src={product.image_url}
                     alt={`${product.name} - disfraz Spider-Man en Chile`}
                     fill
-                    className="object-contain p-4"
+                    className="object-cover"
                     priority
-                    sizes="(max-width:1024px) 100vw, 50vw"
+                    sizes="(max-width:1024px) 100vw, 55vw"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center" style={{ color: 'var(--gray-200)' }}>
@@ -262,217 +254,141 @@ export default async function ProductPage({
                   </div>
                 )}
 
-                {/* Badges */}
-                <div className="absolute top-4 left-4 flex flex-col gap-2">
-                  {product.featured && (
-                    <span className="text-xs font-bold px-3 py-1.5 rounded-full" style={{ background: 'var(--red)', color: '#fff' }}>
-                      Destacado
-                    </span>
-                  )}
-                  {totalStock > 0 && totalStock <= 5 && (
-                    <span className="text-xs font-bold px-3 py-1.5 rounded-full" style={{ background: '#b45309', color: '#fff' }}>
-                      Últimas unidades
-                    </span>
-                  )}
-                </div>
-
-                {/* Watermark corner */}
-                <div className="absolute bottom-3 right-3 text-xs font-black tracking-wider opacity-20"
-                  style={{ color: 'var(--red)', fontSize: '10px' }}>
-                  ARACNIDA
-                </div>
+                {totalStock > 0 && totalStock <= 5 && (
+                  <span className="absolute top-4 left-4 sm:left-4 text-xs font-semibold px-2.5 py-1 rounded-md"
+                    style={{ background: '#fff', color: 'var(--red)', boxShadow: '0 0 0 1px var(--gray-100)' }}>
+                    Últimas unidades
+                  </span>
+                )}
               </div>
 
-              {/* Thumbnail strip from gallery */}
+              {/* Miniaturas: abren la galería completa más abajo */}
               {galleryImages.length > 0 && (
-                <div className="flex gap-2 mt-4 overflow-x-auto pb-1">
+                <div className="flex gap-2 mt-3 overflow-x-auto no-scrollbar">
                   {galleryImages.slice(0, 6).map((img, i) => (
-                    <div key={i} className="relative rounded-xl overflow-hidden flex-shrink-0"
-                      style={{ width: 64, height: 64, border: '1.5px solid var(--gray-100)', background: '#fff' }}>
+                    <a key={i} href="#galeria" className="relative rounded-lg overflow-hidden flex-shrink-0"
+                      style={{ width: 64, height: 64, background: 'var(--gray-50)' }}>
                       <Image src={img.url} alt={img.alt || `${product.name} ${i + 1}`}
                         fill className="object-cover" sizes="64px" />
-                    </div>
+                    </a>
                   ))}
                   {galleryImages.length > 6 && (
-                    <div className="relative rounded-xl flex-shrink-0 flex items-center justify-center"
-                      style={{ width: 64, height: 64, border: '1.5px solid var(--gray-100)', background: 'var(--gray-50)' }}>
-                      <span className="text-xs font-bold" style={{ color: 'var(--gray-400)' }}>+{galleryImages.length - 6}</span>
-                    </div>
+                    <a href="#galeria" className="rounded-lg flex-shrink-0 flex items-center justify-center"
+                      style={{ width: 64, height: 64, background: 'var(--gray-50)' }}>
+                      <span className="text-xs font-semibold" style={{ color: 'var(--gray-600)' }}>+{galleryImages.length - 6}</span>
+                    </a>
                   )}
                 </div>
               )}
             </div>
-          </ScrollReveal>
+          </div>
 
           {/* ── Info panel ── */}
-          <ScrollReveal delay={120}>
-            <div className="flex flex-col gap-6">
+          <div className="flex flex-col">
 
-              {/* Category + name */}
-              <div>
-                {product.category && (
-                  <Link href={`/products?category=${product.category.slug}`}>
-                    <span className="text-xs font-bold uppercase tracking-widest mb-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all"
-                      style={{ background: 'rgba(192,57,43,.08)', color: 'var(--red)', border: '1px solid rgba(192,57,43,.15)' }}>
-                      {product.category.name}
-                    </span>
-                  </Link>
-                )}
-                <h1 className="text-3xl md:text-4xl lg:text-[2.6rem] font-black leading-tight mt-3"
-                  style={{ color: 'var(--text)', letterSpacing: '-0.02em' }}>
-                  {product.name}
-                </h1>
-              </div>
+            {/* Category + name */}
+            {product.category && (
+              <Link href={`/products?category=${product.category.slug}`} className="section-tag self-start" style={{ marginBottom: '.5rem' }}>
+                {product.category.name}
+              </Link>
+            )}
+            <h1 className="text-[1.75rem] leading-[1.1] sm:text-4xl lg:text-[2.6rem] font-bold"
+              style={{ color: 'var(--text)', letterSpacing: '-0.035em' }}>
+              {product.name}
+            </h1>
 
-              {/* Calificación real: solo se muestra si existen reseñas aprobadas.
-                  Antes había un "5.0" fijo escrito a mano sin datos detrás. */}
-              <div className="flex items-center gap-3 flex-wrap">
-                {reviewSummary.count > 0 ? (
-                  <>
-                    <div className="flex gap-0.5">
-                      {Array.from({ length: 5 }).map((_, i) => (
-                        <Star
-                          key={i}
-                          size={15}
-                          fill={i < Math.round(reviewSummary.average) ? '#f59e0b' : 'none'}
-                          stroke={i < Math.round(reviewSummary.average) ? 'none' : '#d4d4d4'}
-                        />
-                      ))}
-                    </div>
-                    <span className="text-sm font-semibold" style={{ color: 'var(--gray-600)' }}>
-                      {reviewSummary.average.toFixed(1)}
-                    </span>
-                    <a href="#resenas" className="text-sm underline" style={{ color: 'var(--gray-400)' }}>
-                      {reviewSummary.count} {reviewSummary.count === 1 ? 'reseña' : 'reseñas'}
-                    </a>
-                  </>
-                ) : (
-                  <a href="#resenas" className="text-sm" style={{ color: 'var(--gray-400)' }}>
-                    Sé el primero en dejar una reseña
+            {/* Calificación real: solo se muestra si existen reseñas aprobadas. */}
+            <div className="flex items-center gap-2 flex-wrap mt-3 text-sm">
+              {reviewSummary.count > 0 ? (
+                <>
+                  <div className="flex gap-0.5" style={{ color: 'var(--text)' }}>
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star
+                        key={i}
+                        size={14}
+                        fill={i < Math.round(reviewSummary.average) ? 'currentColor' : 'none'}
+                        stroke={i < Math.round(reviewSummary.average) ? 'none' : 'var(--gray-200)'}
+                      />
+                    ))}
+                  </div>
+                  <a href="#resenas" className="underline underline-offset-2" style={{ color: 'var(--gray-600)' }}>
+                    {reviewSummary.average.toFixed(1)} · {reviewSummary.count} {reviewSummary.count === 1 ? 'reseña' : 'reseñas'}
                   </a>
-                )}
-                <span className="text-sm" style={{ color: 'var(--gray-400)' }}>
-                  · <strong style={{ color: 'var(--gray-600)' }}>+500 clientes</strong> en todo Chile
-                </span>
-              </div>
+                </>
+              ) : (
+                <a href="#resenas" style={{ color: 'var(--gray-400)' }}>Sin reseñas todavía</a>
+              )}
+              <span style={{ color: 'var(--gray-200)' }}>|</span>
+              <span style={{ color: 'var(--gray-600)' }}>+500 clientes en Chile</span>
+            </div>
 
-              {/* Description */}
-              <p className="text-base leading-relaxed" style={{ color: 'var(--gray-600)', lineHeight: 1.75 }}>
-                {product.description}
-              </p>
-
-              {/* Feature chips */}
-              <div className="flex flex-wrap gap-2">
-                {features.map((f, i) => (
-                  <span key={i} className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full"
-                    style={{ background: 'var(--gray-50)', color: 'var(--gray-600)', border: '1px solid var(--gray-200)' }}>
-                    <span style={{ color: 'var(--red)' }}>{f.icon}</span>
-                    {f.text}
-                  </span>
-                ))}
-              </div>
-
-              {/* Divider */}
-              <div style={{ borderTop: '1px solid var(--gray-100)' }} />
-
-              {/* Purchase section */}
+            {/* Compra: precio, tallas, cantidad y botón */}
+            <div className="mt-6 pt-6" style={{ borderTop: '1px solid var(--gray-100)' }}>
               <ProductPurchase product={product} variants={variants} />
+            </div>
 
-              {/* Size guide */}
-              {variants.some((v) => !isNaN(parseInt(v.size))) && <SizeGuide />}
+            {/* Size guide */}
+            {variants.some((v) => !isNaN(parseInt(v.size))) && (
+              <div className="mt-4">
+                <SizeGuide />
+              </div>
+            )}
 
-              {/* Divider */}
-              <div style={{ borderTop: '1px solid var(--gray-100)' }} />
-
-              {/* Retiro presencial — mucha gente no sabía que existía esta opción
-                  porque solo aparecía al final, dentro del checkout. */}
-              <div className="rounded-2xl p-4"
-                style={{ background: 'rgba(22,163,74,.06)', border: '1px solid rgba(22,163,74,.25)' }}>
-                <div className="flex items-start gap-3">
-                  <span className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-                    style={{ background: 'rgba(22,163,74,.12)', color: '#15803d' }}>
-                    <Store size={17} />
-                  </span>
+            {/* Envío y retiro: una sola lista ordenada, en vez de tres cajas
+                de colores distintos compitiendo entre sí. */}
+            <div className="mt-8 rounded-[var(--radius)] divide-y" style={{ boxShadow: '0 0 0 1px var(--gray-100)', borderColor: 'var(--gray-100)' }}>
+              {[
+                { icon: <Truck size={18} strokeWidth={1.75} />, t: 'Envío a todo Chile', s: `Desde ${formatPrice(MIN_SHIPPING_COST)} por Blue Express · despacho en 24-48 h hábiles` },
+                { icon: <Store size={18} strokeWidth={1.75} />, t: `Retiro gratis en ${PICKUP_PLACE}`, s: `Los ${PICKUP_SLOTS.map((s) => `${s.plural} de ${s.hours}`).join(' y los ')}, coordinando con ${PICKUP_LEAD_HOURS} h de anticipación` },
+                { icon: <RotateCcw size={18} strokeWidth={1.75} />, t: 'Cambios dentro de 7 días', s: 'Sin usar y con su empaque original' },
+              ].map((row) => (
+                <div key={row.t} className="flex items-start gap-3.5 p-4" style={{ borderColor: 'var(--gray-100)' }}>
+                  <span className="mt-0.5 shrink-0" style={{ color: 'var(--text)' }}>{row.icon}</span>
                   <div>
-                    <p className="font-bold text-sm" style={{ color: 'var(--text)' }}>
-                      ¿Vives cerca? Retira gratis en {PICKUP_PLACE}
-                    </p>
-                    <p className="text-sm mt-0.5" style={{ color: 'var(--gray-600)' }}>
-                      Te ahorras el costo de envío. Entregamos los{' '}
-                      <strong>
-                        {PICKUP_SLOTS.map((s) => `${s.plural} de ${s.hours}`).join(' y los ')}
-                      </strong>
-                      , coordinando con {PICKUP_LEAD_HOURS} hrs de anticipación.
-                    </p>
-                    <p className="text-xs mt-1.5 font-semibold" style={{ color: '#15803d' }}>
-                      Puedes elegir esta opción al finalizar tu compra
-                    </p>
+                    <p className="text-sm font-semibold" style={{ color: 'var(--text)' }}>{row.t}</p>
+                    <p className="text-[13px] mt-0.5 leading-snug" style={{ color: 'var(--gray-600)' }}>{row.s}</p>
                   </div>
                 </div>
-              </div>
-
-              {/* Envío a domicilio */}
-              <div className="rounded-2xl p-4 space-y-3"
-                style={{ background: 'rgba(192,57,43,.04)', border: '1px solid rgba(192,57,43,.12)' }}>
-                <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: 'var(--red)' }}>
-                  ¿Prefieres que te lo enviemos?
-                </p>
-                {[
-                  { icon: <Truck size={15} />, text: 'Envíos a todo Chile por Blue Express' },
-                  { icon: <Clock size={15} />, text: 'Despacho en 24–48 hrs hábiles' },
-                  { icon: <MapPin size={15} />, text: `Envío desde ${formatPrice(MIN_SHIPPING_COST)} según tu región` },
-                  { icon: <RotateCcw size={15} />, text: 'Cambios aceptados dentro de 7 días' },
-                ].map((item, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <span style={{ color: 'var(--red)', flexShrink: 0 }}>{item.icon}</span>
-                    <span className="text-sm" style={{ color: 'var(--gray-600)' }}>{item.text}</span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Trust badges */}
-              <div className="grid grid-cols-3 gap-3">
-                {[
-                  { icon: <Shield size={20} />, label: 'Calidad', sub: 'garantizada' },
-                  { icon: <Truck size={20} />, label: 'Envío', sub: 'todo Chile' },
-                  { icon: <RotateCcw size={20} />, label: 'Cambios', sub: '7 días' },
-                ].map((b) => (
-                  <div key={b.label} className="flex flex-col items-center text-center gap-1.5 py-3 px-2 rounded-2xl"
-                    style={{ background: '#fff', border: '1px solid var(--gray-100)' }}>
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-                      style={{ background: 'rgba(192,57,43,.08)', color: 'var(--red)' }}>
-                      {b.icon}
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold" style={{ color: 'var(--text)' }}>{b.label}</p>
-                      <p className="text-xs" style={{ color: 'var(--gray-400)' }}>{b.sub}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* WhatsApp CTA */}
-              <a
-                href={`https://wa.me/56978829942?text=${encodeURIComponent(`Hola! Me interesa el producto: ${product.name}`)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 py-3.5 rounded-2xl text-sm font-bold transition-all hover:scale-[1.02] active:scale-[0.98]"
-                style={{ background: '#25D366', color: '#fff', boxShadow: '0 4px 16px rgba(37,211,102,.3)' }}
-              >
-                <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-                </svg>
-                Consultar por WhatsApp
-              </a>
-
+              ))}
             </div>
-          </ScrollReveal>
+
+            {/* Descripción y detalles */}
+            <div className="mt-8">
+              <h2 className="text-sm font-semibold mb-3" style={{ color: 'var(--text)' }}>Descripción</h2>
+              <p className="text-[15px] leading-relaxed" style={{ color: 'var(--gray-600)' }}>
+                {product.description}
+              </p>
+              <ul className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
+                {features.map((f, i) => (
+                  <li key={i} className="flex items-center gap-2 text-sm" style={{ color: 'var(--gray-800)' }}>
+                    <CheckCircle2 size={15} strokeWidth={2} style={{ color: '#15803d' }} className="shrink-0" />
+                    {f.text}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* WhatsApp: consulta secundaria, sin competir con "Agregar al carrito" */}
+            <a
+              href={`https://wa.me/56978829942?text=${encodeURIComponent(`Hola! Me interesa el producto: ${product.name}`)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-8 inline-flex items-center justify-center gap-2 min-h-[48px] rounded-[10px] text-sm font-semibold transition-colors hover:bg-[var(--gray-50)]"
+              style={{ color: 'var(--text)', boxShadow: 'inset 0 0 0 1px var(--gray-200)' }}
+            >
+              <svg viewBox="0 0 24 24" fill="#25D366" className="w-[18px] h-[18px]">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+              </svg>
+              ¿Dudas? Pregúntanos por WhatsApp
+            </a>
+
+          </div>
         </div>
 
         {/* ── Gallery section ── */}
         {galleryImages.length > 0 && (
           <ScrollReveal delay={80}>
-            <div style={{ borderTop: '1px solid var(--gray-200)', paddingTop: '0' }}>
+            <div id="galeria" style={{ scrollMarginTop: 110 }}>
               <ProductGallery
                 images={galleryImages.map((img) => ({ url: img.url, alt: img.alt || product.name }))}
                 productName={product.name}
