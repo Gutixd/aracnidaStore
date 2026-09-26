@@ -1,9 +1,12 @@
 import { z } from 'zod'
 
 export const checkoutSchema = z.object({
-  customer_name: z.string().min(2, 'Nombre requerido'),
-  customer_email: z.string().email('Email inválido'),
-  customer_phone: z.string().min(8, 'Teléfono inválido'),
+  // .trim(): el autocompletar del celular suele dejar un espacio al final
+  // ("correo@gmail.com "), y eso bastaba para rechazar el correo y trabar
+  // la compra.
+  customer_name: z.string().trim().min(2, 'Escribe tu nombre'),
+  customer_email: z.string().trim().toLowerCase().email('Revisa tu correo: no parece válido'),
+  customer_phone: z.string().trim().min(8, 'Escribe un teléfono de al menos 8 dígitos'),
   delivery_method: z.enum(['delivery', 'retiro']),
   delivery_address: z.string().optional(),
   delivery_region: z.string().optional(),
@@ -69,9 +72,12 @@ export const reservationSchema = z.object({
   quantity: z.coerce.number().int().min(1, 'Cantidad inválida').max(10, 'Máximo 10 unidades por reserva'),
   /** Fecha para la que necesita el producto, YYYY-MM-DD */
   needed_by: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Selecciona una fecha válida'),
-  customer_name: z.string().min(2, 'Nombre requerido'),
-  customer_email: z.string().email('Email inválido'),
-  customer_phone: z.string().min(8, 'Teléfono inválido'),
+  // .trim(): el autocompletar del celular suele dejar un espacio al final
+  // ("correo@gmail.com "), y eso bastaba para rechazar el correo y trabar
+  // la compra.
+  customer_name: z.string().trim().min(2, 'Escribe tu nombre'),
+  customer_email: z.string().trim().toLowerCase().email('Revisa tu correo: no parece válido'),
+  customer_phone: z.string().trim().min(8, 'Escribe un teléfono de al menos 8 dígitos'),
   // Ambos son en línea: la reserva solo se confirma con el pago completo.
   payment_method: z.enum(['mercadopago', 'transferencia']),
   notes: z.string().max(500, 'Nota demasiado larga').optional(),

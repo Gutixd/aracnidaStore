@@ -1,7 +1,7 @@
 'use client'
 
 import { useCart } from '@/store/cart'
-import { useForm } from 'react-hook-form'
+import { useForm, type FieldErrors } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { checkoutSchema, CheckoutFormData } from '@/lib/validations'
 import { createOrder } from '@/lib/actions/orders'
@@ -167,6 +167,26 @@ export default function CheckoutPage() {
     }
   }
 
+  // Si falta o está mal un dato, el aviso en rojo aparece junto a ese campo,
+  // que en celular queda muy arriba del botón: el cliente tocaba "Confirmar
+  // pedido", no veía nada y creía que la página estaba rota. Ahora se lo
+  // lleva al primer campo con problema y se avisa también junto al botón.
+  function onInvalid(errs: FieldErrors<CheckoutFormData>) {
+    const campos = Object.keys(errs)
+    setError(
+      campos.length === 1
+        ? 'Falta corregir un dato del formulario. Te llevamos a él.'
+        : `Faltan corregir ${campos.length} datos del formulario. Te llevamos al primero.`
+    )
+    const primero = document.querySelector<HTMLElement>(
+      campos.map((c) => `[name="${c}"]`).join(',')
+    )
+    if (primero) {
+      primero.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      setTimeout(() => primero.focus({ preventScroll: true }), 400)
+    }
+  }
+
   const labelClass = 'block text-sm font-semibold mb-1.5'
   const labelStyle = { color: 'var(--gray-600)' }
 
@@ -190,7 +210,7 @@ export default function CheckoutPage() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <form onSubmit={handleSubmit(onSubmit, onInvalid)} noValidate>
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
             {/* Form */}
             <div className="lg:col-span-3 space-y-6">
