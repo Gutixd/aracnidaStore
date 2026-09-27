@@ -2,6 +2,7 @@ import { Resend } from 'resend'
 import { Order } from '@/types'
 import { PICKUP_PLACE, PICKUP_SLOT_LABELS, formatPickupDate } from '@/lib/pickup'
 import { createAdminClient } from '@/lib/supabase/server'
+import { describeReservationDelivery } from '@/lib/reservations'
 
 const API_KEY = process.env.RESEND_API_KEY
 // Debe ser un dominio verificado en Resend. Mientras no lo esté, se puede usar
@@ -421,6 +422,8 @@ function reservationAmountsBlock(order: Order): string {
       <table style="width:100%;border-collapse:collapse;margin-bottom:24px;">
         <tr><td style="padding:6px 0;color:#555;">Precio normal</td><td style="padding:6px 0;text-align:right;color:#888;text-decoration:line-through;">${money(order.subtotal)}</td></tr>
         <tr><td style="padding:6px 0;color:#555;">Descuento por reservar (15%)</td><td style="padding:6px 0;text-align:right;color:#15803d;font-weight:600;">−${money(order.discount)}</td></tr>
+        ${Number(order.shipping_cost) > 0 ? `<tr><td style="padding:6px 0;color:#555;">Envío</td><td style="padding:6px 0;text-align:right;color:#555;">${money(order.shipping_cost)}</td></tr>` : ''}
+        <tr><td colspan="2" style="padding:6px 0 10px;color:#555;font-size:13px;">Entrega: ${esc(describeReservationDelivery(order))}</td></tr>
         <tr>
           <td style="padding:10px 0;border-top:2px solid #1a2744;font-weight:800;color:#15803d;">Total pagado</td>
           <td style="padding:10px 0;border-top:2px solid #1a2744;text-align:right;font-weight:900;color:#15803d;font-size:19px;">${money(order.total)}</td>

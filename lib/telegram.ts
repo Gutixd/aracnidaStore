@@ -1,5 +1,6 @@
 import { Order } from '@/types'
 import { formatPickupDate, PICKUP_SLOT_LABELS } from '@/lib/pickup'
+import { describeReservationDelivery } from '@/lib/reservations'
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN!
 const CHAT_ID = process.env.TELEGRAM_CHAT_ID!
@@ -105,10 +106,10 @@ ${items}
 
 💰 <b>Precio normal:</b> ${formatPrice(order.subtotal)}
 🎁 <b>Descuento (15%):</b> -${formatPrice(order.discount)}
-✅ <b>Total pagado:</b> ${formatPrice(order.total)}
+${Number(order.shipping_cost) > 0 ? `🚚 <b>Envío:</b> ${formatPrice(order.shipping_cost)}\n` : ''}✅ <b>Total pagado:</b> ${formatPrice(order.total)}
 
 💳 <b>Pago:</b> ${order.payment_method === 'transferencia' ? '🏦 Transferencia' : '💳 Mercado Pago'}
-📦 <b>Entrega:</b> por coordinar cuando llegue el producto
+📦 <b>Entrega:</b> ${describeReservationDelivery(order)}${order.delivery_reference ? `\n📌 <b>Referencia:</b> ${order.delivery_reference}` : ''}
 
 🕐 <b>Fecha:</b> ${formatDate(order.created_at)}
 `.trim()

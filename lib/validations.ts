@@ -80,9 +80,19 @@ export const reservationSchema = z.object({
   customer_phone: z.string().trim().min(8, 'Escribe un teléfono de al menos 8 dígitos'),
   // Ambos son en línea: la reserva solo se confirma con el pago completo.
   payment_method: z.enum(['mercadopago', 'transferencia']),
+  // Cómo se entrega. Antes quedaba "por definir" y el envío no se cobraba:
+  // al llegar el producto había que pedirle al cliente un segundo pago.
+  delivery_method: z.enum(['retiro', 'delivery']),
+  delivery_address: z.string().trim().optional(),
+  delivery_region: z.string().trim().optional(),
+  delivery_commune: z.string().trim().optional(),
+  delivery_reference: z.string().trim().max(200).optional(),
   notes: z.string().max(500, 'Nota demasiado larga').optional(),
   marketing_opt_in: z.boolean().optional(),
-})
+}).refine(
+  (d) => d.delivery_method === 'retiro' || (!!d.delivery_address && !!d.delivery_region && !!d.delivery_commune),
+  { message: 'Para el envío necesitamos dirección, región y comuna', path: ['delivery_address'] }
+)
 
 export type ReservationFormData = z.infer<typeof reservationSchema>
 

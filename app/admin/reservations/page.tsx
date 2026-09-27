@@ -2,7 +2,7 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { formatPrice, formatDate, PAYMENT_METHOD_LABELS, PAYMENT_STATUS_LABELS, PAYMENT_STATUS_COLORS } from '@/lib/utils'
 import {
   RESERVATION_STATUS_LABELS, RESERVATION_STATUS_COLORS,
-  formatReservationDate, parseISODate,
+  formatReservationDate, parseISODate, describeReservationDelivery,
 } from '@/lib/reservations'
 import { Order } from '@/types'
 import { AdminReservationControls } from '@/components/admin/AdminReservationControls'
@@ -148,6 +148,12 @@ export default async function AdminReservationsPage() {
                   <p className="text-xs mt-2" style={{ color: 'var(--gray-400)' }}>
                     Pagó con {PAYMENT_METHOD_LABELS[r.payment_method ?? ''] ?? r.payment_method ?? '—'}
                   </p>
+                  <p className="text-xs mt-2 font-semibold" style={{ color: 'var(--gray-600)' }}>
+                    {describeReservationDelivery(r)}
+                  </p>
+                  {r.delivery_reference && (
+                    <p className="text-xs mt-0.5" style={{ color: 'var(--gray-400)' }}>Ref: {r.delivery_reference}</p>
+                  )}
                 </div>
 
                 <div>
@@ -165,6 +171,12 @@ export default async function AdminReservationsPage() {
                       <span style={{ color: 'var(--gray-600)' }}>Descuento</span>
                       <span className="tabular-nums" style={{ color: '#15803d' }}>−{formatPrice(r.discount)}</span>
                     </div>
+                    {Number(r.shipping_cost) > 0 && (
+                      <div className="flex justify-between">
+                        <span style={{ color: 'var(--gray-600)' }}>Envío</span>
+                        <span className="tabular-nums" style={{ color: 'var(--gray-600)' }}>{formatPrice(r.shipping_cost)}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between font-semibold">
                       <span style={{ color: '#15803d' }}>
                         {r.payment_status === 'pagado' ? 'Total pagado' : 'Total a pagar'}

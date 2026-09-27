@@ -11,7 +11,9 @@ import {
 } from '@/lib/reservations'
 import { createReservation } from '@/lib/actions/reservations'
 import { createReservationPreference } from '@/lib/actions/payment'
-import { CalendarDays, Minus, Plus, Loader2, CreditCard, Landmark, Tag, Info } from 'lucide-react'
+import { REGIONES_CHILE, getShippingInfo } from '@/lib/shipping'
+import { PICKUP_PLACE, PICKUP_SLOTS } from '@/lib/pickup'
+import { CalendarDays, Minus, Plus, Loader2, CreditCard, Landmark, Tag, Info, Truck, MapPin, ChevronDown } from 'lucide-react'
 
 interface Props {
   product: Product
@@ -30,6 +32,11 @@ export function ReservationForm({ product, variants }: Props) {
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
   const [paymentMethod, setPaymentMethod] = useState<'mercadopago' | 'transferencia'>('mercadopago')
+  const [deliveryMethod, setDeliveryMethod] = useState<'retiro' | 'delivery' | null>(null)
+  const [address, setAddress] = useState('')
+  const [region, setRegion] = useState('')
+  const [commune, setCommune] = useState('')
+  const [reference, setReference] = useState('')
   const [notes, setNotes] = useState('')
   const [optIn, setOptIn] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -45,9 +52,28 @@ export function ReservationForm({ product, variants }: Props) {
   const dateOk = neededBy !== '' && hasEnoughNotice(neededBy)
   const dateTouchedButEarly = neededBy !== '' && !dateOk
 
+  // Mismo cálculo que hace el servidor (que es el que manda): el descuento
+  // aplica solo al producto y el envío se suma completo.
+  const isDelivery = deliveryMethod === 'delivery'
+  const shippingInfo = getShippingInfo(region || undefined, amounts.final)
+  const shippingCost = isDelivery && region ? shippingInfo.cost : 0
+  const total = amounts.final + shippingCost
+  const deliveryOk =
+    deliveryMethod === 'retiro' ||
+    (isDelivery && address.trim() !== '' && region !== '' && commune.trim() !== '')
+  const canSubmit = dateOk && deliveryOk
+
+  const missingHint = !dateOk
+    ? 'Elige una fecha para continuar'
+    : !deliveryMethod
+      ? 'Elige cómo quieres recibirlo'
+      : !deliveryOk
+        ? 'Completa la dirección de envío'
+        : null
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (loading) return
+    if (loading || !canSubmit) return
     setError(null)
     setLoading(true)
 
@@ -60,6 +86,11 @@ export function ReservationForm({ product, variants }: Props) {
         customer_email: email,
         customer_phone: phone,
         payment_method: paymentMethod,
+        delivery_method: deliveryMethod ?? 'retiro',
+        delivery_address: isDelivery ? address : undefined,
+        delivery_region: isDelivery ? region : undefined,
+        delivery_commune: isDelivery ? commune : undefined,
+        delivery_reference: isDelivery && reference ? reference : undefined,
         notes: notes || undefined,
         marketing_opt_in: optIn,
       })
@@ -235,10 +266,87 @@ export function ReservationForm({ product, variants }: Props) {
           </label>
         </div>
 
-        {/* Pago */}
+        {/* Entrega */}
         <div className="card p-5">
           <div className="flex items-center gap-3 mb-4">
             <span className={stepCls} style={stepStyle}>5</span>
+            <h2 className="font-bold" style={{ color: 'var(--text)' }}>¿Cómo lo recibes?</h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {([
+              { id: 'retiro' as const, label: `Retiro en Maipú`, desc: `Gratis · ${PICKUP_PLACE}`, icon: MapPin },
+              { id: 'delivery' as const, label: 'Envío a domicilio', desc: 'Blue Express · todo Chile', icon: Truck },
+            ]).map(({ id, label, desc, icon: Icon }) => {
+              const active = deliveryMethod === id
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setDeliveryMethod(id)}
+                  aria-pressed={active}
+                  className="text-left p-4 rounded-xl transition-all"
+                  style={active
+                    ? { border: '1.5px solid var(--red)', background: 'rgba(192,57,43,.04)' }
+                    : { border: '1.5px solid var(--gray-200)', background: '#fff' }}
+                >
+                  <Icon size={18} style={{ color: active ? 'var(--red)' : 'var(--gray-400)' }} />
+                  <p className="font-bold text-sm mt-2" style={{ color: 'var(--text)' }}>{label}</p>
+                  <p className="text-xs mt-0.5" style={{ color: 'var(--gray-400)' }}>{desc}</p>
+                </button>
+              )
+            })}
+          </div>
+
+          {deliveryMethod === 'retiro' && (
+            <p className="text-xs mt-3 flex items-start gap-1.5" style={{ color: 'var(--gray-600)' }}>
+              <Info size={13} className="mt-0.5 shrink-0" />
+              Cuando llegue tu producto te escribimos para coordinar el día. Entregamos los{' '}
+              {PICKUP_SLOTS.map((s) => `${s.plural} de ${s.hours}`).join(' y los ')}.
+            </p>
+          )}
+
+          {isDelivery && (
+            <div className="mt-4 space-y-4">
+              <div>
+                <span className={labelCls} style={labelStyle}>Región</span>
+                <div className="relative">
+                  <select value={region} onChange={(e) => setRegion(e.target.value)} className="input-field appearance-none pr-10" required>
+                    <option value="" disabled>Selecciona tu región</option>
+                    {REGIONES_CHILE.map((r) => <option key={r} value={r}>{r}</option>)}
+                  </select>
+                  <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'var(--gray-400)' }} />
+                </div>
+                {region && (
+                  <p className="text-xs mt-2 font-semibold" style={{ color: shippingCost === 0 ? '#15803d' : 'var(--gray-600)' }}>
+                    {shippingInfo.label} · {shippingCost === 0 ? 'Envío gratis' : `Envío ${formatPrice(shippingCost)}`}
+                  </p>
+                )}
+              </div>
+              <div>
+                <span className={labelCls} style={labelStyle}>Comuna</span>
+                <input value={commune} onChange={(e) => setCommune(e.target.value)} className="input-field" placeholder="Ej: Viña del Mar, Maipú..." required />
+              </div>
+              <div>
+                <span className={labelCls} style={labelStyle}>Dirección</span>
+                <input value={address} onChange={(e) => setAddress(e.target.value)} className="input-field" placeholder="Calle, número, depto/casa" autoComplete="street-address" required />
+              </div>
+              <div>
+                <span className={labelCls} style={labelStyle}>Referencia (opcional)</span>
+                <input value={reference} onChange={(e) => setReference(e.target.value)} className="input-field" placeholder="Casa azul, frente al banco..." />
+              </div>
+              <p className="text-xs flex items-start gap-1.5" style={{ color: 'var(--gray-400)' }}>
+                <Info size={13} className="mt-0.5 shrink-0" />
+                Lo despachamos apenas llegue el producto. El envío toma de 1 a 12 días hábiles según tu región,
+                así que considéralo al elegir la fecha.
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Pago */}
+        <div className="card p-5">
+          <div className="flex items-center gap-3 mb-4">
+            <span className={stepCls} style={stepStyle}>6</span>
             <h2 className="font-bold" style={{ color: 'var(--text)' }}>¿Cómo pagas?</h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -290,12 +398,24 @@ export function ReservationForm({ product, variants }: Props) {
                   −{formatPrice(amounts.discount)}
                 </td>
               </tr>
+              {deliveryMethod && (
+                <tr>
+                  <td className="py-1.5" style={{ color: 'var(--gray-600)' }}>
+                    {isDelivery ? 'Envío' : 'Retiro en Maipú'}
+                  </td>
+                  <td className="py-1.5 text-right tabular-nums" style={{ color: 'var(--gray-600)' }}>
+                    {isDelivery
+                      ? (region ? (shippingCost === 0 ? 'Gratis' : formatPrice(shippingCost)) : 'Elige región')
+                      : 'Gratis'}
+                  </td>
+                </tr>
+              )}
               <tr>
                 <td className="pt-3 font-bold" style={{ color: '#15803d', borderTop: '2px solid var(--text)' }}>
                   Total a pagar ahora
                 </td>
                 <td className="pt-3 text-right font-black tabular-nums text-lg" style={{ color: '#15803d', borderTop: '2px solid var(--text)' }}>
-                  {formatPrice(amounts.final)}
+                  {formatPrice(total)}
                 </td>
               </tr>
             </tbody>
@@ -309,26 +429,27 @@ export function ReservationForm({ product, variants }: Props) {
 
           <button
             type="submit"
-            disabled={loading || !dateOk}
+            disabled={loading || !canSubmit}
             className="btn-primary w-full justify-center py-4 mt-5 disabled:opacity-50"
           >
             {loading
               ? <><Loader2 size={18} className="animate-spin" /> Procesando...</>
-              : <>Pagar {formatPrice(amounts.final)}</>}
+              : <>Pagar {formatPrice(total)}</>}
           </button>
 
-          {!dateOk && (
+          {missingHint && (
             <p className="text-xs text-center mt-2" style={{ color: 'var(--gray-400)' }}>
-              Elige una fecha para continuar
+              {missingHint}
             </p>
           )}
         </div>
 
         <div className="rounded-xl p-4 text-xs leading-relaxed"
           style={{ background: 'var(--gray-50)', color: 'var(--gray-600)' }}>
-          <strong style={{ color: 'var(--text)' }}>Cómo funciona:</strong> pagas el total ahora con
-          15% de descuento, conseguimos tu producto, te avisamos cuando llegue y ahí eliges envío
-          a domicilio o retiro presencial. No queda nada por pagar en ese momento.
+          <strong style={{ color: 'var(--text)' }}>Cómo funciona:</strong> pagas todo ahora (el producto
+          con 15% de descuento, más el envío si lo eliges), conseguimos tu producto y te avisamos cuando
+          llegue: si es envío lo despachamos de inmediato, y si es retiro coordinamos el día. No queda
+          nada por pagar después.
         </div>
       </div>
     </form>

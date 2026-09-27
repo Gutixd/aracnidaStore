@@ -2,7 +2,7 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { formatPrice, formatDate, PAYMENT_METHOD_LABELS } from '@/lib/utils'
 import {
   RESERVATION_STATUS_LABELS, RESERVATION_STATUS_COLORS,
-  formatReservationDate,
+  formatReservationDate, describeReservationDelivery,
 } from '@/lib/reservations'
 import { PICKUP_PLACE } from '@/lib/pickup'
 import { CheckCircle2, Clock, Package, Truck, PackageCheck, CalendarDays, Landmark } from 'lucide-react'
@@ -204,6 +204,14 @@ export default async function ReservaPage({
                   −{formatPrice(reservation.discount)}
                 </td>
               </tr>
+              {Number(reservation.shipping_cost) > 0 && (
+                <tr>
+                  <td className="py-1.5" style={{ color: 'var(--gray-600)' }}>Envío</td>
+                  <td className="py-1.5 text-right tabular-nums" style={{ color: 'var(--gray-600)' }}>
+                    {formatPrice(reservation.shipping_cost)}
+                  </td>
+                </tr>
+              )}
               <tr>
                 <td className="pt-3 font-bold" style={{ color: '#15803d', borderTop: '2px solid var(--text)' }}>
                   {pagoConfirmado ? 'Total pagado' : 'Total a pagar'}
@@ -225,9 +233,23 @@ export default async function ReservaPage({
         <div className="card p-6 mb-8">
           <h2 className={sectionTitle} style={sectionStyle}>Entrega</h2>
           <p className="text-sm leading-relaxed" style={{ color: 'var(--gray-600)' }}>
-            Cuando tu producto llegue te contactamos para coordinar cómo lo prefieres:{' '}
-            <strong style={{ color: 'var(--text)' }}>envío a domicilio</strong> o{' '}
-            <strong style={{ color: 'var(--text)' }}>retiro gratis en {PICKUP_PLACE}</strong>.
+            {reservation.delivery_method === 'delivery' ? (
+              <>
+                <strong style={{ color: 'var(--text)' }}>{describeReservationDelivery(reservation)}</strong>.
+                {' '}Lo despachamos por Blue Express apenas llegue tu producto y te enviamos el seguimiento.
+              </>
+            ) : reservation.delivery_method === 'retiro' ? (
+              <>
+                <strong style={{ color: 'var(--text)' }}>Retiro gratis en {PICKUP_PLACE}</strong>.
+                {' '}Cuando llegue tu producto te escribimos para coordinar el día.
+              </>
+            ) : (
+              <>
+                Cuando tu producto llegue te contactamos para coordinar cómo lo prefieres:{' '}
+                <strong style={{ color: 'var(--text)' }}>envío a domicilio</strong> o{' '}
+                <strong style={{ color: 'var(--text)' }}>retiro gratis en {PICKUP_PLACE}</strong>.
+              </>
+            )}
             {pagoConfirmado
               ? ' Tu reserva ya está pagada en su totalidad, así que no queda nada pendiente al recibirla.'
               : ' Al pagarse el 100% al reservar, una vez confirmado tu pago no queda nada pendiente al recibirla.'}

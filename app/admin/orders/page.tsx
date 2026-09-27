@@ -6,7 +6,7 @@ import {
   PAYMENT_METHOD_LABELS,
 } from '@/lib/utils'
 import { PICKUP_SLOT_LABELS, PICKUP_PLACE, formatPickupDate } from '@/lib/pickup'
-import { formatReservationDate } from '@/lib/reservations'
+import { formatReservationDate, describeReservationDelivery } from '@/lib/reservations'
 import { Order } from '@/types'
 import { AdminOrderStatusChanger } from '@/components/admin/AdminOrderStatusChanger'
 import { AdminPaymentStatusChanger } from '@/components/admin/AdminPaymentStatusChanger'
@@ -152,7 +152,8 @@ export default async function AdminOrdersPage() {
                         </strong>
                       </span>
                     </p>
-                    <p style={{ color: 'var(--gray-400)' }}>Entrega por definir cuando llegue el producto</p>
+                    <p style={{ color: 'var(--gray-600)' }}>{describeReservationDelivery(order)}</p>
+                    {order.delivery_reference && <p style={{ color: 'var(--gray-400)' }}>Ref: {order.delivery_reference}</p>}
                     <Link href="/admin/reservations" className="inline-flex items-center gap-1 text-xs font-semibold hover:underline"
                       style={{ color: 'var(--red)' }}>
                       Gestionar en Reservas <ArrowRight size={12} />

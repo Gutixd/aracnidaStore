@@ -67,6 +67,25 @@ export function formatReservationDate(value: string): string {
   return d.toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
 }
 
+/**
+ * Cómo se entrega una reserva, en una línea. Un solo texto para el correo,
+ * Telegram y el panel. Las reservas antiguas (antes de pedir la entrega al
+ * reservar) quedaron con 'por_definir'.
+ */
+export function describeReservationDelivery(order: {
+  delivery_method?: string | null
+  delivery_address?: string | null
+  delivery_commune?: string | null
+  delivery_region?: string | null
+}): string {
+  if (order.delivery_method === 'delivery') {
+    const parts = [order.delivery_address, order.delivery_commune, order.delivery_region].filter(Boolean)
+    return `Envío a domicilio · ${parts.join(', ')}`
+  }
+  if (order.delivery_method === 'retiro') return 'Retiro en Metro Plaza de Maipú (se coordina el día al llegar)'
+  return 'Por coordinar cuando llegue el producto'
+}
+
 /** Etiquetas del estado de la reserva (las de un pedido normal no calzan). */
 export const RESERVATION_STATUS_LABELS: Record<string, string> = {
   pendiente: 'Pendiente de pago',

@@ -6,6 +6,7 @@ import { upsertMarketingContact } from '@/lib/actions/marketing'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { reservationSchema, type ReservationFormData } from '@/lib/validations'
 import { calcReservation, hasEnoughNotice, RESERVATION_MIN_DAYS } from '@/lib/reservations'
+import { calcShippingCost } from '@/lib/shipping'
 import { notifyNewReservation } from '@/lib/telegram'
 import { sendPushToAdmins } from '@/lib/push'
 import { sendReservationReceipt, sendAdminReservationNotification } from '@/lib/email'
@@ -20,8 +21,9 @@ import { revalidatePath } from 'next/cache'
  *   tenemos ("el producto será gestionado y recibido por nosotros antes de
  *   coordinar la entrega"); descontar inventario que no existe descuadraría
  *   el stock real y bloquearía ventas inmediatas de lo que sí hay.
- * - No pide datos de entrega: se coordinan cuando el producto llega, por eso
- *   delivery_method queda en 'por_definir'.
+ * - Pide cómo se entrega (retiro o envío) y cobra el envío junto con la
+ *   reserva. Antes quedaba 'por_definir' y el envío había que cobrarlo
+ *   aparte cuando llegaba el producto.
  * - El precio se recalcula acá desde la base de datos. Nunca se confía en el
  *   monto que venga del navegador.
  */
@@ -65,6 +67,13 @@ export async function createReservation(input: ReservationFormData) {
 
   const amounts = calcReservation(Number(variant.price), data.quantity)
 
+  // El envío se calcula acá con la misma tabla de zonas que el checkout
+  // normal, nunca con un monto enviado desde el navegador. El 15% de
+  // descuento aplica solo al producto; el envío se cobra completo.
+  const isDelivery = data.delivery_method === 'delivery'
+  const shippingCost = calcShippingCost(data.delivery_method, data.delivery_region, amounts.final)
+  const total = amounts.final + shippingCost
+
   const { data: order, error: orderError } = await supabase
     .from('orders')
     .insert({
@@ -74,16 +83,17 @@ export async function createReservation(input: ReservationFormData) {
       customer_phone: data.customer_phone,
       subtotal: amounts.normal,
       discount: amounts.discount,
-      shipping_cost: 0, // se define al coordinar la entrega
-      total: amounts.final,
-      // Se paga 100% al reservar: no queda saldo pendiente.
-      deposit_amount: amounts.final,
+      shipping_cost: shippingCost,
+      total,
+      // Se paga 100% al reservar (producto + envío): no queda saldo pendiente.
+      deposit_amount: total,
       balance_due: 0,
       needed_by: data.needed_by,
-      delivery_method: 'por_definir',
-      delivery_address: '',
-      delivery_commune: '',
-      delivery_reference: '',
+      delivery_method: data.delivery_method,
+      delivery_address: isDelivery ? data.delivery_address ?? '' : '',
+      delivery_region: isDelivery ? data.delivery_region ?? null : null,
+      delivery_commune: isDelivery ? data.delivery_commune ?? '' : '',
+      delivery_reference: isDelivery ? data.delivery_reference ?? '' : '',
       payment_method: data.payment_method,
       status: 'pendiente',
       payment_status: 'pendiente',

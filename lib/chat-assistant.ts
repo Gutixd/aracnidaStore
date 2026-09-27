@@ -69,7 +69,7 @@ RESERVA ANTICIPADA (sirve incluso para productos AGOTADOS):
 - Requiere al menos ${RESERVATION_MIN_DAYS} días de anticipación respecto a la fecha en que lo necesita.
 - Tiene 15% de descuento sobre el precio normal.
 - Se paga el 100% al reservar (Mercado Pago o transferencia); no queda saldo pendiente.
-- El producto se consigue y, cuando llega, el cliente elige envío a domicilio o retiro en ${PICKUP_PLACE}.
+- Al reservar el cliente elige envío a domicilio (se paga el envío junto con la reserva, sin descuento sobre el envío) o retiro gratis en ${PICKUP_PLACE}. Cuando llega el producto se despacha o se coordina el retiro.
 
 CAMBIOS Y DEVOLUCIONES:
 - 7 días corridos desde la recepción, producto sin usar, con etiquetas, en su embalaje original, y con el número de orden. El cliente cubre el envío de la devolución.
