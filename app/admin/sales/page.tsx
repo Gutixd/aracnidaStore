@@ -3,29 +3,34 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { formatPrice } from '@/lib/utils'
 import {
   buildSalesReport, MONTH_NAMES,
-  type ReportOrder, type Ranked,
+  type ReportOrder, type ReportExpense, type Ranked,
 } from '@/lib/sales-report'
 
 export const dynamic = 'force-dynamic'
 
 async function getData() {
   const supabase = await createAdminClient()
-  const [{ data: orders }, { data: products }] = await Promise.all([
+  const [{ data: orders }, { data: products }, { data: expenses }] = await Promise.all([
     supabase
       .from('orders')
       .select(
-        'id, created_at, total, status, payment_status, payment_method, delivery_method, is_reservation, items:order_items(product_id, product_name, size, quantity, total_price)'
+        'id, created_at, total, shipping_cost, status, payment_status, payment_method, delivery_method, is_reservation, items:order_items(product_id, product_name, size, quantity, total_price, unit_cost)'
       )
       .eq('payment_status', 'pagado')
       .neq('status', 'cancelado'),
     supabase.from('products').select('id, category:categories(name)'),
+    supabase.from('expenses').select('amount, category, created_at'),
   ])
 
   const categoryByProduct: Record<string, string> = {}
   for (const p of (products ?? []) as unknown as { id: string; category: { name: string } | null }[]) {
     if (p.category?.name) categoryByProduct[p.id] = p.category.name.charAt(0).toUpperCase() + p.category.name.slice(1)
   }
-  return { orders: (orders ?? []) as unknown as ReportOrder[], categoryByProduct }
+  return {
+    orders: (orders ?? []) as unknown as ReportOrder[],
+    categoryByProduct,
+    expenses: (expenses ?? []) as ReportExpense[],
+  }
 }
 
 function href(year: number, month: number | null) {
@@ -83,11 +88,13 @@ export default async function AdminSalesPage({
   searchParams: Promise<{ year?: string; month?: string }>
 }) {
   const sp = await searchParams
-  const { orders, categoryByProduct } = await getData()
+  const { orders, categoryByProduct, expenses } = await getData()
 
   const monthParam = Number(sp.month)
   const month = Number.isInteger(monthParam) && monthParam >= 1 && monthParam <= 12 ? monthParam : null
-  const report = buildSalesReport(orders, categoryByProduct, sp.year ? Number(sp.year) : null, month)
+  const report = buildSalesReport(orders, categoryByProduct, sp.year ? Number(sp.year) : null, month, expenses)
+  const pf = report.profit
+  const profitColor = (n: number) => (n >= 0 ? '#15803d' : 'var(--red)')
 
   const maxRevenue = Math.max(...report.months.map((m) => m.revenue), 1)
   const periodLabel = report.month ? `${MONTH_NAMES[report.month - 1]} ${report.year}` : `Año ${report.year}`
@@ -152,6 +159,69 @@ export default async function AdminSalesPage({
         ))}
       </div>
 
+      {/* Ganancia del período */}
+      <div className="card p-5 mb-6">
+        <div className="flex flex-wrap items-baseline justify-between gap-2 mb-5">
+          <h2 className="text-sm font-bold" style={{ color: 'var(--text)' }}>Ganancia · {periodLabel}</h2>
+          <p className="text-xs" style={{ color: 'var(--gray-400)' }}>Lo que te queda después de costos y gastos</p>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.2fr] gap-6">
+          {/* Cifra principal */}
+          <div className="rounded-[var(--radius)] p-5 flex flex-col justify-center" style={{ background: 'var(--gray-50)' }}>
+            <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--gray-400)' }}>Ganancia neta</p>
+            <p className="text-4xl font-black tabular-nums mt-1" style={{ color: profitColor(pf.profit), letterSpacing: '-.03em' }}>
+              {formatPrice(pf.profit)}
+            </p>
+            <p className="text-sm mt-1" style={{ color: 'var(--gray-600)' }}>
+              Margen de <strong style={{ color: 'var(--text)' }}>{pf.margin.toFixed(0)}%</strong> sobre lo vendido en productos
+            </p>
+          </div>
+
+          {/* Desglose: de lo vendido a lo que queda */}
+          <div className="text-sm">
+            {[
+              { l: 'Ventas de productos', v: pf.productSales, sign: '', hint: 'Sin envíos; ya descuenta cupones y el 15% de reservas' },
+              { l: 'Costo de lo vendido', v: -pf.cost, sign: '−', hint: 'Lo que te costaron esos productos' },
+              { l: 'Gastos operativos', v: -pf.opExpenses, sign: '−', hint: 'Marketing, operación y otros del período' },
+            ].map((r) => (
+              <div key={r.l} className="flex items-start justify-between gap-3 py-2.5" style={{ borderBottom: '1px solid var(--gray-100)' }}>
+                <div>
+                  <p style={{ color: 'var(--gray-800)' }}>{r.l}</p>
+                  <p className="text-[11px]" style={{ color: 'var(--gray-400)' }}>{r.hint}</p>
+                </div>
+                <p className="tabular-nums font-semibold shrink-0" style={{ color: r.v < 0 ? 'var(--red)' : 'var(--text)' }}>
+                  {r.sign}{formatPrice(Math.abs(r.v))}
+                </p>
+              </div>
+            ))}
+            <div className="flex items-center justify-between gap-3 pt-3">
+              <p className="font-bold" style={{ color: 'var(--text)' }}>Ganancia neta</p>
+              <p className="tabular-nums font-black text-base" style={{ color: profitColor(pf.profit) }}>{formatPrice(pf.profit)}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Caja: la otra mirada, con las compras de stock */}
+        <div className="mt-5 pt-4 grid grid-cols-1 sm:grid-cols-3 gap-3" style={{ borderTop: '1px solid var(--gray-100)' }}>
+          {[
+            { l: 'Entró a caja', v: pf.cashIn, c: 'var(--text)', s: 'Todo lo cobrado, con envíos' },
+            { l: 'Invertido en stock', v: pf.invested, c: 'var(--text)', s: 'Compras registradas en Gastos' },
+            { l: 'Caja del período', v: pf.cashFlow, c: profitColor(pf.cashFlow), s: 'Entró − todo lo que salió' },
+          ].map((k) => (
+            <div key={k.l}>
+              <p className="text-xs" style={{ color: 'var(--gray-400)' }}>{k.l}</p>
+              <p className="text-lg font-bold tabular-nums" style={{ color: k.c }}>{formatPrice(k.v)}</p>
+              <p className="text-[11px]" style={{ color: 'var(--gray-400)' }}>{k.s}</p>
+            </div>
+          ))}
+        </div>
+        <p className="text-[11px] mt-3 leading-relaxed" style={{ color: 'var(--gray-400)' }}>
+          Las compras de stock no se restan de la ganancia porque ese costo ya se descuenta cuando vendes el producto
+          (restarlo también sería contarlo dos veces). La caja sí las incluye: te dice cuánta plata te quedó disponible.
+        </p>
+      </div>
+
       {/* Mes a mes */}
       <div className="card p-5 mb-6">
         <div className="flex flex-wrap items-baseline justify-between gap-2 mb-5">
@@ -193,20 +263,24 @@ export default async function AdminSalesPage({
 
         {/* Detalle: en celular son filas, no columnas que obliguen a arrastrar */}
         <div className="mt-6 divide-y" style={{ borderTop: '1px solid var(--gray-100)' }}>
-          {report.months.filter((m) => m.orders > 0).length === 0 ? (
+          {report.months.filter((m) => m.orders > 0 || m.cashOut > 0).length === 0 ? (
             <p className="text-sm pt-4" style={{ color: 'var(--gray-400)' }}>Todavía no hay ventas pagadas en {report.year}.</p>
           ) : (
-            report.months.filter((m) => m.orders > 0).map((m) => (
+            report.months.filter((m) => m.orders > 0 || m.cashOut > 0).map((m) => (
               <Link key={m.month} href={href(report.year, m.month)}
                 className="flex items-center justify-between gap-3 py-3"
                 style={{ borderColor: 'var(--gray-100)' }}>
-                <div>
+                <div className="min-w-0">
                   <p className="text-sm font-semibold" style={{ color: 'var(--text)' }}>{MONTH_NAMES[m.month - 1]}</p>
                   <p className="text-xs" style={{ color: 'var(--gray-400)' }}>
-                    {m.orders} {m.orders === 1 ? 'pedido' : 'pedidos'} · {m.units} {m.units === 1 ? 'unidad' : 'unidades'}
+                    {m.orders} {m.orders === 1 ? 'pedido' : 'pedidos'} · vendido {formatPrice(m.revenue)}
+                    {m.invested > 0 && ` · invertido ${formatPrice(m.invested)}`}
                   </p>
                 </div>
-                <p className="text-base font-black tabular-nums" style={{ color: 'var(--text)' }}>{formatPrice(m.revenue)}</p>
+                <div className="text-right shrink-0">
+                  <p className="text-base font-black tabular-nums" style={{ color: profitColor(m.profit) }}>{formatPrice(m.profit)}</p>
+                  <p className="text-[11px]" style={{ color: 'var(--gray-400)' }}>ganancia · {m.margin.toFixed(0)}%</p>
+                </div>
               </Link>
             ))
           )}

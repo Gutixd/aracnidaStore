@@ -47,7 +47,7 @@ export async function createReservation(input: ReservationFormData) {
 
   const { data: variant } = await supabase
     .from('product_variants')
-    .select('id, size, price, active, product_id')
+    .select('id, size, price, cost_price, active, product_id')
     .eq('id', data.variant_id)
     .single()
 
@@ -57,7 +57,7 @@ export async function createReservation(input: ReservationFormData) {
 
   const { data: product } = await supabase
     .from('products')
-    .select('id, name, color, image_url, active')
+    .select('id, name, color, image_url, active, cost_price')
     .eq('id', variant.product_id)
     .single()
 
@@ -120,6 +120,8 @@ export async function createReservation(input: ReservationFormData) {
     // Se guarda el precio YA con descuento, para que el detalle del pedido
     // cuadre con el total cobrado y con lo que ve el cliente.
     unit_price: Math.round(amounts.final / data.quantity),
+    // Costo congelado al reservar, para calcular la ganancia real del mes.
+    unit_cost: Number(variant.cost_price) > 0 ? Number(variant.cost_price) : Number(product.cost_price ?? 0),
     total_price: amounts.final,
   })
 

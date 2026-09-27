@@ -37,7 +37,7 @@ export async function createOrder(
 
   // Validar stock y recalcular el precio de cada variante DESDE LA BASE DE DATOS.
   // Nunca se confía en el precio que llega desde el navegador (evita manipulación).
-  const pricedItems: { item: CartItem; price: number }[] = []
+  const pricedItems: { item: CartItem; price: number; cost: number }[] = []
 
   for (const cartItem of cartItems) {
     const { product, variant, quantity } = cartItem
@@ -48,7 +48,7 @@ export async function createOrder(
 
     const { data: current } = await supabase
       .from('product_variants')
-      .select('stock, price, active')
+      .select('stock, price, cost_price, active, product:products(cost_price)')
       .eq('id', variant.id)
       .single()
 
@@ -59,7 +59,10 @@ export async function createOrder(
       return { error: `Stock insuficiente para "${product.name}" talla ${variant.size}. Disponible: ${current.stock}` }
     }
 
-    pricedItems.push({ item: cartItem, price: Number(current.price) })
+    // Costo congelado al vender (variante; si no tiene, el del producto).
+    const productCost = Number((current.product as { cost_price?: number } | null)?.cost_price ?? 0)
+    const cost = Number(current.cost_price) > 0 ? Number(current.cost_price) : productCost
+    pricedItems.push({ item: cartItem, price: Number(current.price), cost })
   }
 
   const subtotal = pricedItems.reduce((sum, { item, price }) => sum + price * item.quantity, 0)
@@ -121,7 +124,7 @@ export async function createOrder(
   }
 
   // Items del pedido y descuento de stock por variante
-  for (const { item: { product, variant, quantity }, price } of pricedItems) {
+  for (const { item: { product, variant, quantity }, price, cost } of pricedItems) {
     await supabase.from('order_items').insert({
       order_id: order.id,
       product_id: product.id,
@@ -132,6 +135,7 @@ export async function createOrder(
       color: product.color,
       quantity,
       unit_price: price,
+      unit_cost: cost,
       total_price: price * quantity,
     })
 
