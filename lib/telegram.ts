@@ -69,7 +69,7 @@ export async function notifyNewOrder(order: Order): Promise<void> {
 ${items}
 
 💰 <b>Subtotal:</b> ${formatPrice(order.subtotal)}
-🚚 <b>Envío:</b> ${formatPrice(order.shipping_cost)}
+${Number(order.discount) > 0 ? `🎟️ <b>Cupón${order.coupon_code ? ` ${order.coupon_code}` : ''}:</b> -${formatPrice(order.discount)}\n` : ''}🚚 <b>Envío:</b> ${formatPrice(order.shipping_cost)}
 💵 <b>TOTAL:</b> ${formatPrice(order.total)}
 
 📦 <b>Método:</b> ${order.delivery_method === 'delivery' ? '🏠 Delivery a domicilio' : '📍 Retiro en Plaza de Maipú'}

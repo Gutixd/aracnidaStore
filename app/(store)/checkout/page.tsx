@@ -12,7 +12,9 @@ import { useState, useEffect, useMemo } from 'react'
 import { checkCart } from '@/lib/actions/cart'
 import Link from 'next/link'
 import Image from 'next/image'
-import { ShoppingBag, Loader2, MapPin, ChevronDown, Truck, Calendar, Banknote, Copy, Check, Clock, AlertCircle, CreditCard } from 'lucide-react'
+import { ShoppingBag, Loader2, MapPin, ChevronDown, Truck, Calendar, Banknote, Copy, Check, Clock, AlertCircle, CreditCard, Tag } from 'lucide-react'
+import { previewCoupon } from '@/lib/actions/coupons'
+import { couponDiscount, type CouponType } from '@/lib/coupon-math'
 import { REGIONES_CHILE, getShippingInfo, FREE_SHIPPING_THRESHOLD, MIN_SHIPPING_COST } from '@/lib/shipping'
 import {
   PICKUP_SLOTS, PICKUP_PLACE, PICKUP_LEAD_HOURS,
@@ -33,6 +35,10 @@ export default function CheckoutPage() {
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
   const [cartNotice, setCartNotice] = useState<string[]>([])
+  const [couponInput, setCouponInput] = useState('')
+  const [coupon, setCoupon] = useState<{ code: string; type: CouponType; value: number; label: string } | null>(null)
+  const [couponError, setCouponError] = useState<string | null>(null)
+  const [couponLoading, setCouponLoading] = useState(false)
   // Las fechas se calculan tras montar: en el servidor la zona horaria es UTC
   // y daría un día distinto al del cliente en Chile.
   const [now, setNow] = useState<Date | null>(null)
@@ -114,10 +120,33 @@ export default function CheckoutPage() {
   register('pickup_date')
 
   const subtotal = getTotalPrice()
+  // El descuento se recalcula en vivo si cambia el carrito; el servidor lo
+  // vuelve a validar al confirmar (mínimo de compra, usos, vigencia).
+  const couponAmount = coupon ? couponDiscount(coupon, subtotal) : 0
   const isRetiro = deliveryMethod === 'retiro'
-  const shippingInfo = getShippingInfo(deliveryRegion, subtotal)
+  const shippingInfo = getShippingInfo(deliveryRegion, subtotal - couponAmount)
   const shippingCost = isRetiro ? 0 : shippingInfo.cost
-  const total = subtotal + shippingCost
+  const total = subtotal - couponAmount + shippingCost
+
+  async function applyCoupon() {
+    if (!couponInput.trim() || couponLoading) return
+    setCouponLoading(true)
+    setCouponError(null)
+    try {
+      const res = await previewCoupon(couponInput, subtotal, watch('customer_email'))
+      if ('error' in res && res.error) {
+        setCouponError(res.error)
+        setCoupon(null)
+      } else if ('code' in res && res.code) {
+        setCoupon({ code: res.code, type: res.type, value: res.value, label: res.label })
+        setCouponInput(res.code)
+      }
+    } catch {
+      setCouponError('No se pudo validar el cupón. Intenta de nuevo.')
+    } finally {
+      setCouponLoading(false)
+    }
+  }
 
   function copyToClipboard(text: string, key: string) {
     navigator.clipboard.writeText(text)
@@ -141,7 +170,7 @@ export default function CheckoutPage() {
     setLoading(true)
     setError(null)
     try {
-      const result = await createOrder(data, items)
+      const result = await createOrder({ ...data, coupon_code: coupon?.code }, items)
       if (result.error) {
         setError(result.error)
         setLoading(false)
@@ -591,11 +620,61 @@ export default function CheckoutPage() {
                   ))}
                 </div>
 
-                <div className="pt-4 space-y-2 mb-6" style={{ borderTop: '1px solid var(--gray-100)' }}>
+                {/* Cupón de descuento */}
+                <div className="pt-4 mb-4" style={{ borderTop: '1px solid var(--gray-100)' }}>
+                  {coupon ? (
+                    <div className="flex items-center justify-between gap-3 rounded-[10px] px-3 py-2.5"
+                      style={{ background: 'rgba(22,163,74,.07)', boxShadow: 'inset 0 0 0 1px rgba(22,163,74,.25)' }}>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <Tag size={15} style={{ color: '#15803d' }} className="shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold truncate" style={{ color: '#15803d' }}>{coupon.code}</p>
+                          <p className="text-xs" style={{ color: 'var(--gray-600)' }}>{coupon.label}</p>
+                        </div>
+                      </div>
+                      <button type="button" onClick={() => { setCoupon(null); setCouponInput('') }}
+                        className="text-xs font-semibold underline shrink-0" style={{ color: 'var(--gray-600)' }}>
+                        Quitar
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <label htmlFor="coupon" className="block text-sm font-semibold mb-1.5" style={{ color: 'var(--gray-600)' }}>
+                        ¿Tienes un cupón?
+                      </label>
+                      <div className="flex gap-2">
+                        <input
+                          id="coupon"
+                          value={couponInput}
+                          onChange={(e) => { setCouponInput(e.target.value.toUpperCase()); setCouponError(null) }}
+                          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); applyCoupon() } }}
+                          placeholder="CÓDIGO"
+                          autoCapitalize="characters"
+                          autoComplete="off"
+                          className="input-field flex-1 uppercase tracking-wider"
+                          style={{ minWidth: 0 }}
+                        />
+                        <button type="button" onClick={applyCoupon} disabled={!couponInput.trim() || couponLoading}
+                          className="btn-dark shrink-0 disabled:opacity-40" style={{ paddingLeft: '1rem', paddingRight: '1rem' }}>
+                          {couponLoading ? <Loader2 size={16} className="animate-spin" /> : 'Aplicar'}
+                        </button>
+                      </div>
+                      {couponError && <p className="text-xs mt-1.5" style={{ color: 'var(--red)' }}>{couponError}</p>}
+                    </>
+                  )}
+                </div>
+
+                <div className="space-y-2 mb-6">
                   <div className="flex justify-between text-sm">
                     <span style={{ color: 'var(--gray-600)' }}>Subtotal</span>
                     <span className="font-semibold tabular-nums" style={{ color: 'var(--text)' }}>{formatPrice(subtotal)}</span>
                   </div>
+                  {couponAmount > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span style={{ color: '#15803d' }}>Cupón {coupon?.code}</span>
+                      <span className="font-semibold tabular-nums" style={{ color: '#15803d' }}>−{formatPrice(couponAmount)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-sm">
                     <span style={{ color: 'var(--gray-600)' }}>
                       {isRetiro ? 'Retiro' : deliveryRegion && shippingInfo.label ? `Envío (${shippingInfo.label.split('·')[0].trim()})` : 'Envío'}

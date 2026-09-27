@@ -135,7 +135,7 @@ function buildHtml(order: Order, reviewSlug?: string | null): string {
 
       <table style="width:100%;border-collapse:collapse;margin-bottom:24px;">
         <tr><td style="padding:6px 0;color:#555;">Subtotal</td><td style="padding:6px 0;text-align:right;color:#1a2744;">${money(order.subtotal)}</td></tr>
-        ${Number(order.discount ?? 0) > 0 ? `<tr><td style="padding:6px 0;color:#555;">Descuento</td><td style="padding:6px 0;text-align:right;color:#15803d;">−${money(Number(order.discount))}</td></tr>` : ''}
+        ${Number(order.discount ?? 0) > 0 ? `<tr><td style="padding:6px 0;color:#555;">${order.coupon_code ? `Cupón ${esc(order.coupon_code)}` : 'Descuento'}</td><td style="padding:6px 0;text-align:right;color:#15803d;">−${money(Number(order.discount))}</td></tr>` : ''}
         <tr><td style="padding:6px 0;color:#555;">Envío</td><td style="padding:6px 0;text-align:right;color:${Number(order.shipping_cost) === 0 ? '#15803d' : '#1a2744'};">${Number(order.shipping_cost) === 0 ? 'Gratis' : money(order.shipping_cost)}</td></tr>
         <tr>
           <td style="padding:12px 0 0;border-top:2px solid #1a2744;font-weight:800;color:#1a2744;font-size:17px;">Total</td>
@@ -355,7 +355,7 @@ function buildAdminHtml(order: Order): string {
 
       <table style="width:100%;border-collapse:collapse;margin-bottom:24px;">
         <tr><td style="padding:5px 0;color:#555;font-size:14px;">Subtotal</td><td style="padding:5px 0;text-align:right;color:#1a2744;font-size:14px;">${money(order.subtotal)}</td></tr>
-        ${discount > 0 ? `<tr><td style="padding:5px 0;color:#555;font-size:14px;">Descuento</td><td style="padding:5px 0;text-align:right;color:#15803d;font-size:14px;">−${money(discount)}</td></tr>` : ''}
+        ${discount > 0 ? `<tr><td style="padding:5px 0;color:#555;font-size:14px;">${order.coupon_code ? `Cupón ${esc(order.coupon_code)}` : 'Descuento'}</td><td style="padding:5px 0;text-align:right;color:#15803d;font-size:14px;">−${money(discount)}</td></tr>` : ''}
         <tr><td style="padding:5px 0;color:#555;font-size:14px;">Envío</td><td style="padding:5px 0;text-align:right;font-size:14px;color:${Number(order.shipping_cost) === 0 ? '#15803d' : '#1a2744'};">${Number(order.shipping_cost) === 0 ? 'Gratis' : money(order.shipping_cost)}</td></tr>
         <tr>
           <td style="padding:12px 0 0;border-top:2px solid #1a2744;font-weight:800;color:#1a2744;font-size:16px;">Total</td>

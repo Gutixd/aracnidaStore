@@ -124,6 +124,11 @@ export default async function AdminOrdersPage() {
               <div className="text-right">
                 <p className="text-2xl font-black tabular-nums" style={{ color: 'var(--text)' }}>{formatPrice(order.total)}</p>
                 {order.shipping_cost > 0 && <p className="text-xs" style={{ color: 'var(--gray-400)' }}>+{formatPrice(order.shipping_cost)} envío</p>}
+                {order.coupon_code && (
+                  <p className="text-xs font-semibold" style={{ color: '#15803d' }}>
+                    Cupón {order.coupon_code} · −{formatPrice(order.discount)}
+                  </p>
+                )}
               </div>
             </div>
 

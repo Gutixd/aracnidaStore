@@ -40,7 +40,8 @@ export async function createMercadoPagoPreference(orderId: string) {
 
   const baseUrl = await getBaseUrl()
 
-  const items =
+  type MpItem = { id: string; title: string; quantity: number; unit_price: number; currency_id: string }
+  let items: MpItem[] =
     (order.items ?? []).map(
       (i: { product_name: string; size: string; quantity: number; unit_price: number }) => ({
         id: orderId,
@@ -60,6 +61,20 @@ export async function createMercadoPagoPreference(orderId: string) {
       unit_price: Number(order.shipping_cost),
       currency_id: 'CLP',
     })
+  }
+
+  // Mercado Pago no acepta ítems con precio negativo, así que un descuento
+  // por cupón no se puede agregar como línea aparte. En ese caso se cobra un
+  // solo ítem por el total exacto del pedido (ya con descuento y envío).
+  if (Number(order.discount) > 0) {
+    const unidades = (order.items ?? []).reduce((s: number, i: { quantity: number }) => s + i.quantity, 0)
+    items = [{
+      id: orderId,
+      title: `Pedido AracnidaStore (${unidades} ${unidades === 1 ? 'producto' : 'productos'}${order.coupon_code ? `, cupón ${order.coupon_code}` : ''})`,
+      quantity: 1,
+      unit_price: Number(order.total),
+      currency_id: 'CLP',
+    }]
   }
 
   try {

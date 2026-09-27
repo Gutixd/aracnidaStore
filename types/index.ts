@@ -87,6 +87,8 @@ export interface Order {
   subtotal: number
   shipping_cost: number
   discount: number
+  /** Código de cupón aplicado, si hubo */
+  coupon_code?: string | null
   total: number
   delivery_method: DeliveryMethod
   delivery_address: string

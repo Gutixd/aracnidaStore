@@ -12,6 +12,7 @@ import { CheckoutFormData } from '@/lib/validations'
 import { CartItem } from '@/types'
 import { calcShippingCost } from '@/lib/shipping'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { checkCoupon } from '@/lib/coupons'
 
 const LOW_STOCK_THRESHOLD = 3
 const MAX_QTY_PER_ITEM = 20
@@ -62,9 +63,28 @@ export async function createOrder(
   }
 
   const subtotal = pricedItems.reduce((sum, { item, price }) => sum + price * item.quantity, 0)
+
+  // Cupón: se revalida acá aunque el checkout ya lo haya mostrado aplicado
+  // (pudo expirar o agotarse entre medio). Si ya no sirve, se avisa en vez
+  // de cobrar un total distinto al que el cliente vio.
+  let discount = 0
+  let couponCode: string | null = null
+  if (formData.coupon_code) {
+    const res = await checkCoupon(formData.coupon_code, subtotal, formData.customer_email)
+    if (!res.ok) return { error: `Cupón: ${res.error}. Quítalo para continuar.` }
+    discount = res.discount
+    couponCode = res.coupon.code
+  }
+
   // El costo de envío se calcula en el servidor según la región y el método.
-  const shippingCost = calcShippingCost(formData.delivery_method, formData.delivery_region, subtotal)
-  const total = subtotal + shippingCost
+  // El umbral de envío gratis se mide sobre lo que realmente paga en productos.
+  const shippingCost = calcShippingCost(formData.delivery_method, formData.delivery_region, subtotal - discount)
+  const total = subtotal - discount + shippingCost
+
+  // Mercado Pago no permite cobrar $0 (un cupón que cubre todo, con retiro).
+  if (total <= 0 && formData.payment_method === 'mercadopago') {
+    return { error: 'Con este cupón no hay nada que pagar en línea: elige transferencia o efectivo para confirmar.' }
+  }
 
   // Crear pedido
   const { data: order, error: orderError } = await supabase
@@ -75,7 +95,8 @@ export async function createOrder(
       customer_phone: formData.customer_phone,
       subtotal,
       shipping_cost: shippingCost,
-      discount: 0,
+      discount,
+      coupon_code: couponCode,
       total,
       delivery_method: formData.delivery_method,
       delivery_address: formData.delivery_method === 'retiro' ? 'Plaza de Maipú' : (formData.delivery_address ?? ''),

@@ -19,6 +19,8 @@ export const checkoutSchema = z.object({
   // 'mercadopago' y 'transferencia' aplican al envío; 'transferencia' y
   // 'efectivo' al retiro. La combinación válida se verifica más abajo.
   payment_method: z.enum(['transferencia', 'efectivo', 'mercadopago']).optional(),
+  /** Código de cupón ya validado en la vista previa; el servidor lo revalida. */
+  coupon_code: z.string().trim().max(30).optional(),
   notes: z.string().optional(),
   /**
    * Consentimiento para recibir ofertas por correo. Desmarcado por defecto a
