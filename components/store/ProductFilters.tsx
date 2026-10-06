@@ -9,11 +9,13 @@ import { useNavigationProgress } from './NavigationProgress'
 interface ProductFiltersProps {
   categories: Category[]
   currentParams: Record<string, string | undefined>
+  /** Cuántos modelos tienen cada talla en stock con los filtros actuales */
+  sizeCounts: Record<string, number>
 }
 
-const SIZES = ['100','110','120','130','140','150','160','170','180','190','Única']
+const SIZES = ['100','110','120','130','140','150','160','170','180','190']
 
-export function ProductFilters({ categories, currentParams }: ProductFiltersProps) {
+export function ProductFilters({ categories, currentParams, sizeCounts }: ProductFiltersProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   // Comparte la barra de progreso y el difuminado con el resto de la
@@ -141,7 +143,7 @@ export function ProductFilters({ categories, currentParams }: ProductFiltersProp
           <span className={filterLabel} style={filterStyle}>Ordenar</span>
           <div className="space-y-1">
             {[
-              { value: 'newest', label: 'Más recientes' },
+              { value: 'newest', label: 'Disponibles primero' },
               { value: 'price_asc', label: 'Menor precio' },
               { value: 'price_desc', label: 'Mayor precio' },
             ].map((opt) => {
@@ -186,34 +188,52 @@ export function ProductFilters({ categories, currentParams }: ProductFiltersProp
         </div>
 
         {/* Size */}
-        <div>
-          <span className={filterLabel} style={filterStyle}>Talla</span>
-          <div className="flex flex-wrap gap-1.5">
-            {SIZES.map((size) => {
-              const active = currentParams.size === size
-              return (
-                <button key={size}
-                  onClick={() => updateParam('size', currentParams.size === size ? null : size)}
-                  className="px-2.5 py-1.5 text-xs rounded-lg border transition-all font-medium"
-                  style={active
-                    ? { background: '#c0392b', color: '#fff', borderColor: '#c0392b' }
-                    : { background: '#fff', color: '#5a5a54', borderColor: '#ddddd8' }}>
-                  {size}
-                </button>
-              )
-            })}
+        {/* Las tallas son de disfraces (estatura en cm). Máscaras, peluches y
+            accesorios son talla única, así que ahí el filtro no aplica y se
+            oculta en vez de ofrecer botones que no filtran nada. */}
+        {(!currentParams.category || currentParams.category === 'disfraces' || currentParams.size) && (
+          <div>
+            <span className={filterLabel} style={filterStyle}>Talla de disfraz (cm)</span>
+            <div className="grid grid-cols-5 gap-1.5">
+              {SIZES.map((size) => {
+                const active = currentParams.size === size
+                const count = sizeCounts[size] ?? 0
+                const disabled = count === 0 && !active
+                return (
+                  <button key={size}
+                    disabled={disabled}
+                    title={disabled ? `Talla ${size} sin stock` : `${count} ${count === 1 ? 'modelo' : 'modelos'} con talla ${size}`}
+                    onClick={() => updateParam('size', active ? null : size)}
+                    className="h-9 text-xs rounded-lg border transition-all font-semibold tabular-nums"
+                    style={active
+                      ? { background: '#111114', color: '#fff', borderColor: '#111114' }
+                      : disabled
+                        ? { background: '#f6f6f4', color: '#c9c9c4', borderColor: '#ececea', textDecoration: 'line-through', cursor: 'not-allowed' }
+                        : { background: '#fff', color: '#26262a', borderColor: '#dcdcd8' }}>
+                    {size}
+                  </button>
+                )
+              })}
+            </div>
+            <p className="text-[11px] mt-2 leading-snug" style={{ color: '#9b9b93' }}>
+              {currentParams.size
+                ? `Mostrando solo modelos con la ${currentParams.size} en stock.`
+                : 'Las tachadas están agotadas, pero se pueden reservar.'}
+            </p>
           </div>
-        </div>
+        )}
 
         {/* Price */}
         <div>
           <span className={filterLabel} style={filterStyle}>Precio</span>
           <div className="space-y-1">
             {[
-              { label: 'Hasta $20.000', min: undefined, max: '20000' },
-              { label: '$20.000 - $30.000', min: '20000', max: '30000' },
-              { label: '$30.000 - $45.000', min: '30000', max: '45000' },
-              { label: 'Más de $45.000', min: '45000', max: undefined },
+              // Tramos alineados con los precios reales del catálogo, para
+              // que ninguno quede vacío ni corte un grupo por la mitad.
+              { label: 'Hasta $25.000', min: undefined, max: '25000' },
+              { label: '$25.000 - $40.000', min: '25000', max: '40000' },
+              { label: '$40.000 - $60.000', min: '40000', max: '60000' },
+              { label: 'Más de $60.000', min: '60000', max: undefined },
             ].map((range) => {
               const isActive = currentParams.min === range.min && currentParams.max === range.max
               return (

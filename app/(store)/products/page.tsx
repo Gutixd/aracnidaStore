@@ -1,4 +1,5 @@
 import { Suspense } from 'react'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Product, Category } from '@/types'
 import { ProductCard } from '@/components/store/ProductCard'
@@ -59,7 +60,12 @@ export async function generateMetadata({
   }
 }
 
-async function getProducts(params: SearchParams): Promise<Product[]> {
+/** Tallas que el producto tiene activas Y con stock: las únicas que se pueden comprar hoy. */
+function sizesInStock(p: Product): string[] {
+  return (p.variants ?? []).filter((v) => v.active && v.stock > 0).map((v) => v.size)
+}
+
+async function getProducts(params: SearchParams): Promise<{ products: Product[]; sizeCounts: Record<string, number> }> {
   const supabase = await createClient()
 
   // Filtrar por categoría con un INNER JOIN en la misma consulta. Antes se
@@ -97,14 +103,23 @@ async function getProducts(params: SearchParams): Promise<Product[]> {
   const { data } = await query
   let products = (data ?? []) as Product[]
 
-  // Filtro de talla: el producto debe tener una variante con esa talla y stock
-  if (params.size) {
-    products = products.filter((p) =>
-      (p.variants ?? []).some((v) => v.active && v.size === params.size)
-    )
+  // Cuántos modelos tienen cada talla en stock, con los demás filtros ya
+  // aplicados. El panel de filtros usa esto para ofrecer solo tallas que
+  // devuelven algo, en vez de una lista fija que lleva a páginas vacías.
+  const sizeCounts: Record<string, number> = {}
+  for (const p of products) {
+    for (const s of new Set(sizesInStock(p))) sizeCounts[s] = (sizeCounts[s] ?? 0) + 1
   }
 
-  return products
+  // Filtro de talla: solo modelos que tienen ESA talla con stock. Antes
+  // bastaba con que la talla existiera en el producto, así que "170"
+  // mostraba todos los disfraces aunque la 170 estuviera agotada.
+  if (params.size) {
+    const size = params.size
+    products = products.filter((p) => sizesInStock(p).includes(size))
+  }
+
+  return { products, sizeCounts }
 }
 
 async function getCategories(): Promise<Category[]> {
@@ -114,7 +129,7 @@ async function getCategories(): Promise<Category[]> {
 }
 
 async function ProductsContent({ params }: { params: SearchParams }) {
-  const [products, categories] = await Promise.all([getProducts(params), getCategories()])
+  const [{ products, sizeCounts }, categories] = await Promise.all([getProducts(params), getCategories()])
 
   const inStock = products.filter(p => p.stock > 0).length
   const categoryLabel = params.category
@@ -135,7 +150,9 @@ async function ProductsContent({ params }: { params: SearchParams }) {
             {params.category ? `${categoryLabel} de Spider-Man en Chile` : 'Disfraces y máscaras de Spider-Man en Chile'}
           </h1>
           <p className="mt-2 text-sm" style={{ color: 'rgba(255,255,255,.45)' }}>
-            {inStock} productos disponibles · {products.length - inStock} sin stock
+            {params.size
+              ? `${products.length} ${products.length === 1 ? 'modelo' : 'modelos'} con talla ${params.size} en stock`
+              : `${inStock} productos disponibles · ${products.length - inStock} sin stock`}
           </p>
           {/* Párrafo con las mismas palabras clave que el título/meta:
               el contenido visible pesa más para SEO que el meta description solo. */}
@@ -161,7 +178,7 @@ async function ProductsContent({ params }: { params: SearchParams }) {
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Sidebar */}
           <aside className="w-full lg:w-64 shrink-0">
-            <ProductFilters categories={categories} currentParams={params as Record<string, string | undefined>} />
+            <ProductFilters categories={categories} currentParams={params as Record<string, string | undefined>} sizeCounts={sizeCounts} />
           </aside>
 
           {/* Grid */}
@@ -169,14 +186,24 @@ async function ProductsContent({ params }: { params: SearchParams }) {
             {products.length > 0 ? (
               <div className="grid grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-5">
                 {products.map((product) => (
-                  <ProductCard key={product.id} product={product} />
+                  <ProductCard key={product.id} product={product} filterSize={params.size} />
                 ))}
               </div>
             ) : (
-              <div className="text-center py-24 card">
+              <div className="text-center py-20 px-6 card">
                 <Package size={48} className="mx-auto mb-4" style={{ color: '#ddddd8' }} />
-                <p className="text-lg font-semibold mb-2" style={{ color: '#1a1a18' }}>Sin resultados</p>
-                <p className="text-sm" style={{ color: '#9b9b93' }}>Prueba ajustando los filtros</p>
+                <p className="text-lg font-semibold mb-2" style={{ color: '#1a1a18' }}>
+                  {params.size ? `No hay modelos con talla ${params.size} en stock` : 'Sin resultados'}
+                </p>
+                <p className="text-sm max-w-sm mx-auto" style={{ color: '#9b9b93' }}>
+                  {params.size
+                    ? 'Puedes reservar cualquier talla con 15% de descuento: entra al modelo que te guste y elige "Resérvalo".'
+                    : 'Prueba quitando algún filtro.'}
+                </p>
+                <Link href={params.category ? `/products?category=${params.category}` : '/products'}
+                  className="btn-dark mt-6 inline-flex">
+                  {params.size ? 'Ver todos los modelos' : 'Limpiar filtros'}
+                </Link>
               </div>
             )}
           </div>

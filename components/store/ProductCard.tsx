@@ -11,19 +11,28 @@ import { calcReservation } from '@/lib/reservations'
 
 interface ProductCardProps {
   product: Product
+  /** Talla por la que se está filtrando el catálogo, si hay una */
+  filterSize?: string
 }
 
-export function ProductCard({ product }: ProductCardProps) {
+export function ProductCard({ product, filterSize }: ProductCardProps) {
   const { addItem, items } = useCart()
   const [added, setAdded] = useState(false)
 
   const variants = (product.variants ?? []).filter((v) => v.active)
   const isSingle = variants.length === 1
-  const totalStock = variants.length
-    ? variants.reduce((s, v) => s + v.stock, 0)
-    : product.stock
-  const minPrice = variants.length ? Math.min(...variants.map((v) => v.price)) : product.price
-  const hasMultiplePrices = variants.length > 1 && new Set(variants.map((v) => v.price)).size > 1
+  // Con el catálogo filtrado por talla, la tarjeta habla de ESA talla: su
+  // stock y su precio, y el enlace la deja preseleccionada en la ficha.
+  const sized = filterSize && variants.length > 1
+    ? variants.find((v) => v.size === filterSize && v.stock > 0)
+    : undefined
+  const totalStock = sized
+    ? sized.stock
+    : variants.length
+      ? variants.reduce((s, v) => s + v.stock, 0)
+      : product.stock
+  const minPrice = sized ? sized.price : variants.length ? Math.min(...variants.map((v) => v.price)) : product.price
+  const hasMultiplePrices = !sized && variants.length > 1 && new Set(variants.map((v) => v.price)).size > 1
   // Solo se anuncia el alza si de verdad es más cara que lo que se cobra hoy.
   const risesTo =
     product.future_price && product.future_price > minPrice ? product.future_price : null
@@ -42,7 +51,7 @@ export function ProductCard({ product }: ProductCardProps) {
   }
 
   return (
-    <Link href={`/products/${product.slug}`} className="group block">
+    <Link href={`/products/${product.slug}${sized ? `?talla=${encodeURIComponent(sized.size)}` : ''}`} className="group block">
       <div className="card-product relative">
         {/* Imagen sobre fondo neutro parejo: todas las fotos se ven como
             una colección, no como recortes pegados. */}
@@ -99,7 +108,9 @@ export function ProductCard({ product }: ProductCardProps) {
             {product.name}
           </h3>
           <p className="text-xs mt-0.5" style={{ color: 'var(--gray-400)' }}>
-            {variants.length > 1 ? `${variants.length} tallas` : product.color}
+            {sized
+              ? `Talla ${sized.size} disponible`
+              : variants.length > 1 ? `${variants.length} tallas` : product.color}
           </p>
 
           <div className="mt-2 flex items-baseline gap-1.5 flex-wrap">

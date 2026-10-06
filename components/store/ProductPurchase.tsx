@@ -4,7 +4,7 @@ import { Product, ProductVariant } from '@/types'
 import { useCart } from '@/store/cart'
 import { formatPrice } from '@/lib/utils'
 import { ShoppingCart, Check, Minus, Plus, TrendingUp, CalendarDays, Tag } from 'lucide-react'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
 import { calcReservation, RESERVATION_MIN_DAYS } from '@/lib/reservations'
 
@@ -27,6 +27,14 @@ export function ProductPurchase({ product, variants }: Props) {
   )
   const [quantity, setQuantity] = useState(1)
   const [added, setAdded] = useState(false)
+
+  // Si viene del catálogo filtrado por talla (?talla=170), esa talla queda
+  // elegida. Se lee en el navegador para que la ficha siga siendo cacheable.
+  useEffect(() => {
+    const talla = new URLSearchParams(window.location.search).get('talla')
+    const v = talla ? variants.find((x) => x.size === talla && x.stock > 0) : null
+    if (v) setSelectedId(v.id)
+  }, [variants])
 
   const selected = variants.find((v) => v.id === selectedId) ?? null
   const inCart = selected ? items.some((i) => i.variant.id === selected.id) : false
