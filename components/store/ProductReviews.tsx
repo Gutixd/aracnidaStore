@@ -196,7 +196,15 @@ export function ProductReviews({ productId, productName, reviews, average, count
                 </div>
                 <time className="text-xs shrink-0" style={{ color: 'var(--gray-400)' }}
                   dateTime={r.created_at}>
-                  {new Date(r.created_at).toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: 'numeric' })}
+                  {/* Fecha armada a mano y en hora de Chile: toLocaleDateString daba
+                      un texto distinto en el servidor (UTC) y en el navegador, y
+                      React fallaba al hidratar la ficha (error #418). */}
+                  {(() => {
+                    const p = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Santiago', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date(r.created_at))
+                    const get = (t: string) => p.find((x) => x.type === t)?.value ?? ''
+                    const meses = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sept', 'oct', 'nov', 'dic']
+                    return `${get('day')} ${meses[Number(get('month')) - 1]} ${get('year')}`
+                  })()}
                 </time>
               </div>
               <Stars value={r.rating} />
