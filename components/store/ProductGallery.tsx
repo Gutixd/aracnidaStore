@@ -12,9 +12,11 @@ interface GalleryImage {
 interface Props {
   images: GalleryImage[]
   productName: string
+  /** Título de la sección; por defecto el de los disfraces */
+  title?: string
 }
 
-export function ProductGallery({ images, productName }: Props) {
+export function ProductGallery({ images, productName, title = 'Fotos reales del traje' }: Props) {
   const [lightbox, setLightbox] = useState<number | null>(null)
 
   const prev = useCallback(() => {
@@ -47,7 +49,7 @@ export function ProductGallery({ images, productName }: Props) {
             Galería de producto
           </span>
           <h2 className="text-2xl md:text-3xl font-black leading-none" style={{ color: 'var(--text)' }}>
-            Fotos reales del traje
+            {title}
           </h2>
         </div>
         <div className="mb-1 text-sm font-semibold px-3 py-1.5 rounded-full" style={{ background: 'rgba(192,57,43,.08)', color: 'var(--red)' }}>

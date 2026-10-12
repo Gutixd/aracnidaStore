@@ -41,6 +41,10 @@ const CATEGORY_SEO: Record<string, { title: string; description: string }> = {
     title: 'Peluches de Spider-Man en Chile',
     description: 'Peluches de Spider-Man en Chile, ideales de regalo. Envíos a todo Chile o retiro gratis en Santiago.',
   },
+  otros: {
+    title: 'Llaveros de peluche, peluches pequeños y papelería en Chile',
+    description: 'Llaveros de peluche, peluches pequeños, bolígrafos, correctores, squishies y más. Envíos a todo Chile o retiro gratis en Santiago.',
+  },
 }
 
 export async function generateMetadata({
@@ -103,6 +107,12 @@ async function getProducts(params: SearchParams): Promise<{ products: Product[];
   const { data } = await query
   let products = (data ?? []) as Product[]
 
+  // El catálogo general es de Spider-Man: lo de "Otros" se ve entrando a su
+  // categoría o buscándolo, y no se mezcla con los disfraces y máscaras.
+  if (!params.category && !params.search) {
+    products = products.filter((p) => p.category?.slug !== 'otros')
+  }
+
   // Cuántos modelos tienen cada talla en stock, con los demás filtros ya
   // aplicados. El panel de filtros usa esto para ofrecer solo tallas que
   // devuelven algo, en vez de una lista fija que lleva a páginas vacías.
@@ -147,7 +157,11 @@ async function ProductsContent({ params }: { params: SearchParams }) {
             Catálogo
           </div>
           <h1 className="text-3xl md:text-4xl font-black text-white mt-2">
-            {params.category ? `${categoryLabel} de Spider-Man en Chile` : 'Disfraces y máscaras de Spider-Man en Chile'}
+            {params.category === 'otros'
+              ? 'Otros productos: llaveros, peluches y papelería'
+              : params.category
+                ? `${categoryLabel} de Spider-Man en Chile`
+                : 'Disfraces y máscaras de Spider-Man en Chile'}
           </h1>
           <p className="mt-2 text-sm" style={{ color: 'rgba(255,255,255,.45)' }}>
             {params.size

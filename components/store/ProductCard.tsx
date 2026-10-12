@@ -59,7 +59,7 @@ export function ProductCard({ product, filterSize }: ProductCardProps) {
           {product.image_url ? (
             <Image
               src={product.image_url}
-              alt={`${product.name} - Spider-Man Chile`}
+              alt={product.category?.slug === 'otros' ? `${product.name} en Chile` : `${product.name} - Spider-Man Chile`}
               fill
               className={`object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03] ${isOutOfStock ? 'opacity-40 grayscale' : ''}`}
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 25vw"

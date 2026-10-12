@@ -190,8 +190,17 @@ export default async function ProductPage({
 
   const isMask = product.category?.slug === 'mascaras'
   const isAccessory = product.category?.slug === 'accesorios'
+  // "Otros": papelería, llaveros y peluches que no son de Spider-Man. Sin
+  // reclamos de tela, costuras ni "disfraz completo", que no les aplican.
+  const isOtros = product.category?.slug === 'otros'
 
-  const features = isMask
+  const features = isOtros
+    ? [
+        { icon: <CheckCircle2 size={15} />, text: 'Producto nuevo' },
+        { icon: <Package size={15} />, text: 'Envío protegido a todo Chile' },
+        { icon: <Shield size={15} />, text: 'Cambios dentro de 7 días' },
+      ]
+    : isMask
     ? [
         { icon: <Star size={15} />, text: 'Acabado de alta fidelidad' },
         { icon: <CheckCircle2 size={15} />, text: 'Material flexible y resistente' },
@@ -242,7 +251,7 @@ export default async function ProductPage({
                 {product.image_url ? (
                   <Image
                     src={product.image_url}
-                    alt={`${product.name} - disfraz Spider-Man en Chile`}
+                    alt={isOtros ? `${product.name} en Chile` : `${product.name} - disfraz Spider-Man en Chile`}
                     fill
                     className="object-cover"
                     priority
@@ -392,6 +401,7 @@ export default async function ProductPage({
               <ProductGallery
                 images={galleryImages.map((img) => ({ url: img.url, alt: img.alt || product.name }))}
                 productName={product.name}
+                title={isOtros ? 'Fotos del producto' : 'Fotos reales del traje'}
               />
             </div>
           </ScrollReveal>
