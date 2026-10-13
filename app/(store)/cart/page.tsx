@@ -1,6 +1,6 @@
 'use client'
 
-import { useCart } from '@/store/cart'
+import { useCart, useCartReady } from '@/store/cart'
 import { formatPrice } from '@/lib/utils'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -11,6 +11,11 @@ import { PICKUP_PLACE } from '@/lib/pickup'
 export default function CartPage() {
   const { items, removeItem, updateQuantity, getTotalPrice, clearCart } = useCart()
   const total = getTotalPrice()
+  const ready = useCartReady()
+
+  // Hasta cargar el carrito guardado no se sabe si está vacío: se evita
+  // mostrar un instante "Tu carrito está vacío" a quien sí tiene productos.
+  if (!ready) return <div style={{ background: 'var(--gray-50)', minHeight: '100vh' }} aria-busy="true" />
 
   if (items.length === 0) {
     return (

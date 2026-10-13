@@ -1,6 +1,6 @@
 'use client'
 
-import { useCart } from '@/store/cart'
+import { useCart, useCartReady } from '@/store/cart'
 import { useForm, type FieldErrors } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { checkoutSchema, CheckoutFormData } from '@/lib/validations'
@@ -31,6 +31,7 @@ const TRANSFER_INFO = {
 
 export default function CheckoutPage() {
   const { items, getTotalPrice, clearCart, syncWithServer } = useCart()
+  const cartReady = useCartReady()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
@@ -153,6 +154,9 @@ export default function CheckoutPage() {
     setCopied(key)
     setTimeout(() => setCopied(null), 2000)
   }
+
+  // Hasta cargar el carrito guardado no se sabe si está vacío.
+  if (!cartReady) return <div style={{ background: 'var(--gray-50)', minHeight: '100vh' }} aria-busy="true" />
 
   if (items.length === 0) {
     return (

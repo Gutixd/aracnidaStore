@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { CartItem, Product, ProductVariant } from '@/types'
@@ -115,6 +116,27 @@ export const useCart = create<CartStore>()(
         return result
       },
     }),
-    { name: 'aracnida-cart-v2' }
+    {
+      name: 'aracnida-cart-v2',
+      // El servidor siempre pinta el carrito vacío. Si el navegador lo leía
+      // de localStorage ya en el primer pintado, el HTML no coincidía y
+      // React lanzaba el error de hidratación #418 en TODAS las páginas
+      // cuando había productos en el carrito. Ahora se carga justo después
+      // de hidratar (ver useCartReady).
+      skipHydration: true,
+    }
   )
 )
+
+/**
+ * Carga el carrito guardado una vez que la página ya hidrató y avisa cuando
+ * está listo. Es idempotente: puede llamarse desde varios componentes.
+ */
+export function useCartReady() {
+  const [ready, setReady] = useState(false)
+  useEffect(() => {
+    if (!useCart.persist.hasHydrated()) useCart.persist.rehydrate()
+    setReady(true)
+  }, [])
+  return ready
+}

@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { useCart } from '@/store/cart'
+import { useCart, useCartReady } from '@/store/cart'
 import { ShoppingCart, Menu, X, Search, Shirt, Drama, Sparkles, PawPrint, Gift, ChevronRight } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
@@ -18,6 +18,9 @@ const MOBILE_LINKS = [
 
 export function Navbar() {
   const { getTotalItems } = useCart()
+  // El Navbar está en todas las páginas de la tienda: aquí se dispara la
+  // carga del carrito guardado (antes de los efectos de cada página).
+  useCartReady()
   const [menuOpen, setMenuOpen] = useState(false)
   const [scrolledPast, setScrolledPast] = useState(false)
   const pathname = usePathname()

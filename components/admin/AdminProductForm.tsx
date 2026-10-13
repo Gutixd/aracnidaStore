@@ -66,8 +66,42 @@ export function AdminProductForm({ product, categories }: Props) {
         .update({ ...data, updated_at: new Date().toISOString() })
         .eq('id', product.id)
 
-      if (error) setMessage({ type: 'error', text: 'Error al guardar: ' + error.message })
-      else { setMessage({ type: 'success', text: 'Producto actualizado correctamente' }); router.refresh() }
+      if (error) {
+        setMessage({ type: 'error', text: 'Error al guardar: ' + error.message })
+      } else {
+        // El precio que se COBRA es el de cada talla (product_variants), no el
+        // del producto. Antes cambiar el precio aquí no tocaba las tallas: la
+        // tienda siguió cobrando el valor anterior sin ningún aviso.
+        //  - Producto con una sola talla: siempre queda igual al del producto.
+        //  - Varias tallas: solo se mueven las que tenían el precio anterior,
+        //    así un precio especial de una talla no se pisa.
+        const oldPrice = Number(product.price)
+        const oldCost = Number(product.cost_price ?? 0)
+        const { data: variantes } = await supabase
+          .from('product_variants').select('id, price, cost_price').eq('product_id', product.id)
+
+        const unica = (variantes ?? []).length === 1
+        const priceIds = (variantes ?? []).filter((v) => unica || Number(v.price) === oldPrice).map((v) => v.id)
+        const costIds = (variantes ?? []).filter((v) => unica || Number(v.cost_price) === oldCost).map((v) => v.id)
+        const now = new Date().toISOString()
+
+        let syncError = false
+        if (priceIds.length) {
+          const r = await supabase.from('product_variants').update({ price: data.price, updated_at: now }).in('id', priceIds)
+          syncError = syncError || !!r.error
+        }
+        if (costIds.length) {
+          const r = await supabase.from('product_variants').update({ cost_price: data.cost_price, updated_at: now }).in('id', costIds)
+          syncError = syncError || !!r.error
+        }
+
+        setMessage(
+          syncError
+            ? { type: 'error', text: 'El producto se guardó, pero no se pudo actualizar el precio de sus tallas. Revisa la sección Tallas.' }
+            : { type: 'success', text: 'Producto actualizado correctamente' }
+        )
+        router.refresh()
+      }
     } else {
       const slug = `${slugify(form.name)}-${Date.now().toString().slice(-5)}`
       const sku = `PRD-${Date.now().toString().slice(-6)}`
