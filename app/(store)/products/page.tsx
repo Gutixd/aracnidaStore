@@ -43,7 +43,7 @@ const CATEGORY_SEO: Record<string, { title: string; description: string }> = {
   },
   otros: {
     title: 'Llaveros de peluche, peluches pequeños y papelería en Chile',
-    description: 'Llaveros de peluche, peluches pequeños, bolígrafos, correctores, squishies y más. Envíos a todo Chile o retiro gratis en Santiago.',
+    description: 'Llaveros de peluche, peluches pequeños, bolígrafos, gomas de borrar, squishies y más. Envíos a todo Chile o retiro gratis en Santiago.',
   },
 }
 
@@ -102,7 +102,9 @@ async function getProducts(params: SearchParams): Promise<{ products: Product[];
   const sort = params.sort ?? 'newest'
   if (sort === 'price_asc') query = query.order('price', { ascending: true })
   else if (sort === 'price_desc') query = query.order('price', { ascending: false })
-  else query = query.order('stock', { ascending: false }) // primero los que tienen stock
+  // Primero los que tienen stock; a igual stock, el orden en que se cargaron
+  // (sin esto los empates salían en un orden cualquiera y cambiaban entre visitas).
+  else query = query.order('stock', { ascending: false }).order('created_at', { ascending: true })
 
   const { data } = await query
   let products = (data ?? []) as Product[]

@@ -57,12 +57,18 @@ export async function createReservation(input: ReservationFormData) {
 
   const { data: product } = await supabase
     .from('products')
-    .select('id, name, color, image_url, active, cost_price')
+    .select('id, name, color, image_url, active, cost_price, category:categories(slug)')
     .eq('id', variant.product_id)
     .single()
 
   if (!product || product.active === false) {
     return { error: 'Ese producto no está disponible para reservar.' }
+  }
+  // "Otros" son unidades sueltas, sin reposición asegurada: no se reservan.
+  const categoria = product.category as { slug?: string } | { slug?: string }[] | null
+  const slugCategoria = Array.isArray(categoria) ? categoria[0]?.slug : categoria?.slug
+  if (slugCategoria === 'otros') {
+    return { error: 'Este producto no se puede reservar. Puedes comprarlo directamente si hay stock.' }
   }
 
   const amounts = calcReservation(Number(variant.price), data.quantity)

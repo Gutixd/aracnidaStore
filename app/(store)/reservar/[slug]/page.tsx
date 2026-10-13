@@ -45,6 +45,8 @@ export default async function ReservarPage({
   const { slug } = await params
   const product = await getProduct(slug)
   if (!product) notFound()
+  // "Otros" no se reserva: son unidades sueltas.
+  if (product.category?.slug === 'otros') notFound()
 
   // La consulta no garantiza orden, y sin esto las tallas salen mezcladas
   // (140, 150, 190, 100...). Se ordenan por número; "Única" queda al final.

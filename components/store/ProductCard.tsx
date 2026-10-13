@@ -38,6 +38,8 @@ export function ProductCard({ product, filterSize }: ProductCardProps) {
     product.future_price && product.future_price > minPrice ? product.future_price : null
 
   const reservePrice = calcReservation(minPrice, 1).final
+  // "Otros" son unidades sueltas: no se ofrece reservar con descuento.
+  const canReserve = product.category?.slug !== 'otros'
   const isOutOfStock = totalStock === 0
   const isLowStock = totalStock > 0 && totalStock <= 3
   const inCart = isSingle && variants[0] ? items.some((i) => i.variant.id === variants[0].id) : false
@@ -77,7 +79,7 @@ export function ProductCard({ product, filterSize }: ProductCardProps) {
               style={isOutOfStock
                 ? { background: '#fff', color: 'var(--gray-600)', boxShadow: '0 0 0 1px var(--gray-100)' }
                 : { background: '#fff', color: 'var(--red)', boxShadow: '0 0 0 1px var(--gray-100)' }}>
-              {isOutOfStock ? 'Agotado' : `Últimas ${totalStock}`}
+              {isOutOfStock ? 'Agotado' : totalStock === 1 ? 'Última unidad' : `Últimas ${totalStock}`}
             </span>
           )}
 
@@ -129,9 +131,11 @@ export function ProductCard({ product, filterSize }: ProductCardProps) {
           )}
           {/* Segundo precio REAL (el de reserva anticipada), sin inventar
               un precio "antes" que nunca se cobró. */}
-          <p className="text-[11px] sm:text-xs mt-0.5 font-medium" style={{ color: '#15803d' }}>
-            {formatPrice(reservePrice)} reservando
-          </p>
+          {canReserve && (
+            <p className="text-[11px] sm:text-xs mt-0.5 font-medium" style={{ color: '#15803d' }}>
+              {formatPrice(reservePrice)} reservando
+            </p>
+          )}
         </div>
       </div>
     </Link>

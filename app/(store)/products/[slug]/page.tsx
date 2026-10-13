@@ -266,7 +266,7 @@ export default async function ProductPage({
                 {totalStock > 0 && totalStock <= 5 && (
                   <span className="absolute top-4 left-4 sm:left-4 text-xs font-semibold px-2.5 py-1 rounded-md"
                     style={{ background: '#fff', color: 'var(--red)', boxShadow: '0 0 0 1px var(--gray-100)' }}>
-                    Últimas unidades
+                    {totalStock === 1 ? 'Última unidad' : 'Últimas unidades'}
                   </span>
                 )}
               </div>
@@ -333,7 +333,7 @@ export default async function ProductPage({
 
             {/* Compra: precio, tallas, cantidad y botón */}
             <div className="mt-6 pt-6" style={{ borderTop: '1px solid var(--gray-100)' }}>
-              <ProductPurchase product={product} variants={variants} />
+              <ProductPurchase product={product} variants={variants} allowReservation={!isOtros} />
             </div>
 
             {/* Size guide */}

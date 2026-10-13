@@ -51,6 +51,7 @@ export function Footer() {
                 { href: '/products?category=mascaras', label: 'Máscaras' },
                 { href: '/products?category=accesorios', label: 'Accesorios' },
                 { href: '/products?category=peluches', label: 'Peluches' },
+                { href: '/products?category=otros', label: 'Otros' },
               ].map((link) => (
                 <li key={link.href}>
                   <Link href={link.href}

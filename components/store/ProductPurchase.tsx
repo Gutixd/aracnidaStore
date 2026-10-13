@@ -11,9 +11,11 @@ import { calcReservation, RESERVATION_MIN_DAYS } from '@/lib/reservations'
 interface Props {
   product: Product
   variants: ProductVariant[]
+  /** Ofrecer la reserva con descuento. Apagado en "Otros": son unidades sueltas. */
+  allowReservation?: boolean
 }
 
-export function ProductPurchase({ product, variants }: Props) {
+export function ProductPurchase({ product, variants, allowReservation = true }: Props) {
   const { addItem, items } = useCart()
   const isSingle = variants.length === 1
 
@@ -63,7 +65,7 @@ export function ProductPurchase({ product, variants }: Props) {
         </button>
         {/* Justo el caso donde la reserva vale más: no hay stock, pero el
             cliente igual puede encargarlo con descuento. */}
-        <ReserveCta slug={product.slug} price={product.price} emphasis />
+        {allowReservation && <ReserveCta slug={product.slug} price={product.price} emphasis />}
       </div>
     )
   }
@@ -178,7 +180,7 @@ export function ProductPurchase({ product, variants }: Props) {
         )}
       </div>
 
-      <ReserveCta slug={product.slug} price={currentPrice} />
+      {allowReservation && <ReserveCta slug={product.slug} price={currentPrice} />}
     </div>
   )
 }

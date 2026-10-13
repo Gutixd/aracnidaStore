@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { useCart } from '@/store/cart'
-import { ShoppingCart, Menu, X, Search, Shirt, Drama, Sparkles, PawPrint, ChevronRight } from 'lucide-react'
+import { ShoppingCart, Menu, X, Search, Shirt, Drama, Sparkles, PawPrint, Gift, ChevronRight } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import { NavLink } from './NavLink'
@@ -13,6 +13,7 @@ const MOBILE_LINKS = [
   { href: '/products?category=disfraces', label: 'Disfraces', icon: Shirt },
   { href: '/products?category=mascaras', label: 'Máscaras', icon: Drama },
   { href: '/products?category=peluches', label: 'Peluches', icon: PawPrint },
+  { href: '/products?category=otros', label: 'Otros', icon: Gift },
 ]
 
 export function Navbar() {
@@ -68,6 +69,7 @@ export function Navbar() {
               { href: '/products?category=disfraces', label: 'Disfraces' },
               { href: '/products?category=mascaras', label: 'Máscaras' },
               { href: '/products?category=peluches', label: 'Peluches' },
+              { href: '/products?category=otros', label: 'Otros' },
             ].map((link) => (
               <NavLink
                 key={link.href}

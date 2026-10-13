@@ -178,6 +178,36 @@ export default async function HomePage() {
               </ScrollReveal>
             ))}
           </div>
+
+          {/* Acceso a "Otros": llaveros, peluches y papelería. Va como una
+              franja aparte, sin competir con las colecciones de Spider-Man. */}
+          <ScrollReveal>
+            <Link href="/products?category=otros"
+              className="group mt-3 sm:mt-5 flex items-center gap-4 sm:gap-6 rounded-[var(--radius)] p-4 sm:p-5 transition-colors hover:bg-[var(--gray-100)]"
+              style={{ background: 'var(--gray-50)', boxShadow: 'inset 0 0 0 1px var(--gray-100)' }}>
+              <div className="flex -space-x-3 sm:-space-x-4 shrink-0">
+                {[
+                  { src: '/products/peluche-kuromi-capucha-lila.jpg', alt: 'Peluche Kuromi', cls: '' },
+                  { src: '/products/llavero-peluche-twice-carita-corazon-celeste.jpg', alt: 'Llavero de peluche', cls: '' },
+                  // En celular solo caben dos: con tres el texto quedaba comprimido.
+                  { src: '/products/peluche-cinnamoroll-capucha-azul.jpg', alt: 'Peluche Cinnamoroll', cls: 'hidden sm:block' },
+                ].map((t) => (
+                  <span key={t.src} className={`relative w-12 h-12 sm:w-16 sm:h-16 rounded-full overflow-hidden ${t.cls}`}
+                    style={{ boxShadow: '0 0 0 3px var(--gray-50)' }}>
+                    <Image src={t.src} alt={t.alt} fill sizes="64px" className="object-cover" />
+                  </span>
+                ))}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold" style={{ color: 'var(--text)' }}>Más productos</p>
+                <p className="text-sm" style={{ color: 'var(--gray-600)' }}>Llaveros de peluche, peluches pequeños y papelería</p>
+              </div>
+              <span className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 bg-white transition-transform group-hover:translate-x-0.5"
+                style={{ color: 'var(--text)', boxShadow: '0 0 0 1px var(--gray-200)' }}>
+                <ChevronRight size={18} />
+              </span>
+            </Link>
+          </ScrollReveal>
         </div>
       </section>
 
