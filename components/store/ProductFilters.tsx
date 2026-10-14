@@ -2,7 +2,7 @@
 
 import { Category } from '@/types'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Search, X, Loader2, SlidersHorizontal, ChevronDown } from 'lucide-react'
 import { useNavigationProgress } from './NavigationProgress'
 
@@ -14,6 +14,7 @@ interface ProductFiltersProps {
 }
 
 const SIZES = ['100','110','120','130','140','150','160','170','180','190']
+const OPEN_KEY = 'aracnida-filtros-abiertos'
 
 export function ProductFilters({ categories, currentParams, sizeCounts }: ProductFiltersProps) {
   const router = useRouter()
@@ -45,21 +46,32 @@ export function ProductFilters({ categories, currentParams, sizeCounts }: Produc
     [navigate, searchParams]
   )
 
-  // Búsqueda con debounce para no navegar en cada tecla
+  // La búsqueda se aplica SOLO al presionar Enter (o el botón de buscar del
+  // teclado). Antes se enviaba sola 350 ms después de dejar de teclear, y al
+  // terminar de cargar la página reescribía el campo con lo enviado: si el
+  // usuario ya había seguido escribiendo, perdía letras y sentía que "se
+  // recargaba" mientras escribía.
   const [searchText, setSearchText] = useState(currentParams.search ?? '')
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     // Mantener sincronizado si se limpian los filtros desde fuera
     setSearchText(currentParams.search ?? '')
   }, [currentParams.search])
 
-  const onSearchChange = (value: string) => {
-    setSearchText(value)
-    if (debounceRef.current) clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => {
-      updateParam('search', value.trim() || null)
-    }, 350)
+  const submitSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    const value = searchText.trim()
+    if (value === (currentParams.search ?? '')) return
+    // Al buscar, el panel se cierra para ver los resultados de inmediato.
+    try { sessionStorage.setItem(OPEN_KEY, '0') } catch {}
+    updateParam('search', value || null)
+    // Cierra el teclado en el celular.
+    ;(document.activeElement as HTMLElement | null)?.blur()
+  }
+
+  const clearSearch = () => {
+    setSearchText('')
+    if (currentParams.search) updateParam('search', null)
   }
 
   const clearAll = () => {
@@ -71,8 +83,19 @@ export function ProductFilters({ categories, currentParams, sizeCounts }: Produc
     ([k, v]) => v && !(k === 'sort' && v === 'newest')
   ).length
 
-  // Panel colapsable en celular (abierto siempre en desktop)
+  // Panel colapsable en celular (abierto siempre en desktop). Al cambiar un
+  // filtro la lista se recarga y este componente se vuelve a montar: sin
+  // recordar el estado, el panel se cerraba solo con cada toque y había que
+  // volver a abrirlo para elegir otro filtro.
   const [open, setOpen] = useState(false)
+  useEffect(() => {
+    try { if (sessionStorage.getItem(OPEN_KEY) === '1') setOpen(true) } catch {}
+  }, [])
+  const toggleOpen = () =>
+    setOpen((o) => {
+      try { sessionStorage.setItem(OPEN_KEY, o ? '0' : '1') } catch {}
+      return !o
+    })
 
   const filterLabel = 'text-sm font-semibold uppercase tracking-widest mb-3 block'
   const filterStyle = { color: '#9b9b93', fontSize: '11px' }
@@ -81,7 +104,7 @@ export function ProductFilters({ categories, currentParams, sizeCounts }: Produc
     <div className="space-y-3 lg:sticky lg:top-24">
       {/* Botón de filtros (solo celular) */}
       <button
-        onClick={() => setOpen((o) => !o)}
+        onClick={toggleOpen}
         className="lg:hidden w-full card flex items-center justify-between px-5 py-3.5"
         aria-expanded={open}
       >
@@ -119,16 +142,37 @@ export function ProductFilters({ categories, currentParams, sizeCounts }: Produc
         </div>
 
         {/* Search */}
-        <div className="relative">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#9b9b93' }} />
-          <input
-            type="text"
-            placeholder="Buscar..."
-            value={searchText}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="input-field pl-9 text-sm"
-          />
-        </div>
+        <form onSubmit={submitSearch} role="search">
+          <div className="relative">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#9b9b93' }} />
+            <input
+              type="text"
+              inputMode="search"
+              // En el teclado del celular, la tecla de enviar dice "Buscar".
+              enterKeyHint="search"
+              autoComplete="off"
+              autoCorrect="off"
+              placeholder="Buscar..."
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              className="input-field pl-9 pr-10 text-sm"
+              aria-label="Buscar productos"
+            />
+            {searchText && (
+              <button type="button" onClick={clearSearch} aria-label="Borrar búsqueda"
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center hover:bg-black/5"
+                style={{ color: '#9b9b93' }}>
+                <X size={14} />
+              </button>
+            )}
+          </div>
+          {/* Solo aparece cuando hay texto sin enviar */}
+          {searchText.trim() !== (currentParams.search ?? '') && (
+            <p className="text-[11px] mt-1.5" style={{ color: '#9b9b93' }}>
+              Presiona Enter para buscar
+            </p>
+          )}
+        </form>
 
         {hasFilters && (
           <button onClick={clearAll}
