@@ -17,7 +17,7 @@ import { previewCoupon } from '@/lib/actions/coupons'
 import { couponDiscount, type CouponType } from '@/lib/coupon-math'
 import { REGIONES_CHILE, getShippingInfo, FREE_SHIPPING_THRESHOLD, MIN_SHIPPING_COST } from '@/lib/shipping'
 import {
-  PICKUP_SLOTS, PICKUP_PLACE, PICKUP_LEAD_HOURS,
+  PICKUP_SLOTS, PICKUP_PLACE,
   getNextPickupDate, getAvailableTimes, formatPickupDate, toISODate,
 } from '@/lib/pickup'
 

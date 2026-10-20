@@ -60,7 +60,6 @@ export function AdminSettingsForm({ settings }: Props) {
 
   const inputClass = "input-field"
   const labelClass = "block text-sm font-semibold mb-1.5"
-  const labelStyle = { color: 'var(--gray-600)' }
   const sectionTitle = "text-sm font-bold uppercase tracking-wider mb-4"
   const sectionStyle = { color: 'var(--gray-400)' }
 

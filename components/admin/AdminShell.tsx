@@ -35,16 +35,84 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/admin/settings', label: 'Configuración', icon: <Settings size={18} /> },
 ]
 
+type Badges = { pending: number; lowStock: number; pendingReviews: number }
+
+function NavLinks({ pathname, badges }: { pathname: string; badges: Badges }) {
+  return (
+  <nav className="flex-1 p-3 space-y-1">
+    {NAV_ITEMS.map((item) => {
+      const isActive = item.exact ? pathname === item.href : pathname.startsWith(item.href)
+      const badge = item.badgeKey ? badges[item.badgeKey] : 0
+      return (
+        <Link
+          key={item.href}
+          href={item.href}
+          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all"
+          style={isActive
+            ? { background: 'var(--red)', color: '#fff', boxShadow: 'var(--shadow-red)' }
+            : { color: 'var(--gray-600)' }}
+        >
+          <span style={{ color: isActive ? '#fff' : 'var(--gray-400)' }}>{item.icon}</span>
+          <span className="flex-1">{item.label}</span>
+          {badge > 0 && (
+            <span
+              className="inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full text-xs font-bold tabular-nums"
+              style={isActive
+                ? { background: 'rgba(255,255,255,.25)', color: '#fff' }
+                : { background: 'var(--red)', color: '#fff' }}
+            >
+              {badge}
+            </span>
+          )}
+        </Link>
+      )
+    })}
+  </nav>
+  )
+}
+
+function Branding() {
+  return (
+  <Link href="/admin" className="flex items-center gap-3">
+    <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0" style={{ boxShadow: 'var(--shadow-sm)' }}>
+      <Image src="/logo.jpeg" alt="AracnidaStore" width={40} height={40} className="object-cover" />
+    </div>
+    <div>
+      <p className="text-sm font-black" style={{ color: 'var(--text)' }}>AracnidaStore</p>
+      <p className="text-xs" style={{ color: 'var(--gray-400)' }}>Panel de administración</p>
+    </div>
+  </Link>
+  )
+}
+
+function SidebarFooter({ onLogout }: { onLogout: () => void }) {
+  return (
+  <div className="p-3" style={{ borderTop: '1px solid var(--gray-100)' }}>
+    <Link href="/" target="_blank"
+      className="flex items-center gap-2 text-xs mb-1 transition-colors px-3 py-2 rounded-lg"
+      style={{ color: 'var(--gray-400)' }}>
+      <ExternalLink size={13} /> Ver tienda
+    </Link>
+    <button onClick={onLogout}
+      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all hover:opacity-80"
+      style={{ color: 'var(--gray-600)' }}>
+      <LogOut size={16} /> Cerrar sesión
+    </button>
+  </div>
+  )
+}
+
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
-  const [open, setOpen] = useState(false)
-  const [badges, setBadges] = useState<{ pending: number; lowStock: number; pendingReviews: number }>(
+  const [openAt, setOpenAt] = useState<string | null>(null)
+  const open = openAt === pathname
+  const setOpen = (v: boolean) => setOpenAt(v ? pathname : null)
+  const [badges, setBadges] = useState<Badges>(
     { pending: 0, lowStock: 0, pendingReviews: 0 }
   )
 
-  // Cerrar el drawer al navegar
-  useEffect(() => { setOpen(false) }, [pathname])
+  // El drawer se cierra solo al navegar: queda abierto únicamente en la ruta donde se abrió
 
   // Contadores en vivo para la navegación
   useEffect(() => {
@@ -65,6 +133,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       }
     }
     load()
+    return () => { active = false }
   }, [pathname])
 
   async function handleLogout() {
@@ -73,73 +142,14 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     router.push('/admin/login')
   }
 
-  const NavLinks = () => (
-    <nav className="flex-1 p-3 space-y-1">
-      {NAV_ITEMS.map((item) => {
-        const isActive = item.exact ? pathname === item.href : pathname.startsWith(item.href)
-        const badge = item.badgeKey ? badges[item.badgeKey] : 0
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all"
-            style={isActive
-              ? { background: 'var(--red)', color: '#fff', boxShadow: 'var(--shadow-red)' }
-              : { color: 'var(--gray-600)' }}
-          >
-            <span style={{ color: isActive ? '#fff' : 'var(--gray-400)' }}>{item.icon}</span>
-            <span className="flex-1">{item.label}</span>
-            {badge > 0 && (
-              <span
-                className="inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full text-xs font-bold tabular-nums"
-                style={isActive
-                  ? { background: 'rgba(255,255,255,.25)', color: '#fff' }
-                  : { background: 'var(--red)', color: '#fff' }}
-              >
-                {badge}
-              </span>
-            )}
-          </Link>
-        )
-      })}
-    </nav>
-  )
-
-  const Branding = () => (
-    <Link href="/admin" className="flex items-center gap-3">
-      <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0" style={{ boxShadow: 'var(--shadow-sm)' }}>
-        <Image src="/logo.jpeg" alt="AracnidaStore" width={40} height={40} className="object-cover" />
-      </div>
-      <div>
-        <p className="text-sm font-black" style={{ color: 'var(--text)' }}>AracnidaStore</p>
-        <p className="text-xs" style={{ color: 'var(--gray-400)' }}>Panel de administración</p>
-      </div>
-    </Link>
-  )
-
-  const SidebarFooter = () => (
-    <div className="p-3" style={{ borderTop: '1px solid var(--gray-100)' }}>
-      <Link href="/" target="_blank"
-        className="flex items-center gap-2 text-xs mb-1 transition-colors px-3 py-2 rounded-lg"
-        style={{ color: 'var(--gray-400)' }}>
-        <ExternalLink size={13} /> Ver tienda
-      </Link>
-      <button onClick={handleLogout}
-        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all hover:opacity-80"
-        style={{ color: 'var(--gray-600)' }}>
-        <LogOut size={16} /> Cerrar sesión
-      </button>
-    </div>
-  )
-
   return (
     <div className="flex min-h-screen" style={{ background: 'var(--gray-50)' }}>
       {/* Sidebar — escritorio */}
       <aside className="hidden lg:flex w-64 flex-col min-h-screen shrink-0 sticky top-0 h-screen"
         style={{ background: '#fff', borderRight: '1px solid var(--gray-100)' }}>
         <div className="p-5" style={{ borderBottom: '1px solid var(--gray-100)' }}><Branding /></div>
-        <NavLinks />
-        <SidebarFooter />
+        <NavLinks pathname={pathname} badges={badges} />
+        <SidebarFooter onLogout={handleLogout} />
       </aside>
 
       {/* Drawer — móvil */}
@@ -154,8 +164,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                 <X size={20} />
               </button>
             </div>
-            <NavLinks />
-            <SidebarFooter />
+            <NavLinks pathname={pathname} badges={badges} />
+            <SidebarFooter onLogout={handleLogout} />
           </aside>
         </div>
       )}
