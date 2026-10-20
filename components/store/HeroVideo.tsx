@@ -104,12 +104,11 @@ export function HeroVideo() {
               <div className="grid grid-cols-2 gap-4">
                 {HERO_SHOWCASE.map((item, i) => (
                   <Link key={item.src} href={item.href}
-                    className={`group relative block rounded-2xl overflow-hidden aspect-[3/4] ${i % 2 === 1 ? 'mt-8' : ''}`}
+                    className={`group relative block rounded-2xl overflow-hidden aspect-square ${i % 2 === 1 ? 'mt-8' : ''}`}
                     style={{ background: '#f1f2f6', boxShadow: '0 20px 50px rgba(0,0,0,.5)' }}>
-                    {/* Mismo fondo claro y la figura completa en las 4 tarjetas;
-                        multiply funde el blanco de cada foto con el fondo. */}
+                    {/* Tarjetas cuadradas = la foto completa, sin recortes ni bordes */}
                     <Image src={item.src} alt={item.alt} fill sizes="22vw"
-                      className="object-contain p-3 mix-blend-multiply transition-transform duration-700 ease-out group-hover:scale-[1.04]" />
+                      className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]" />
                     <span className="absolute left-3 bottom-3 text-[11px] font-semibold px-2 py-1 rounded-md"
                       style={{ background: 'rgba(17,17,20,.85)', color: '#fff' }}>
                       {item.alt.replace('Disfraz Spider-Man ', '')}
