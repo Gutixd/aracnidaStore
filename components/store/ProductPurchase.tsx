@@ -4,7 +4,7 @@ import { Product, ProductVariant } from '@/types'
 import { useCart } from '@/store/cart'
 import { formatPrice } from '@/lib/utils'
 import { ShoppingCart, Check, Minus, Plus, TrendingUp, CalendarDays, Tag } from 'lucide-react'
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { calcReservation, RESERVATION_MIN_DAYS } from '@/lib/reservations'
 
@@ -19,14 +19,14 @@ export function ProductPurchase({ product, variants, allowReservation = true }: 
   const { addItem, items } = useCart()
   const isSingle = variants.length === 1
 
-  // Preselecciona la primera variante con stock
-  const firstAvailable = useMemo(
-    () => variants.find((v) => v.stock > 0) ?? variants[0],
-    [variants]
-  )
+  // Con varias tallas no se preselecciona ninguna: así nadie agrega al carrito
+  // una talla que no eligió (antes quedaba la primera con stock, p. ej. la 100).
   const [selectedId, setSelectedId] = useState<string | null>(
-    isSingle ? variants[0]?.id ?? null : firstAvailable?.id ?? null
+    isSingle ? variants[0]?.id ?? null : null
   )
+  const mainBtnRef = useRef<HTMLButtonElement>(null)
+  const sizesRef = useRef<HTMLDivElement>(null)
+  const [showBar, setShowBar] = useState(false)
   const [quantity, setQuantity] = useState(1)
   const [added, setAdded] = useState(false)
 
@@ -48,8 +48,24 @@ export function ProductPurchase({ product, variants, allowReservation = true }: 
   const risesTo =
     product.future_price && product.future_price > currentPrice ? product.future_price : null
 
+  // La barra fija del celular aparece cuando el botón principal sale de pantalla
+  useEffect(() => {
+    const el = mainBtnRef.current
+    if (!el) return
+    const io = new IntersectionObserver(([e]) => {
+      // Solo si el botón quedó ARRIBA (ya se pasó), no al cargar la página
+      setShowBar(!e.isIntersecting && e.boundingClientRect.top < 0)
+    })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
+
   function handleAdd() {
-    if (!selected || selected.stock === 0) return
+    if (!selected) {
+      sizesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      return
+    }
+    if (selected.stock === 0) return
     addItem(product, selected, quantity)
     setAdded(true)
     setTimeout(() => setAdded(false), 2000)
@@ -101,10 +117,15 @@ export function ProductPurchase({ product, variants, allowReservation = true }: 
       {/* Selector de tallas (solo si hay más de una) */}
       {!isSingle && (
         <div>
-          <div className="flex items-baseline justify-between mb-3">
+          <div ref={sizesRef} className="flex items-baseline justify-between mb-3 scroll-mt-24">
             <span className="text-sm font-semibold" style={{ color: 'var(--text)' }}>
-              Talla {selected ? <span style={{ color: 'var(--gray-600)', fontWeight: 400 }}>· {selected.size} cm</span> : null}
+              {selected
+                ? <>Talla <span style={{ color: 'var(--gray-600)', fontWeight: 400 }}>· {selected.size} cm</span></>
+                : <>Elige tu talla <span style={{ color: 'var(--gray-600)', fontWeight: 400 }}>(tu estatura en cm)</span></>}
             </span>
+            <Link href="/guia-de-tallas" className="text-xs underline underline-offset-2" style={{ color: 'var(--gray-600)' }}>
+              Guía de tallas
+            </Link>
           </div>
           {/* Cuadrícula pareja de botones grandes: fácil de tocar con el pulgar */}
           <div className="grid grid-cols-5 gap-2">
@@ -166,12 +187,17 @@ export function ProductPurchase({ product, variants, allowReservation = true }: 
       {/* Botón */}
       <div className="flex flex-col sm:flex-row gap-3">
         <button
+          ref={mainBtnRef}
           onClick={handleAdd}
-          disabled={!selected || selected.stock === 0}
+          disabled={!!selected && selected.stock === 0}
           className="btn-primary flex-1 justify-center text-base min-h-[54px]"
           style={added ? { background: '#15803d' } : undefined}
         >
-          {added ? <><Check size={18} strokeWidth={3} />¡Agregado!</> : <><ShoppingCart size={18} />Agregar al carrito</>}
+          {added
+            ? <><Check size={18} strokeWidth={3} />¡Agregado!</>
+            : selected
+              ? <><ShoppingCart size={18} />Agregar al carrito</>
+              : <>Elige tu talla</>}
         </button>
         {inCart && !added && (
           <Link href="/cart" className="btn-ghost flex items-center justify-center py-4 px-6 whitespace-nowrap">
@@ -181,6 +207,29 @@ export function ProductPurchase({ product, variants, allowReservation = true }: 
       </div>
 
       {allowReservation && <ReserveCta slug={product.slug} price={currentPrice} />}
+
+      {/* Barra fija de compra (solo celular, al bajar por la ficha) */}
+      <div
+        className="lg:hidden fixed left-0 right-0 bottom-0 z-40 flex items-center gap-3 pl-4 pr-20 py-3 transition-transform duration-200"
+        style={{
+          background: '#fff', boxShadow: '0 -1px 0 var(--gray-100), 0 -8px 24px rgba(0,0,0,.06)',
+          transform: showBar ? 'translateY(0)' : 'translateY(110%)',
+        }}
+        aria-hidden={!showBar}
+      >
+        <span className="text-lg font-semibold tabular-nums shrink-0" style={{ color: 'var(--text)', letterSpacing: '-.03em' }}>
+          {formatPrice(currentPrice)}
+        </span>
+        <button
+          onClick={handleAdd}
+          tabIndex={showBar ? 0 : -1}
+          disabled={!!selected && selected.stock === 0}
+          className="btn-primary flex-1 justify-center min-h-[46px] text-sm"
+          style={added ? { background: '#15803d' } : undefined}
+        >
+          {added ? <><Check size={16} strokeWidth={3} />¡Agregado!</> : selected ? 'Agregar al carrito' : 'Elige tu talla'}
+        </button>
+      </div>
     </div>
   )
 }

@@ -13,9 +13,11 @@ interface ProductCardProps {
   product: Product
   /** Talla por la que se está filtrando el catálogo, si hay una */
   filterSize?: string
+  /** Etiqueta "Más vendido" (solo con ventas reales) */
+  bestseller?: boolean
 }
 
-export function ProductCard({ product, filterSize }: ProductCardProps) {
+export function ProductCard({ product, filterSize, bestseller = false }: ProductCardProps) {
   const { addItem, items } = useCart()
   const [added, setAdded] = useState(false)
 
@@ -80,6 +82,13 @@ export function ProductCard({ product, filterSize }: ProductCardProps) {
                 ? { background: '#fff', color: 'var(--gray-600)', boxShadow: '0 0 0 1px var(--gray-100)' }
                 : { background: '#fff', color: 'var(--red)', boxShadow: '0 0 0 1px var(--gray-100)' }}>
               {isOutOfStock ? 'Agotado' : totalStock === 1 ? 'Última unidad' : `Últimas ${totalStock}`}
+            </span>
+          )}
+
+          {bestseller && !isOutOfStock && (
+            <span className="absolute top-2.5 right-2.5 text-[11px] font-semibold px-2 py-1 rounded-md"
+              style={{ background: 'var(--ink)', color: '#fff' }}>
+              Más vendido
             </span>
           )}
 

@@ -342,10 +342,8 @@ export default async function ProductPage({
                     {reviewSummary.average.toFixed(1)} · {reviewSummary.count} {reviewSummary.count === 1 ? 'reseña' : 'reseñas'}
                   </a>
                 </>
-              ) : (
-                <a href="#resenas" style={{ color: 'var(--gray-400)' }}>Sin reseñas todavía</a>
-              )}
-              <span style={{ color: 'var(--gray-200)' }}>|</span>
+              ) : null}
+              {reviewSummary.count > 0 && <span style={{ color: 'var(--gray-200)' }}>|</span>}
               <span style={{ color: 'var(--gray-600)' }}>+500 clientes en Chile</span>
             </div>
 

@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { createPublicClient } from '@/lib/supabase/server'
+import { createPublicClient, createAdminClient } from '@/lib/supabase/server'
 import { Product } from '@/types'
 import { ProductCard } from '@/components/store/ProductCard'
 import { Shield, Truck, Package, Zap, Star, MapPin, RotateCcw, ChevronRight, ShoppingBag } from 'lucide-react'
@@ -49,7 +49,7 @@ async function getLatestReviews() {
   return data ?? []
 }
 
-async function getFeaturedProducts(): Promise<Product[]> {
+async function getFeaturedProducts(): Promise<{ products: Product[]; bestIds: Set<string> }> {
   const supabase = createPublicClient()
   const { data } = await supabase
     .from('products')
@@ -57,14 +57,35 @@ async function getFeaturedProducts(): Promise<Product[]> {
     .eq('active', true)
     .eq('featured', true)
     .order('stock', { ascending: false })
-    .limit(6)
-  return data ?? []
+    .limit(12)
+  const products = (data ?? []) as Product[]
+
+  // Los más vendidos van primero. Se cuentan las unidades de pedidos pagados;
+  // si falla la consulta, queda el orden por stock de antes.
+  const sold = new Map<string, number>()
+  try {
+    const admin = await createAdminClient()
+    const { data: items } = await admin
+      .from('order_items')
+      .select('product_id, quantity, orders!inner(payment_status)')
+      .eq('orders.payment_status', 'pagado')
+    for (const i of (items ?? []) as { product_id: string | null; quantity: number }[]) {
+      if (i.product_id) sold.set(i.product_id, (sold.get(i.product_id) ?? 0) + i.quantity)
+    }
+  } catch {}
+
+  const ranked = [...products].sort((a, b) => (sold.get(b.id) ?? 0) - (sold.get(a.id) ?? 0))
+  const top = ranked.slice(0, 6)
+  const bestIds = new Set(
+    top.filter((p) => (sold.get(p.id) ?? 0) >= 3).slice(0, 3).map((p) => p.id)
+  )
+  return { products: top, bestIds }
 }
 
 
 
 export default async function HomePage() {
-  const [featured, latestReviews] = await Promise.all([
+  const [{ products: featured, bestIds }, latestReviews] = await Promise.all([
     getFeaturedProducts(),
     getLatestReviews(),
   ])
@@ -125,7 +146,7 @@ export default async function HomePage() {
           {featured.length > 0 ? (
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-3 gap-y-8 sm:gap-x-6 sm:gap-y-12">
               {featured.map((product) => (
-                <ProductCard key={product.id} product={product} />
+                <ProductCard key={product.id} product={product} bestseller={bestIds.has(product.id)} />
               ))}
             </div>
           ) : (
