@@ -9,7 +9,7 @@ const HERO_SHOWCASE = [
   { src: '/products/disfraz-miles-morales.jpg', alt: 'Disfraz Spider-Man Miles Morales', href: '/products/disfraz-miles-morales' },
   { src: '/products/disfraz-tom-holland.jpg', alt: 'Disfraz Spider-Man Tom Holland', href: '/products/disfraz-tom-holland' },
   { src: '/products/disfraz-venom.jpg', alt: 'Disfraz Spider-Man Venom', href: '/products/disfraz-venom' },
-  { src: '/products/mascara-miles-morales-pro.jpg', alt: 'Máscara Miles Morales PRO ULTRA', href: '/products/mascara-miles-morales-pro' },
+  { src: '/products/disfraz-tobey-maguire.jpg', alt: 'Disfraz Spider-Man Tobey Maguire', href: '/products/disfraz-tobey-maguire' },
 ]
 
 export function HeroVideo() {
@@ -105,10 +105,15 @@ export function HeroVideo() {
                 {HERO_SHOWCASE.map((item, i) => (
                   <Link key={item.src} href={item.href}
                     className={`group relative block rounded-2xl overflow-hidden aspect-[3/4] ${i % 2 === 1 ? 'mt-8' : ''}`}
-                    style={{ boxShadow: '0 20px 50px rgba(0,0,0,.5)' }}>
+                    style={{ background: '#f1f2f6', boxShadow: '0 20px 50px rgba(0,0,0,.5)' }}>
+                    {/* Mismo fondo claro y la figura completa en las 4 tarjetas;
+                        multiply funde el blanco de cada foto con el fondo. */}
                     <Image src={item.src} alt={item.alt} fill sizes="22vw"
-                      className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]" />
-                    <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,.4), transparent 55%)' }} />
+                      className="object-contain p-3 mix-blend-multiply transition-transform duration-700 ease-out group-hover:scale-[1.04]" />
+                    <span className="absolute left-3 bottom-3 text-[11px] font-semibold px-2 py-1 rounded-md"
+                      style={{ background: 'rgba(17,17,20,.85)', color: '#fff' }}>
+                      {item.alt.replace('Disfraz Spider-Man ', '')}
+                    </span>
                   </Link>
                 ))}
               </div>
