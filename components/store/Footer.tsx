@@ -71,6 +71,7 @@ export function Footer() {
               {[
                 { href: '/sobre-nosotros', label: 'Sobre nosotros' },
                 { href: '/guia-de-tallas', label: 'Guía de tallas' },
+                { href: '/guia-de-mascaras', label: 'Guía de máscaras' },
                 { href: '/#faq', label: 'Preguntas frecuentes' },
                 { href: '/rastrear-pedido', label: 'Rastrear mi pedido' },
                 { href: '/terminos', label: 'Términos y condiciones' },

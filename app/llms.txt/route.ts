@@ -52,6 +52,8 @@ export async function GET() {
 - [Disfraces](${SITE_URL}/products?category=disfraces)
 - [Máscaras](${SITE_URL}/products?category=mascaras)
 - [Otros: peluches y accesorios](${SITE_URL}/products?category=otros)
+- [Guía de tallas de disfraces](${SITE_URL}/guia-de-tallas)
+- [Guía de máscaras: básica, Standard y PRO ULTRA](${SITE_URL}/guia-de-mascaras)
 - [Términos, envíos y devoluciones](${SITE_URL}/terminos)
 - [Privacidad](${SITE_URL}/privacidad)
 
