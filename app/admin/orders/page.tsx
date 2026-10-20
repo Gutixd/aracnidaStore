@@ -13,6 +13,7 @@ import { AdminPaymentStatusChanger } from '@/components/admin/AdminPaymentStatus
 import { releaseExpiredOrders } from '@/lib/actions/orders'
 import { after } from 'next/server'
 import Link from 'next/link'
+import { CopyButton } from '@/components/admin/CopyButton'
 import { ShoppingCart, Truck, Store, Calendar, Clock, Banknote, AlertTriangle, CalendarDays, ArrowRight, Search } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
@@ -210,10 +211,19 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
                     </span>
                   )}
                 </div>
-                <p className="font-bold" style={{ color: 'var(--text)' }}>{order.customer_name}</p>
-                <div className="flex items-center gap-3 text-xs mt-0.5" style={{ color: 'var(--gray-400)' }}>
-                  <span>{order.customer_phone}</span><span>·</span>
-                  <span>{order.customer_email}</span><span>·</span>
+                <p className="font-bold flex items-center gap-1.5" style={{ color: 'var(--text)' }}>
+                  {order.customer_name}
+                  <CopyButton text={order.customer_name} title="Copiar nombre" />
+                </p>
+                <div className="flex items-center gap-x-3 gap-y-1 flex-wrap text-xs mt-1" style={{ color: 'var(--gray-400)' }}>
+                  <span className="inline-flex items-center gap-1">
+                    {order.customer_phone}
+                    {order.customer_phone && <CopyButton text={order.customer_phone} title="Copiar teléfono" />}
+                  </span>
+                  <span className="inline-flex items-center gap-1 break-all">
+                    {order.customer_email}
+                    <CopyButton text={order.customer_email} title="Copiar correo" />
+                  </span>
                   <span>{formatDate(order.created_at)}</span>
                 </div>
               </div>
@@ -269,6 +279,21 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
                     <p>{order.delivery_commune}</p>
                     {order.delivery_region && <p style={{ color: 'var(--gray-400)' }}>{order.delivery_region}</p>}
                     {order.delivery_reference && <p style={{ color: 'var(--gray-400)' }}>Ref: {order.delivery_reference}</p>}
+                  </div>
+                  {/* Todo junto y listo para pegar en el formulario del courier */}
+                  <div className="mt-3">
+                    <CopyButton
+                      label="Copiar datos de envío"
+                      title="Copiar nombre, teléfono, correo y dirección"
+                      text={[
+                        order.customer_name,
+                        order.customer_phone ? `Tel: ${order.customer_phone}` : '',
+                        order.customer_email ? `Correo: ${order.customer_email}` : '',
+                        order.delivery_address ?? '',
+                        [order.delivery_commune, order.delivery_region].filter(Boolean).join(', '),
+                        order.delivery_reference ? `Ref: ${order.delivery_reference}` : '',
+                      ].filter(Boolean).join('\n')}
+                    />
                   </div>
                 </div>
               ) : (

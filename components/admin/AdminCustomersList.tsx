@@ -1,3 +1,4 @@
+import { CopyButton } from './CopyButton'
 import { formatPrice } from '@/lib/utils'
 import { Mail, MailX } from 'lucide-react'
 
@@ -31,8 +32,8 @@ export function AdminCustomersList({ customers }: { customers: CustomerRow[] }) 
               <div className="min-w-0">
                 <p className="font-bold truncate" style={{ color: 'var(--text)' }}>{c.name || '—'}</p>
                 {/* break-all: un correo largo desbordaba la tarjeta */}
-                <p className="text-sm break-all" style={{ color: 'var(--gray-600)' }}>{c.email}</p>
-                {c.phone && <p className="text-xs mt-0.5" style={{ color: 'var(--gray-400)' }}>{c.phone}</p>}
+                <p className="text-sm break-all flex items-center gap-1" style={{ color: 'var(--gray-600)' }}>{c.email}<CopyButton text={c.email} title="Copiar correo" /></p>
+                {c.phone && <p className="text-xs mt-0.5 flex items-center gap-1" style={{ color: 'var(--gray-400)' }}>{c.phone}<CopyButton text={c.phone} title="Copiar teléfono" /></p>}
               </div>
               <OfertasBadge acepta={c.acepta_ofertas} />
             </div>
@@ -75,8 +76,8 @@ export function AdminCustomersList({ customers }: { customers: CustomerRow[] }) 
                     {c.name || '—'}
                   </td>
                   <td className="px-4 py-3" style={{ color: 'var(--gray-600)' }}>
-                    <span className="block">{c.email}</span>
-                    <span className="block text-xs" style={{ color: 'var(--gray-400)' }}>{c.phone || '—'}</span>
+                    <span className="flex items-center gap-1">{c.email}<CopyButton text={c.email} title="Copiar correo" /></span>
+                    <span className="flex items-center gap-1 text-xs" style={{ color: 'var(--gray-400)' }}>{c.phone || '—'}{c.phone && <CopyButton text={c.phone} title="Copiar teléfono" />}</span>
                   </td>
                   <td className="px-4 py-3 tabular-nums" style={{ color: 'var(--gray-600)' }}>{c.pedidos}</td>
                   <td className="px-4 py-3 font-bold tabular-nums whitespace-nowrap" style={{ color: 'var(--text)' }}>

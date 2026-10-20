@@ -74,7 +74,15 @@ async function getFeaturedProducts(): Promise<{ products: Product[]; bestIds: Se
     }
   } catch {}
 
-  const ranked = [...products].sort((a, b) => (sold.get(b.id) ?? 0) - (sold.get(a.id) ?? 0))
+  // Con stock primero (un favorito agotado no se puede comprar); dentro de cada
+  // grupo, el que más se vendió va antes.
+  const inStock = (p: Product) =>
+    (p.variants ?? []).some((v) => v.active && v.stock > 0) || (!p.variants?.length && p.stock > 0)
+  const ranked = [...products].sort(
+    (a, b) =>
+      Number(inStock(b)) - Number(inStock(a)) ||
+      (sold.get(b.id) ?? 0) - (sold.get(a.id) ?? 0)
+  )
   const top = ranked.slice(0, 6)
   const bestIds = new Set(
     top.filter((p) => (sold.get(p.id) ?? 0) >= 3).slice(0, 3).map((p) => p.id)

@@ -85,7 +85,7 @@ export function ProductCard({ product, filterSize, bestseller = false }: Product
             </span>
           )}
 
-          {bestseller && !isOutOfStock && (
+          {bestseller && !isOutOfStock && !isLowStock && (
             <span className="absolute top-2.5 right-2.5 text-[11px] font-semibold px-2 py-1 rounded-md"
               style={{ background: 'var(--ink)', color: '#fff' }}>
               Más vendido
