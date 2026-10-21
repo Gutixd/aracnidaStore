@@ -91,6 +91,8 @@ export const reservationSchema = z.object({
   delivery_reference: z.string().trim().max(200).optional(),
   notes: z.string().max(500, 'Nota demasiado larga').optional(),
   marketing_opt_in: z.boolean().optional(),
+  /** Preventa: reserva una unidad de un lote en camino (precio normal, sin 15%) */
+  incoming_batch_id: z.string().uuid().optional(),
 }).refine(
   (d) => d.delivery_method === 'retiro' || (!!d.delivery_address && !!d.delivery_region && !!d.delivery_commune),
   { message: 'Para el envío necesitamos dirección, región y comuna', path: ['delivery_address'] }

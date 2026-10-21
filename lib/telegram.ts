@@ -102,11 +102,10 @@ export async function notifyNewReservation(order: Order): Promise<void> {
 🛍️ <b>Producto:</b>
 ${items}
 
-📆 <b>Lo necesita para:</b> ${order.needed_by ?? '—'}
+${(order.notes ?? '').startsWith('Preventa') ? `🚢 <b>${order.notes}</b>` : `📆 <b>Lo necesita para:</b> ${order.needed_by ?? '—'}`}
 
-💰 <b>Precio normal:</b> ${formatPrice(order.subtotal)}
-🎁 <b>Descuento (15%):</b> -${formatPrice(order.discount)}
-${Number(order.shipping_cost) > 0 ? `🚚 <b>Envío:</b> ${formatPrice(order.shipping_cost)}\n` : ''}✅ <b>Total pagado:</b> ${formatPrice(order.total)}
+💰 <b>Precio${Number(order.discount) > 0 ? ' normal' : ''}:</b> ${formatPrice(order.subtotal)}
+${Number(order.discount) > 0 ? `🎁 <b>Descuento (15%):</b> -${formatPrice(order.discount)}\n` : ''}${Number(order.shipping_cost) > 0 ? `🚚 <b>Envío:</b> ${formatPrice(order.shipping_cost)}\n` : ''}✅ <b>Total pagado:</b> ${formatPrice(order.total)}
 
 💳 <b>Pago:</b> ${order.payment_method === 'transferencia' ? '🏦 Transferencia' : '💳 Mercado Pago'}
 📦 <b>Entrega:</b> ${describeReservationDelivery(order)}${order.delivery_reference ? `\n📌 <b>Referencia:</b> ${order.delivery_reference}` : ''}

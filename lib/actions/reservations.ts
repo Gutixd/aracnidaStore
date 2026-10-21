@@ -5,7 +5,9 @@ import { isAdmin } from '@/lib/auth/admin'
 import { upsertMarketingContact } from '@/lib/actions/marketing'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { reservationSchema, type ReservationFormData } from '@/lib/validations'
-import { calcReservation, hasEnoughNotice, RESERVATION_MIN_DAYS } from '@/lib/reservations'
+import { calcReservation, hasEnoughNotice, RESERVATION_MIN_DAYS, type ReservationBreakdown } from '@/lib/reservations'
+import { reservedByBatch } from '@/lib/incoming'
+import { formatArrival } from '@/lib/incoming-format'
 import { calcShippingCost } from '@/lib/shipping'
 import { notifyNewReservation } from '@/lib/telegram'
 import { sendPushToAdmins } from '@/lib/push'
@@ -37,13 +39,30 @@ export async function createReservation(input: ReservationFormData) {
   const rl = await checkRateLimit('create-reservation', { max: 5, windowMinutes: 30 })
   if (!rl.allowed) return { error: rl.error }
 
-  // La anticipación se valida en el servidor aunque el formulario ya la
-  // valide: el cliente puede mandar cualquier fecha.
-  if (!hasEnoughNotice(data.needed_by)) {
+  const supabase = await createAdminClient()
+
+  // Preventa de un lote en camino: llega en fechas conocidas, así que no
+  // aplica la anticipación mínima ni el 15% (se paga el precio normal).
+  let batch: { id: string; variant_id: string; quantity: number; unit_cost: number; arrives_from: string; arrives_to: string } | null = null
+  if (data.incoming_batch_id) {
+    const { data: b } = await supabase
+      .from('incoming_batches')
+      .select('id, variant_id, quantity, unit_cost, arrives_from, arrives_to, status')
+      .eq('id', data.incoming_batch_id)
+      .single()
+    if (!b || b.status !== 'en_camino' || b.variant_id !== data.variant_id) {
+      return { error: 'Esa talla ya no está disponible en preventa. Actualiza la página.' }
+    }
+    const libres = b.quantity - ((await reservedByBatch([b.id])).get(b.id) ?? 0)
+    if (libres < data.quantity) {
+      return { error: libres > 0 ? `Solo quedan ${libres} en preventa para esa talla.` : 'Se acaban de reservar todas las unidades en camino de esa talla.' }
+    }
+    batch = b
+  } else if (!hasEnoughNotice(data.needed_by)) {
+    // La anticipación se valida en el servidor aunque el formulario ya la
+    // valide: el cliente puede mandar cualquier fecha.
     return { error: `La reserva necesita al menos ${RESERVATION_MIN_DAYS} días de anticipación.` }
   }
-
-  const supabase = await createAdminClient()
 
   const { data: variant } = await supabase
     .from('product_variants')
@@ -71,7 +90,13 @@ export async function createReservation(input: ReservationFormData) {
     return { error: 'Este producto no se puede reservar. Puedes comprarlo directamente si hay stock.' }
   }
 
-  const amounts = calcReservation(Number(variant.price), data.quantity)
+  const amounts: ReservationBreakdown = batch
+    ? (() => { const normal = Math.round(Number(variant.price) * data.quantity); return { normal, discount: 0, final: normal } })()
+    : calcReservation(Number(variant.price), data.quantity)
+  const neededBy = batch ? batch.arrives_to : data.needed_by
+  const notes = batch
+    ? `Preventa · llega entre el ${formatArrival(batch.arrives_from, batch.arrives_to)}${data.notes ? ` · ${data.notes}` : ''}`
+    : data.notes ?? ''
 
   // El envío se calcula acá con la misma tabla de zonas que el checkout
   // normal, nunca con un monto enviado desde el navegador. El 15% de
@@ -94,7 +119,7 @@ export async function createReservation(input: ReservationFormData) {
       // Se paga 100% al reservar (producto + envío): no queda saldo pendiente.
       deposit_amount: total,
       balance_due: 0,
-      needed_by: data.needed_by,
+      needed_by: neededBy,
       delivery_method: data.delivery_method,
       delivery_address: isDelivery ? data.delivery_address ?? '' : '',
       delivery_region: isDelivery ? data.delivery_region ?? null : null,
@@ -103,7 +128,7 @@ export async function createReservation(input: ReservationFormData) {
       payment_method: data.payment_method,
       status: 'pendiente',
       payment_status: 'pendiente',
-      notes: data.notes ?? '',
+      notes,
       marketing_opt_in: data.marketing_opt_in === true,
     })
     .select()
@@ -127,12 +152,25 @@ export async function createReservation(input: ReservationFormData) {
     // cuadre con el total cobrado y con lo que ve el cliente.
     unit_price: Math.round(amounts.final / data.quantity),
     // Costo congelado al reservar, para calcular la ganancia real del mes.
-    unit_cost: Number(variant.cost_price) > 0 ? Number(variant.cost_price) : Number(product.cost_price ?? 0),
+    unit_cost: batch && batch.unit_cost > 0
+      ? batch.unit_cost
+      : Number(variant.cost_price) > 0 ? Number(variant.cost_price) : Number(product.cost_price ?? 0),
     total_price: amounts.final,
+    incoming_batch_id: batch?.id ?? null,
   })
 
   if (itemError) {
     console.error('[Reserva] Error guardando el detalle:', itemError)
+  }
+
+  // Dos personas pueden haber reservado la última unidad al mismo tiempo:
+  // si al guardar ya se pasó del total, se anula esta reserva (aún sin pagar).
+  if (batch) {
+    const ocupados = (await reservedByBatch([batch.id])).get(batch.id) ?? 0
+    if (itemError || ocupados > batch.quantity) {
+      await supabase.from('orders').update({ status: 'cancelado' }).eq('id', order.id)
+      return { error: 'Se acaban de reservar las últimas unidades en camino de esa talla.' }
+    }
   }
 
   if (data.marketing_opt_in === true) {

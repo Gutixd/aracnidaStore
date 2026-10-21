@@ -3,6 +3,8 @@ import { createPublicClient } from '@/lib/supabase/server'
 import { Product, ProductVariant } from '@/types'
 import { notFound } from 'next/navigation'
 import { ProductPurchase } from '@/components/store/ProductPurchase'
+import { IncomingSection } from '@/components/store/IncomingSection'
+import { getIncomingForProduct } from '@/lib/incoming'
 import { SizeGuide } from '@/components/store/SizeGuide'
 import { ProductCard } from '@/components/store/ProductCard'
 import { ProductGallery } from '@/components/store/ProductGallery'
@@ -114,11 +116,12 @@ export default async function ProductPage({
   if (!product) notFound()
 
   const variants = sortVariants((product.variants ?? []).filter((v) => v.active))
-  const [related, galleryImages, reviewSummary, reviews] = await Promise.all([
+  const [related, galleryImages, reviewSummary, reviews, incoming] = await Promise.all([
     getRelated(product.category_id, product.id),
     getGalleryImages(product.id),
     getReviewSummary(product.id),
     getProductReviews(product.id),
+    getIncomingForProduct(product.id),
   ])
 
   const minPrice = variants.length ? Math.min(...variants.map((v) => v.price)) : product.price
@@ -351,6 +354,15 @@ export default async function ProductPage({
             <div className="mt-6 pt-6" style={{ borderTop: '1px solid var(--gray-100)' }}>
               <ProductPurchase product={product} variants={variants} allowReservation={!isOtros} />
             </div>
+
+            {/* Trajes en camino: se reservan al precio normal */}
+            {!isOtros && (
+              <IncomingSection
+                slug={product.slug}
+                price={minPrice}
+                items={incoming}
+              />
+            )}
 
             {/* Size guide */}
             {variants.some((v) => !isNaN(parseInt(v.size))) && (

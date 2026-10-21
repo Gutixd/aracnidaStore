@@ -416,12 +416,19 @@ export async function sendAdminOrderNotification(order: Order): Promise<void> {
    Reserva anticipada
    ──────────────────────────────────────────────────────────────────────── */
 
+/** Preventa de un lote en camino (precio normal, sin el 15%). */
+function isPreorder(order: Order): boolean {
+  return (order.notes ?? '').startsWith('Preventa')
+}
+
 /** Desglose de montos, el bloque más importante del correo de reserva. */
 function reservationAmountsBlock(order: Order): string {
   return `
       <table style="width:100%;border-collapse:collapse;margin-bottom:24px;">
-        <tr><td style="padding:6px 0;color:#555;">Precio normal</td><td style="padding:6px 0;text-align:right;color:#888;text-decoration:line-through;">${money(order.subtotal)}</td></tr>
-        <tr><td style="padding:6px 0;color:#555;">Descuento por reservar (15%)</td><td style="padding:6px 0;text-align:right;color:#15803d;font-weight:600;">−${money(order.discount)}</td></tr>
+        ${Number(order.discount) > 0
+          ? `<tr><td style="padding:6px 0;color:#555;">Precio normal</td><td style="padding:6px 0;text-align:right;color:#888;text-decoration:line-through;">${money(order.subtotal)}</td></tr>
+        <tr><td style="padding:6px 0;color:#555;">Descuento por reservar (15%)</td><td style="padding:6px 0;text-align:right;color:#15803d;font-weight:600;">−${money(order.discount)}</td></tr>`
+          : `<tr><td style="padding:6px 0;color:#555;">Producto (preventa)</td><td style="padding:6px 0;text-align:right;color:#555;">${money(order.subtotal)}</td></tr>`}
         ${Number(order.shipping_cost) > 0 ? `<tr><td style="padding:6px 0;color:#555;">Envío</td><td style="padding:6px 0;text-align:right;color:#555;">${money(order.shipping_cost)}</td></tr>` : ''}
         <tr><td colspan="2" style="padding:6px 0 10px;color:#555;font-size:13px;">Entrega: ${esc(describeReservationDelivery(order))}</td></tr>
         <tr>
@@ -477,8 +484,9 @@ function buildReservationHtml(order: Order): string {
       </table>
 
       <div style="margin:20px 0;padding:14px 16px;background:#f4f7ff;border:1px solid #d9e2ff;border-radius:12px;">
-        <p style="margin:0;font-size:13px;color:#555;">Lo necesitas para el</p>
+        <p style="margin:0;font-size:13px;color:#555;">${isPreorder(order) ? 'Llega a más tardar el' : 'Lo necesitas para el'}</p>
         <p style="margin:2px 0 0;font-weight:700;color:#1a2744;font-size:16px;">${esc(order.needed_by ?? 'Por confirmar')}</p>
+        ${isPreorder(order) ? `<p style="margin:6px 0 0;font-size:13px;color:#555;">${esc(order.notes ?? '')}</p>` : ''}
       </div>
 
       ${reservationAmountsBlock(order)}

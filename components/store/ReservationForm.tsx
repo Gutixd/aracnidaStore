@@ -13,19 +13,40 @@ import { createReservation } from '@/lib/actions/reservations'
 import { createReservationPreference } from '@/lib/actions/payment'
 import { REGIONES_CHILE, getShippingInfo } from '@/lib/shipping'
 import { PICKUP_PLACE, PICKUP_SLOTS } from '@/lib/pickup'
-import { CalendarDays, Minus, Plus, Loader2, CreditCard, Landmark, Tag, Info, Truck, MapPin, ChevronDown } from 'lucide-react'
+import { CalendarDays, Minus, Plus, Loader2, CreditCard, Landmark, Tag, Info, Truck, MapPin, ChevronDown, PackageCheck } from 'lucide-react'
+import type { IncomingAvailability } from '@/lib/incoming'
+import { formatArrival } from '@/lib/incoming-format'
 
 interface Props {
   product: Product
   variants: ProductVariant[]
+  /** Preventa: tallas que vienen en camino con cupos libres. Sin 15% ni fecha que elegir. */
+  incoming?: IncomingAvailability[]
+  /** Talla con la que se abre el formulario (?talla=) */
+  initialSize?: string
 }
 
 const MAX_QTY = 10
 
-export function ReservationForm({ product, variants }: Props) {
+export function ReservationForm({ product, variants: allVariants, incoming, initialSize }: Props) {
   const router = useRouter()
+  const isPreorder = !!incoming
 
-  const [variantId, setVariantId] = useState(variants[0]?.id ?? '')
+  // En preventa solo se ofrecen las tallas en camino, y por cada una el lote
+  // que llega primero.
+  const batchByVariant = useMemo(() => {
+    const m = new Map<string, IncomingAvailability>()
+    for (const b of incoming ?? []) {
+      const cur = m.get(b.variant_id)
+      if (!cur || b.arrives_to < cur.arrives_to) m.set(b.variant_id, b)
+    }
+    return m
+  }, [incoming])
+  const variants = isPreorder ? allVariants.filter((v) => batchByVariant.has(v.id)) : allVariants
+
+  const [variantId, setVariantId] = useState(
+    (initialSize && variants.find((v) => v.size === initialSize)?.id) || variants[0]?.id || ''
+  )
   const [quantity, setQuantity] = useState(1)
   const [neededBy, setNeededBy] = useState('')
   const [name, setName] = useState('')
@@ -44,12 +65,17 @@ export function ReservationForm({ product, variants }: Props) {
 
   const minDate = useMemo(() => minReservationDate(), [])
   const selected = variants.find((v) => v.id === variantId) ?? variants[0]
-  const amounts = useMemo(
-    () => calcReservation(Number(selected?.price ?? product.price), quantity),
-    [selected, product.price, quantity]
-  )
+  const batch = selected ? batchByVariant.get(selected.id) : undefined
+  const maxQty = isPreorder ? Math.min(MAX_QTY, batch?.available ?? 1) : MAX_QTY
+  const amounts = useMemo(() => {
+    if (isPreorder) {
+      const normal = Math.round(Number(selected?.price ?? product.price) * quantity)
+      return { normal, discount: 0, final: normal }
+    }
+    return calcReservation(Number(selected?.price ?? product.price), quantity)
+  }, [isPreorder, selected, product.price, quantity])
 
-  const dateOk = neededBy !== '' && hasEnoughNotice(neededBy)
+  const dateOk = isPreorder ? !!batch : neededBy !== '' && hasEnoughNotice(neededBy)
   const dateTouchedButEarly = neededBy !== '' && !dateOk
 
   // Mismo cálculo que hace el servidor (que es el que manda): el descuento
@@ -81,7 +107,8 @@ export function ReservationForm({ product, variants }: Props) {
       const result = await createReservation({
         variant_id: variantId,
         quantity,
-        needed_by: neededBy,
+        needed_by: isPreorder && batch ? batch.arrives_to : neededBy,
+        incoming_batch_id: isPreorder && batch ? batch.batch_id : undefined,
         customer_name: name,
         customer_email: email,
         customer_phone: phone,
@@ -165,7 +192,7 @@ export function ReservationForm({ product, variants }: Props) {
                     <button
                       key={v.id}
                       type="button"
-                      onClick={() => setVariantId(v.id)}
+                      onClick={() => { setVariantId(v.id); setQuantity(1) }}
                       className="min-w-[52px] px-3 py-2.5 rounded-xl text-sm font-bold transition-all"
                       style={active
                         ? { background: 'var(--red)', color: '#fff', border: '1.5px solid var(--red)' }
@@ -178,11 +205,18 @@ export function ReservationForm({ product, variants }: Props) {
               </div>
               {/* En una reserva la talla NO depende del stock actual: el
                   producto se encarga después, por eso se ofrecen todas. */}
-              <p className="text-xs mt-3 flex items-start gap-1.5" style={{ color: 'var(--gray-400)' }}>
-                <Info size={13} className="mt-0.5 shrink-0" />
-                Puedes reservar cualquier talla, tengamos stock o no — para eso es la reserva.
-              </p>
+              {!isPreorder && (
+                <p className="text-xs mt-3 flex items-start gap-1.5" style={{ color: 'var(--gray-400)' }}>
+                  <Info size={13} className="mt-0.5 shrink-0" />
+                  Puedes reservar cualquier talla, tengamos stock o no — para eso es la reserva.
+                </p>
+              )}
             </>
+          )}
+          {isPreorder && batch && (
+            <p className="text-xs mt-3 font-semibold" style={{ color: batch.available <= 2 ? '#b45309' : 'var(--gray-600)' }}>
+              {batch.available === 1 ? 'Queda 1 en camino' : `Quedan ${batch.available} en camino`} en talla {selected?.size}
+            </p>
           )}
         </div>
 
@@ -199,7 +233,7 @@ export function ReservationForm({ product, variants }: Props) {
               <Minus size={15} />
             </button>
             <span className="w-10 text-center font-bold tabular-nums">{quantity}</span>
-            <button type="button" onClick={() => setQuantity((q) => Math.min(MAX_QTY, q + 1))}
+            <button type="button" onClick={() => setQuantity((q) => Math.min(maxQty, q + 1))} disabled={quantity >= maxQty}
               className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ color: 'var(--gray-600)' }}
               aria-label="Aumentar">
               <Plus size={15} />
@@ -207,7 +241,28 @@ export function ReservationForm({ product, variants }: Props) {
           </div>
         </div>
 
-        {/* Fecha */}
+        {/* Fecha (en preventa la fecha la pone la llegada del lote) */}
+        {isPreorder ? (
+          <div className="card p-5">
+            <div className="flex items-center gap-3 mb-4">
+              <span className={stepCls} style={stepStyle}>3</span>
+              <h2 className="font-bold" style={{ color: 'var(--text)' }}>¿Cuándo llega?</h2>
+            </div>
+            {batch && (
+              <div className="rounded-xl p-4 flex items-start gap-3" style={{ background: 'rgba(37,99,235,.06)', border: '1px solid rgba(37,99,235,.18)' }}>
+                <PackageCheck size={20} className="shrink-0 mt-0.5" style={{ color: '#1d4ed8' }} />
+                <div>
+                  <p className="font-bold text-sm" style={{ color: 'var(--text)' }}>
+                    Llega entre el {formatArrival(batch.arrives_from, batch.arrives_to)}
+                  </p>
+                  <p className="text-xs mt-1 leading-relaxed" style={{ color: 'var(--gray-600)' }}>
+                    Apenas llegue te avisamos: si elegiste envío lo despachamos ese mismo día, y si es retiro coordinamos el sábado.
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
         <div className="card p-5">
           <div className="flex items-center gap-3 mb-4">
             <span className={stepCls} style={stepStyle}>3</span>
@@ -233,6 +288,7 @@ export function ReservationForm({ product, variants }: Props) {
             </p>
           )}
         </div>
+        )}
 
         {/* Datos */}
         <div className="card p-5 space-y-4">
@@ -378,26 +434,47 @@ export function ReservationForm({ product, variants }: Props) {
       {/* ── Columna derecha: resumen pegajoso ── */}
       <div className="lg:sticky lg:top-24 space-y-4">
         <div className="card p-5">
-          <div className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 mb-4"
-            style={{ background: 'rgba(22,163,74,.1)', color: '#15803d' }}>
-            <Tag size={13} />
-            <span className="text-xs font-bold">15% de descuento por reservar</span>
-          </div>
+          {isPreorder ? (
+            <div className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 mb-4"
+              style={{ background: 'rgba(37,99,235,.08)', color: '#1d4ed8' }}>
+              <PackageCheck size={13} />
+              <span className="text-xs font-bold">Preventa · asegura tu talla</span>
+            </div>
+          ) : (
+            <div className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 mb-4"
+              style={{ background: 'rgba(22,163,74,.1)', color: '#15803d' }}>
+              <Tag size={13} />
+              <span className="text-xs font-bold">15% de descuento por reservar</span>
+            </div>
+          )}
 
           <table className="w-full text-sm">
             <tbody>
-              <tr>
-                <td className="py-1.5" style={{ color: 'var(--gray-600)' }}>Precio normal</td>
-                <td className="py-1.5 text-right tabular-nums" style={{ color: 'var(--gray-400)', textDecoration: 'line-through' }}>
-                  {formatPrice(amounts.normal)}
-                </td>
-              </tr>
-              <tr>
-                <td className="py-1.5" style={{ color: 'var(--gray-600)' }}>Descuento (15%)</td>
-                <td className="py-1.5 text-right tabular-nums font-semibold" style={{ color: '#15803d' }}>
-                  −{formatPrice(amounts.discount)}
-                </td>
-              </tr>
+              {isPreorder ? (
+                <tr>
+                  <td className="py-1.5" style={{ color: 'var(--gray-600)' }}>
+                    {product.name.replace('Disfraz ', '')} · {selected?.size}{quantity > 1 ? ` × ${quantity}` : ''}
+                  </td>
+                  <td className="py-1.5 text-right tabular-nums" style={{ color: 'var(--text)' }}>
+                    {formatPrice(amounts.normal)}
+                  </td>
+                </tr>
+              ) : (
+                <>
+                  <tr>
+                    <td className="py-1.5" style={{ color: 'var(--gray-600)' }}>Precio normal</td>
+                    <td className="py-1.5 text-right tabular-nums" style={{ color: 'var(--gray-400)', textDecoration: 'line-through' }}>
+                      {formatPrice(amounts.normal)}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="py-1.5" style={{ color: 'var(--gray-600)' }}>Descuento (15%)</td>
+                    <td className="py-1.5 text-right tabular-nums font-semibold" style={{ color: '#15803d' }}>
+                      −{formatPrice(amounts.discount)}
+                    </td>
+                  </tr>
+                </>
+              )}
               {deliveryMethod && (
                 <tr>
                   <td className="py-1.5" style={{ color: 'var(--gray-600)' }}>
@@ -446,10 +523,15 @@ export function ReservationForm({ product, variants }: Props) {
 
         <div className="rounded-xl p-4 text-xs leading-relaxed"
           style={{ background: 'var(--gray-50)', color: 'var(--gray-600)' }}>
-          <strong style={{ color: 'var(--text)' }}>Cómo funciona:</strong> pagas todo ahora (el producto
-          con 15% de descuento, más el envío si lo eliges), conseguimos tu producto y te avisamos cuando
-          llegue: si es envío lo despachamos de inmediato, y si es retiro coordinamos el día. No queda
-          nada por pagar después.
+          <strong style={{ color: 'var(--text)' }}>Cómo funciona:</strong>{' '}
+          {isPreorder
+            ? <>pagas ahora el precio normal (más el envío si lo eliges) y tu traje queda apartado: nadie más
+              puede comprar esa unidad. Cuando llegue te avisamos y lo despachamos o coordinamos el retiro.
+              No queda nada por pagar después.</>
+            : <>pagas todo ahora (el producto
+              con 15% de descuento, más el envío si lo eliges), conseguimos tu producto y te avisamos cuando
+              llegue: si es envío lo despachamos de inmediato, y si es retiro coordinamos el día. No queda
+              nada por pagar después.</>}
         </div>
       </div>
     </form>

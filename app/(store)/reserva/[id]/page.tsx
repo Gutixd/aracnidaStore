@@ -181,10 +181,15 @@ export default async function ReservaPage({
           </div>
 
           <div className="rounded-xl p-4 mb-6" style={{ background: 'var(--gray-50)' }}>
-            <p className="text-xs mb-1" style={{ color: 'var(--gray-400)' }}>Lo necesitas para el</p>
+            <p className="text-xs mb-1" style={{ color: 'var(--gray-400)' }}>
+              {(reservation.notes ?? '').startsWith('Preventa') ? 'Llega a más tardar el' : 'Lo necesitas para el'}
+            </p>
             <p className="font-bold capitalize" style={{ color: 'var(--text)' }}>
               {reservation.needed_by ? formatReservationDate(reservation.needed_by) : 'Por confirmar'}
             </p>
+            {(reservation.notes ?? '').startsWith('Preventa') && (
+              <p className="text-xs mt-1" style={{ color: 'var(--gray-600)' }}>{reservation.notes}</p>
+            )}
             <p className="text-xs mt-3" style={{ color: 'var(--gray-400)' }}>
               Reservada el {formatDate(reservation.created_at)}
             </p>
@@ -193,17 +198,20 @@ export default async function ReservaPage({
           <table className="w-full text-sm">
             <tbody>
               <tr>
-                <td className="py-1.5" style={{ color: 'var(--gray-600)' }}>Precio normal</td>
-                <td className="py-1.5 text-right tabular-nums" style={{ color: 'var(--gray-400)', textDecoration: 'line-through' }}>
+                <td className="py-1.5" style={{ color: 'var(--gray-600)' }}>{Number(reservation.discount) > 0 ? 'Precio normal' : 'Producto (preventa)'}</td>
+                <td className="py-1.5 text-right tabular-nums"
+                  style={Number(reservation.discount) > 0 ? { color: 'var(--gray-400)', textDecoration: 'line-through' } : { color: 'var(--gray-600)' }}>
                   {formatPrice(reservation.subtotal)}
                 </td>
               </tr>
-              <tr>
-                <td className="py-1.5" style={{ color: 'var(--gray-600)' }}>Descuento por reservar (15%)</td>
-                <td className="py-1.5 text-right tabular-nums font-semibold" style={{ color: '#15803d' }}>
-                  −{formatPrice(reservation.discount)}
-                </td>
-              </tr>
+              {Number(reservation.discount) > 0 && (
+                <tr>
+                  <td className="py-1.5" style={{ color: 'var(--gray-600)' }}>Descuento por reservar (15%)</td>
+                  <td className="py-1.5 text-right tabular-nums font-semibold" style={{ color: '#15803d' }}>
+                    −{formatPrice(reservation.discount)}
+                  </td>
+                </tr>
+              )}
               {Number(reservation.shipping_cost) > 0 && (
                 <tr>
                   <td className="py-1.5" style={{ color: 'var(--gray-600)' }}>Envío</td>
