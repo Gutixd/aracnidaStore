@@ -34,17 +34,31 @@ export interface IncomingAvailability {
   available: number
 }
 
-/** Unidades ya reservadas por lote (pedidos no cancelados). */
+/** Una preventa sin pagar aparta la unidad solo por este tiempo. */
+export const UNPAID_HOLD_HOURS = 24
+
+/**
+ * Unidades ya reservadas por lote: las pagadas, y las sin pagar de las
+ * últimas 24 h (alguien que está pagando o que transfirió y falta confirmar).
+ * Así una preventa abandonada no deja el traje bloqueado para siempre.
+ */
 export async function reservedByBatch(batchIds: string[]): Promise<Map<string, number>> {
   const out = new Map<string, number>()
   if (batchIds.length === 0) return out
   const supabase = await createAdminClient()
   const { data } = await supabase
     .from('order_items')
-    .select('incoming_batch_id, quantity, orders!inner(status)')
+    .select('incoming_batch_id, quantity, orders!inner(status, payment_status, created_at)')
     .in('incoming_batch_id', batchIds)
     .neq('orders.status', 'cancelado')
-  for (const r of (data ?? []) as { incoming_batch_id: string; quantity: number }[]) {
+  const limit = Date.now() - UNPAID_HOLD_HOURS * 3600_000
+  for (const r of (data ?? []) as unknown as {
+    incoming_batch_id: string; quantity: number
+    orders: { payment_status: string; created_at: string } | { payment_status: string; created_at: string }[]
+  }[]) {
+    const o = Array.isArray(r.orders) ? r.orders[0] : r.orders
+    const holds = o?.payment_status === 'pagado' || (o && new Date(o.created_at).getTime() > limit)
+    if (!holds) continue
     out.set(r.incoming_batch_id, (out.get(r.incoming_batch_id) ?? 0) + Number(r.quantity))
   }
   return out

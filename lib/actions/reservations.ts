@@ -95,7 +95,7 @@ export async function createReservation(input: ReservationFormData) {
     : calcReservation(Number(variant.price), data.quantity)
   const neededBy = batch ? batch.arrives_to : data.needed_by
   const notes = batch
-    ? `Preventa · llega entre el ${formatArrival(batch.arrives_from, batch.arrives_to)}${data.notes ? ` · ${data.notes}` : ''}`
+    ? `Preventa · llega ${formatArrival(batch.arrives_from, batch.arrives_to)}${data.notes ? ` · ${data.notes}` : ''}`
     : data.notes ?? ''
 
   // El envío se calcula acá con la misma tabla de zonas que el checkout

@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { createAdminClient } from '@/lib/supabase/server'
 import { formatPrice } from '@/lib/utils'
 import { formatArrival } from '@/lib/incoming-format'
-import type { IncomingBatch } from '@/lib/incoming'
+import { UNPAID_HOLD_HOURS, type IncomingBatch } from '@/lib/incoming'
 import { AdminIncomingForm, type IncomingProductOption } from '@/components/admin/AdminIncomingForm'
 import { AdminIncomingActions } from '@/components/admin/AdminIncomingActions'
 import { Ship, ExternalLink } from 'lucide-react'
@@ -14,7 +14,7 @@ type Row = IncomingBatch & {
   variant: { size: string; price: number } | null
 }
 
-type Holder = { batch: string; name: string; qty: number; paid: boolean; orderId: string }
+type Holder = { batch: string; name: string; qty: number; paid: boolean; expired: boolean; orderId: string }
 
 function sizeNum(s: string) {
   const n = Number(s)
@@ -50,18 +50,22 @@ export default async function AdminIncomingPage() {
   const { data: items } = ids.length
     ? await supabase
         .from('order_items')
-        .select('incoming_batch_id, quantity, order:orders!inner(id, customer_name, payment_status, status)')
+        .select('incoming_batch_id, quantity, order:orders!inner(id, customer_name, payment_status, status, created_at)')
         .in('incoming_batch_id', ids)
         .neq('order.status', 'cancelado')
     : { data: [] }
   const holders: Holder[] = ((items ?? []) as unknown as {
     incoming_batch_id: string; quantity: number
-    order: { id: string; customer_name: string; payment_status: string } | { id: string; customer_name: string; payment_status: string }[]
+    order: { id: string; customer_name: string; payment_status: string; created_at: string } | { id: string; customer_name: string; payment_status: string; created_at: string }[]
   }[]).map((i) => {
     const o = Array.isArray(i.order) ? i.order[0] : i.order
-    return { batch: i.incoming_batch_id, name: o.customer_name, qty: Number(i.quantity), paid: o.payment_status === 'pagado', orderId: o.id }
+    const paid = o.payment_status === 'pagado'
+    // eslint-disable-next-line react-hooks/purity -- página dinámica: se calcula en cada visita
+    const expired = !paid && new Date(o.created_at).getTime() < Date.now() - UNPAID_HOLD_HOURS * 3600_000
+    return { batch: i.incoming_batch_id, name: o.customer_name, qty: Number(i.quantity), paid, expired, orderId: o.id }
   })
-  const reservedOf = (id: string) => holders.filter((h) => h.batch === id).reduce((s, h) => s + h.qty, 0)
+  // Igual que la tienda: una preventa sin pagar por más de 24 h ya no aparta la unidad
+  const reservedOf = (id: string) => holders.filter((h) => h.batch === id && !h.expired).reduce((s, h) => s + h.qty, 0)
 
   // KPIs
   const totalUnits = rows.reduce((s, r) => s + r.quantity, 0)
@@ -148,7 +152,7 @@ export default async function AdminIncomingPage() {
                 {[...p.groups.entries()].map(([key, list]) => (
                   <div key={key} className="px-5 py-4 space-y-3" style={{ borderBottom: '1px solid var(--gray-100)' }}>
                     <p className="text-xs font-bold uppercase tracking-wider" style={{ color: '#1d4ed8' }}>
-                      Llega entre el {formatArrival(list[0].arrives_from, list[0].arrives_to)}
+                      Llega {formatArrival(list[0].arrives_from, list[0].arrives_to)}
                     </p>
                     {list
                       .sort((a, b) => sizeNum(a.variant?.size ?? '') - sizeNum(b.variant?.size ?? ''))
@@ -177,7 +181,7 @@ export default async function AdminIncomingPage() {
                                 <> · {who.map((h, i) => (
                                   <span key={h.orderId + i}>
                                     {i > 0 && ', '}
-                                    {h.name}{h.qty > 1 ? ` ×${h.qty}` : ''}{!h.paid && ' (sin pagar)'}
+                                    {h.name}{h.qty > 1 ? ` ×${h.qty}` : ''}{h.expired ? ' (sin pagar, vencida)' : !h.paid && ' (sin pagar)'}
                                   </span>
                                 ))}</>
                               )}

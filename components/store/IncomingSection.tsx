@@ -52,7 +52,7 @@ export function IncomingSection({ slug, price, items }: Props) {
           return (
             <div key={key}>
               <p className="text-[11px] font-semibold uppercase tracking-wider mb-2" style={{ color: '#1d4ed8' }}>
-                Llegan entre el {formatArrival(arrives_from, arrives_to)}
+                Llegan {formatArrival(arrives_from, arrives_to)}
               </p>
               <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                 {list.map((it) => (

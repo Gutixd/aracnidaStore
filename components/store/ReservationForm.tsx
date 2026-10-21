@@ -253,7 +253,7 @@ export function ReservationForm({ product, variants: allVariants, incoming, init
                 <PackageCheck size={20} className="shrink-0 mt-0.5" style={{ color: '#1d4ed8' }} />
                 <div>
                   <p className="font-bold text-sm" style={{ color: 'var(--text)' }}>
-                    Llega entre el {formatArrival(batch.arrives_from, batch.arrives_to)}
+                    Llega {formatArrival(batch.arrives_from, batch.arrives_to)}
                   </p>
                   <p className="text-xs mt-1 leading-relaxed" style={{ color: 'var(--gray-600)' }}>
                     Apenas llegue te avisamos: si elegiste envío lo despachamos ese mismo día, y si es retiro coordinamos el sábado.
