@@ -1,6 +1,17 @@
 import type { Product, ProductVariant } from '@/types'
 
 /**
+ * Columnas que la llave pública de Supabase puede leer. El costo de compra
+ * (cost_price) NO tiene permiso de lectura para visitantes (ver migración
+ * hide_cost_price_from_anon): por eso la tienda nunca debe pedir '*' en
+ * products ni en product_variants, o la consulta falla con "permission denied".
+ */
+export const PUBLIC_PRODUCT_COLUMNS =
+  'id, name, slug, description, price, stock, sku, category_id, size, color, image_url, active, featured, created_at, updated_at, future_price'
+export const PUBLIC_VARIANT_COLUMNS =
+  'id, product_id, size, stock, price, sku, active, created_at, updated_at'
+
+/**
  * Lo único que la tienda necesita del producto en el navegador (tarjetas,
  * selector de tallas, carrito, reserva).
  *

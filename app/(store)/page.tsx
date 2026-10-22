@@ -3,7 +3,7 @@ import Image from 'next/image'
 import { createPublicClient, createAdminClient } from '@/lib/supabase/server'
 import { Product } from '@/types'
 import { ProductCard } from '@/components/store/ProductCard'
-import { toPublicProduct } from '@/lib/public-product'
+import { toPublicProduct, PUBLIC_PRODUCT_COLUMNS, PUBLIC_VARIANT_COLUMNS } from '@/lib/public-product'
 import { Shield, Truck, Package, Zap, Star, MapPin, RotateCcw, ChevronRight, ShoppingBag } from 'lucide-react'
 import { ScrollReveal } from '@/components/store/ScrollReveal'
 import { VideoShowcase } from '@/components/store/VideoShowcase'
@@ -56,12 +56,12 @@ async function getFeaturedProducts(): Promise<{ products: Product[]; bestIds: Se
   const supabase = createPublicClient()
   const { data } = await supabase
     .from('products')
-    .select('*, category:categories(id,name,slug), variants:product_variants(*)')
+    .select(`${PUBLIC_PRODUCT_COLUMNS}, category:categories(id,name,slug), variants:product_variants(${PUBLIC_VARIANT_COLUMNS})`)
     .eq('active', true)
     .eq('featured', true)
     .order('stock', { ascending: false })
     .limit(12)
-  const products = (data ?? []) as Product[]
+  const products = (data ?? []) as unknown as Product[]
 
   // Los más vendidos van primero. Se cuentan las unidades de pedidos pagados;
   // si falla la consulta, queda el orden por stock de antes.

@@ -5,7 +5,7 @@ import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { Product, ProductVariant } from '@/types'
 import { ReservationForm } from '@/components/store/ReservationForm'
-import { toPublicProduct, toPublicVariant } from '@/lib/public-product'
+import { toPublicProduct, toPublicVariant, PUBLIC_PRODUCT_COLUMNS, PUBLIC_VARIANT_COLUMNS } from '@/lib/public-product'
 import { RESERVATION_MIN_DAYS } from '@/lib/reservations'
 import { ChevronRight, CalendarDays, PackageCheck } from 'lucide-react'
 import { getIncomingForProduct } from '@/lib/incoming'
@@ -14,11 +14,11 @@ const getProduct = cache(async (slug: string): Promise<Product | null> => {
   const supabase = await createClient()
   const { data } = await supabase
     .from('products')
-    .select('*, category:categories(id,name,slug), variants:product_variants(*)')
+    .select(`${PUBLIC_PRODUCT_COLUMNS}, category:categories(id,name,slug), variants:product_variants(${PUBLIC_VARIANT_COLUMNS})`)
     .eq('slug', slug)
     .eq('active', true)
     .single()
-  return data
+  return data as unknown as Product | null
 })
 
 export async function generateMetadata({

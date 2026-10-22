@@ -8,13 +8,13 @@ import { publishToInstagram } from '@/lib/instagram'
  * una, se marca "error" y se sigue con las demás — un fallo no debe frenar
  * el resto de la cola.
  *
- * Vercel agrega solo el header Authorization con CRON_SECRET cuando esa
- * variable existe: así se evita que cualquiera dispare publicaciones
- * llamando a esta URL a mano.
+ * Vercel agrega solo el header Authorization con CRON_SECRET. Si la
+ * variable falta, se rechaza todo (antes quedaba abierta): así nadie puede
+ * disparar publicaciones llamando a esta URL a mano.
  */
 export async function GET(request: NextRequest) {
   const secret = process.env.CRON_SECRET
-  if (secret && request.headers.get('authorization') !== `Bearer ${secret}`) {
+  if (!secret || request.headers.get('authorization') !== `Bearer ${secret}`) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
   }
 

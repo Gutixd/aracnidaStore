@@ -7,7 +7,7 @@ import { IncomingSection } from '@/components/store/IncomingSection'
 import { getIncomingForProduct } from '@/lib/incoming'
 import { SizeGuide } from '@/components/store/SizeGuide'
 import { ProductCard } from '@/components/store/ProductCard'
-import { toPublicProduct, toPublicVariant } from '@/lib/public-product'
+import { toPublicProduct, toPublicVariant, PUBLIC_PRODUCT_COLUMNS, PUBLIC_VARIANT_COLUMNS } from '@/lib/public-product'
 import { ProductGallery } from '@/components/store/ProductGallery'
 import { ScrollReveal } from '@/components/store/ScrollReveal'
 import Image from 'next/image'
@@ -45,11 +45,11 @@ const getProduct = cache(async (slug: string): Promise<Product | null> => {
   const supabase = createPublicClient()
   const { data } = await supabase
     .from('products')
-    .select('*, category:categories(id,name,slug), variants:product_variants(*)')
+    .select(`${PUBLIC_PRODUCT_COLUMNS}, category:categories(id,name,slug), variants:product_variants(${PUBLIC_VARIANT_COLUMNS})`)
     .eq('slug', slug)
     .eq('active', true)
     .single()
-  return data
+  return data as unknown as Product | null
 })
 
 async function getGalleryImages(productId: string) {
@@ -66,12 +66,12 @@ async function getRelated(categoryId: string, productId: string): Promise<Produc
   const supabase = createPublicClient()
   const { data } = await supabase
     .from('products')
-    .select('*, category:categories(id,name,slug), variants:product_variants(*)')
+    .select(`${PUBLIC_PRODUCT_COLUMNS}, category:categories(id,name,slug), variants:product_variants(${PUBLIC_VARIANT_COLUMNS})`)
     .eq('category_id', categoryId)
     .eq('active', true)
     .neq('id', productId)
     .limit(4)
-  return data ?? []
+  return (data ?? []) as unknown as Product[]
 }
 
 export async function generateMetadata({

@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Product, Category } from '@/types'
 import { ProductCard } from '@/components/store/ProductCard'
-import { toPublicProduct } from '@/lib/public-product'
+import { toPublicProduct, PUBLIC_PRODUCT_COLUMNS, PUBLIC_VARIANT_COLUMNS } from '@/lib/public-product'
 import { ProductFilters } from '@/components/store/ProductFilters'
 import { ProductsGridSkeleton } from '@/components/store/ProductsGridSkeleton'
 import { Package, Store } from 'lucide-react'
@@ -85,7 +85,7 @@ async function getProducts(params: SearchParams): Promise<{ products: Product[];
 
   let query = supabase
     .from('products')
-    .select(`*, ${relacionCategoria}, variants:product_variants(*)`)
+    .select(`${PUBLIC_PRODUCT_COLUMNS}, ${relacionCategoria}, variants:product_variants(${PUBLIC_VARIANT_COLUMNS})`)
     .eq('active', true)
 
   // Con !inner, filtrar por el slug de la categoría relacionada. Si el slug
@@ -108,7 +108,7 @@ async function getProducts(params: SearchParams): Promise<{ products: Product[];
   else query = query.order('stock', { ascending: false }).order('created_at', { ascending: true })
 
   const { data } = await query
-  let products = (data ?? []) as Product[]
+  let products = (data ?? []) as unknown as Product[]
 
   // El catálogo general es de Spider-Man: lo de "Otros" se ve entrando a su
   // categoría o buscándolo, y no se mezcla con los disfraces y máscaras.
