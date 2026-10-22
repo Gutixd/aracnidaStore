@@ -1,7 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { PICKUP_PLACE, PICKUP_LEAD_HOURS } from '@/lib/pickup'
-import { MIN_SHIPPING_COST } from '@/lib/shipping'
-import { RESERVATION_MIN_DAYS } from '@/lib/reservations'
+import { buildStoreKnowledge } from '@/lib/store-knowledge'
 
 /**
  * Asistente de chat del sitio, con Gemini (nivel gratis de Google AI Studio).
@@ -32,53 +30,9 @@ const WHATSAPP = '+56 9 7882 9942'
 export const isChatAssistantEnabled = () => Boolean(API_KEY)
 
 async function buildStoreContext(): Promise<string> {
-  const supabase = await createClient()
-  const { data: products } = await supabase
-    .from('products')
-    .select('name, price, stock, description, size, color, category:categories(name)')
-    .eq('active', true)
-    .order('price')
-
-  const catalogo = (products ?? [])
-    .map((p) => {
-      const cat = Array.isArray(p.category) ? p.category[0] : p.category
-      const stockTxt = p.stock > 0 ? `${p.stock} en stock` : 'AGOTADO'
-      return `- ${p.name} (${cat?.name ?? 'producto'}) — $${Number(p.price).toLocaleString('es-CL')} — talla ${p.size} — ${stockTxt}`
-    })
-    .join('\n')
-
-  return `
-CATÁLOGO ACTUAL (única fuente de verdad para precios y stock — si un producto no está en esta lista, no existe o no está disponible):
-${catalogo || '(sin productos activos en este momento)'}
-
-TALLAS DE DISFRACES (por altura, en cm):
-XS/100: 90-100cm · S/110: 100-110cm · M/120: 110-120cm · L/130: 120-130cm · XL/140: 130-140cm · 160: 150-160cm · 170: 160-170cm · 180: 170-180cm · 190: 180-190cm
-Si está entre dos tallas, recomendar la mayor. Las máscaras son talla única elástica.
-
-ENVÍOS Y RETIRO:
-- Envío a domicilio por Blue Express a todo Chile, desde $${MIN_SHIPPING_COST.toLocaleString('es-CL')} según la región (se calcula y muestra en el checkout).
-- Región Metropolitana: 1 a 3 días hábiles. Zona centro y sur (Valparaíso a La Araucanía): 3 a 7 días hábiles. Zonas extremas (Arica, Tarapacá, Antofagasta, Atacama, Los Ríos, Los Lagos, Aysén, Magallanes): 7 a 12 días hábiles.
-- Retiro gratis en ${PICKUP_PLACE}: solo sábado 11:00-15:00, coordinando con al menos ${PICKUP_LEAD_HOURS} horas de anticipación.
-
-PAGO:
-- Envío a domicilio: Mercado Pago (tarjeta de crédito o débito) o transferencia bancaria directa. Si Mercado Pago rechaza la tarjeta, se puede pagar por transferencia: el pedido queda reservado y se despacha al confirmar el pago.
-- Retiro en persona: efectivo o transferencia bancaria directa al momento del retiro.
-
-RESERVA ANTICIPADA (sirve incluso para productos AGOTADOS):
-- Se reserva desde la ficha del producto, botón "Resérvalo".
-- Requiere al menos ${RESERVATION_MIN_DAYS} días de anticipación respecto a la fecha en que lo necesita.
-- Tiene 15% de descuento sobre el precio normal.
-- Se paga el 100% al reservar (Mercado Pago o transferencia); no queda saldo pendiente.
-- Al reservar el cliente elige envío a domicilio (se paga el envío junto con la reserva, sin descuento sobre el envío) o retiro gratis en ${PICKUP_PLACE}. Cuando llega el producto se despacha o se coordina el retiro.
-
-CAMBIOS Y DEVOLUCIONES:
-- 7 días corridos desde la recepción, producto sin usar, con etiquetas, en su embalaje original, y con el número de orden. El cliente cubre el envío de la devolución.
-
-OTROS DATOS:
-- Los precios están en pesos chilenos (CLP) e incluyen IVA.
-- Los pedidos con pago en línea que no se completan en 45 minutos se cancelan y el stock se libera.
-- Es una tienda de disfraces y máscaras de cosplay inspirados en Spider-Man (Marvel/Disney), no productos oficiales de Marvel.
-`.trim()
+  // Misma fuente que el asistente de Instagram: catálogo con stock por talla,
+  // trajes en camino y políticas reales de la tienda.
+  return buildStoreKnowledge(await createClient())
 }
 
 const SYSTEM_INSTRUCTIONS = `Eres el asistente de chat de AracnidaStore, tienda chilena de disfraces y máscaras de Spider-Man (aracnidastore.com).

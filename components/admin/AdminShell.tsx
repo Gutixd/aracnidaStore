@@ -8,7 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 import {
   LayoutDashboard, Package, ShoppingCart, Archive,
   DollarSign, BarChart2, Settings, LogOut, ExternalLink,
-  Menu, X, MessageSquare, Users, Camera, CalendarDays, TrendingUp, Ticket, Ship,
+  Menu, X, MessageSquare, Users, Camera, CalendarDays, TrendingUp, Ticket, Ship, Bot,
 } from 'lucide-react'
 
 interface NavItem {
@@ -28,6 +28,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/admin/inventory', label: 'Inventario', icon: <Archive size={18} />, badgeKey: 'lowStock' },
   { href: '/admin/customers', label: 'Clientes', icon: <Users size={18} /> },
   { href: '/admin/instagram', label: 'Instagram', icon: <Camera size={18} /> },
+  { href: '/admin/assistant', label: 'Asistente IG', icon: <Bot size={18} /> },
   { href: '/admin/reviews', label: 'Reseñas', icon: <MessageSquare size={18} />, badgeKey: 'pendingReviews' },
   { href: '/admin/sales', label: 'Ventas del año', icon: <TrendingUp size={18} /> },
   { href: '/admin/coupons', label: 'Cupones', icon: <Ticket size={18} /> },
