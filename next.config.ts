@@ -66,13 +66,16 @@ const nextConfig: NextConfig = {
       // 2 min (y sirve la copia vieja hasta 1 h mientras se actualiza en
       // segundo plano). Así no se paga ISR y casi todas las visitas ni
       // llegan a la función. Un cambio de stock se ve en ≤2 min.
+      // Next.js pone su propio Cache-Control (private, no-store) en páginas
+      // dinámicas y pisa el nuestro; Vercel-CDN-Cache-Control es la cabecera
+      // que lee solo la CDN de Vercel, así que Next no la toca.
       {
         source: '/',
-        headers: [{ key: 'Cache-Control', value: 'public, s-maxage=120, stale-while-revalidate=3600' }],
+        headers: [{ key: 'Vercel-CDN-Cache-Control', value: 's-maxage=120, stale-while-revalidate=3600' }],
       },
       {
         source: '/products/:slug',
-        headers: [{ key: 'Cache-Control', value: 'public, s-maxage=120, stale-while-revalidate=3600' }],
+        headers: [{ key: 'Vercel-CDN-Cache-Control', value: 's-maxage=120, stale-while-revalidate=3600' }],
       },
       // Los archivos de /public salían con `max-age=0, must-revalidate`: el
       // navegador volvía a preguntar por el video en cada visita. Se cachean
