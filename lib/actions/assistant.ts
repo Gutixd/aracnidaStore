@@ -46,7 +46,7 @@ export async function pauseConversationManually(igUserId: string) {
 /** Prueba la IA sin enviar nada a Instagram. */
 export async function testAssistant(message: string, knowledge: string) {
   if (!(await isAdmin())) return { error: 'No autorizado' }
-  if (!isAssistantModelConfigured()) return { error: 'Falta ANTHROPIC_API_KEY en el servidor' }
+  if (!isAssistantModelConfigured()) return { error: 'Falta GROQ_API_KEY (o ANTHROPIC_API_KEY) en el servidor' }
   const text = message.trim().slice(0, 1000)
   if (!text) return { error: 'Escribe un mensaje de prueba' }
   const out = await previewAssistantReply(text, knowledge.slice(0, 8000))

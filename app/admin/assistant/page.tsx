@@ -1,6 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import { dmConfigStatus } from '@/lib/instagram-dm'
-import { isAssistantModelConfigured } from '@/lib/ig-assistant'
+import { isAssistantModelConfigured, assistantProvider } from '@/lib/ig-assistant'
 import { AdminAssistantConfig } from '@/components/admin/AdminAssistantConfig'
 import { AdminConversationActions } from '@/components/admin/AdminConversationActions'
 import { CopyButton } from '@/components/admin/CopyButton'
@@ -34,7 +34,7 @@ export default async function AdminAssistantPage() {
   const llm = isAssistantModelConfigured()
   const anyMessage = (convs ?? []).length > 0
   const steps = [
-    { ok: llm, label: 'Clave de Claude (ANTHROPIC_API_KEY) en Vercel' },
+    { ok: llm, label: llm ? `IA conectada: ${assistantProvider() === 'groq' ? 'Llama de Meta (Groq)' : 'Claude'}` : 'Clave de la IA en Vercel: GROQ_API_KEY (Llama de Meta, gratis)' },
     { ok: env.appSecret, label: 'INSTAGRAM_APP_SECRET en Vercel' },
     { ok: env.verifyToken, label: 'INSTAGRAM_WEBHOOK_VERIFY_TOKEN en Vercel' },
     { ok: env.accessToken, label: 'INSTAGRAM_ACCESS_TOKEN con permiso de mensajes' },
