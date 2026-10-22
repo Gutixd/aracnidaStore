@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { refreshStorefront } from '@/lib/actions/storefront'
 import { Plus, Minus, RotateCcw, Loader2 } from 'lucide-react'
 
 interface Props {
@@ -48,6 +49,7 @@ export function AdminStockManager({ product }: Props) {
       setCurrentStock(newStock)
       setReason('')
       setMessage(`Stock actualizado: ${newStock} unidades`)
+      await refreshStorefront([product.id])
       router.refresh()
     } else {
       setMessage('Error al actualizar stock')

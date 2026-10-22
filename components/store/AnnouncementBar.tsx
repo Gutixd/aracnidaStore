@@ -1,3 +1,6 @@
+'use client'
+
+import { useEffect, useState } from 'react'
 import { FREE_SHIPPING_THRESHOLD, MIN_SHIPPING_COST } from '@/lib/shipping'
 import { PICKUP_PLACE } from '@/lib/pickup'
 import { RESERVATION_MIN_DAYS } from '@/lib/reservations'
@@ -35,8 +38,17 @@ function getBlackFridayMessage(now: Date): string | null {
   return '🔥 SE VIENE EL BLACK FRIDAY: DESDE EL VIERNES 27 DE NOVIEMBRE'
 }
 
-export function AnnouncementBar() {
-  const blackFriday = getBlackFridayMessage(new Date())
+/**
+ * Las páginas vienen de caché (hasta 24 h), así que la hora del servidor
+ * puede ser vieja: el aviso de Black Friday se recalcula en el navegador con
+ * la fecha real. `renderedAt` evita un desajuste de hidratación: el primer
+ * render usa la misma hora que usó el servidor.
+ */
+export function AnnouncementBar({ renderedAt }: { renderedAt: number }) {
+  const [now, setNow] = useState(renderedAt)
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- sincroniza con el reloj real tras hidratar
+  useEffect(() => { setNow(Date.now()) }, [])
+  const blackFriday = getBlackFridayMessage(new Date(now))
   const messages = blackFriday ? [blackFriday, ...MESSAGES] : MESSAGES
 
   // La lista se duplica para que el loop no muestre un vacío al reiniciar:

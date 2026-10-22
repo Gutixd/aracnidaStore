@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { refreshStorefront } from '@/lib/actions/storefront'
 import { Trash2, Loader2, Check } from 'lucide-react'
 
 interface Props { id: string; name: string }
@@ -17,6 +18,8 @@ export function AdminDeleteProduct({ id, name }: Props) {
     setLoading(true)
     setError(false)
     const supabase = createClient()
+    // Antes de borrar: después ya no existe el slug para saber qué ficha vencer
+    await refreshStorefront([id])
     const { error: delError } = await supabase.from('products').delete().eq('id', id)
     setLoading(false)
     if (delError) { setError(true); return }

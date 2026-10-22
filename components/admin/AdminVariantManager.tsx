@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { refreshStorefront } from '@/lib/actions/storefront'
 import { ProductVariant } from '@/types'
 import { formatPrice } from '@/lib/utils'
 import { Plus, Minus, Check, Loader2, AlertCircle } from 'lucide-react'
@@ -92,6 +93,7 @@ export function AdminVariantManager({ productId, variants }: Props) {
     await recalcProduct(supabase)
     setSavedId(variant.id)
     setTimeout(() => setSavedId(null), 1500)
+    await refreshStorefront([productId])
     router.refresh()
     setSavingId(null)
   }

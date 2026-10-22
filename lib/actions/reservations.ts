@@ -15,6 +15,7 @@ import { sendReservationReceipt, sendAdminReservationNotification } from '@/lib/
 import { notifyOrderStarted } from '@/lib/alerts'
 import type { Order } from '@/types'
 import { revalidatePath } from 'next/cache'
+import { revalidateProductsById } from '@/lib/revalidate-store'
 
 /**
  * Crea una reserva anticipada. A diferencia de un pedido normal:
@@ -182,6 +183,9 @@ export async function createReservation(input: ReservationFormData) {
     })
   }
 
+  // Una preventa ocupa un cupo del lote en camino: la ficha debe mostrarlo
+  if (batch) await revalidateProductsById(supabase, [product.id])
+
   // Aviso inmediato: el de "reserva pagada" solo sale al confirmarse el pago,
   // y una reserva por transferencia puede quedar días sin que nadie la vea.
   await notifyOrderStarted({
@@ -267,6 +271,14 @@ export async function updateReservationStatus(reservationId: string, newStatus: 
     .eq('is_reservation', true)
 
   if (error) return { error: 'No se pudo actualizar la reserva' }
+
+  // Cancelar una preventa libera su cupo en la ficha del traje
+  if (newStatus === 'cancelado') {
+    const { data: items } = await supabase
+      .from('order_items').select('product_id, incoming_batch_id').eq('order_id', reservationId)
+    const ids = (items ?? []).filter((i) => i.incoming_batch_id).map((i) => i.product_id as string)
+    if (ids.length) await revalidateProductsById(supabase, ids)
+  }
 
   revalidatePath('/admin/reservations')
   return { ok: true }

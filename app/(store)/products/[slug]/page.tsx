@@ -22,10 +22,12 @@ import type { Metadata } from 'next'
 
 const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://aracnidastore.com'
 
-// Cada ficha se genera una vez y se sirve cacheada 60 s. Más corto que la
-// portada porque aquí se eligen tallas: un agotado se refleja en ≤1 min, y
-// igual el checkout revalida el stock en el servidor antes de cobrar.
-export const revalidate = 60
+// Cada ficha se sirve desde caché y se regenera SOLO cuando cambia algo
+// (venta, stock, producto, reseña, preventa): ver lib/revalidate-store.ts.
+// Antes era cada 60 s y cada visita o bot posterior reescribía la página
+// (escrituras ISR en Vercel). Las 24 h quedan solo como red de seguridad, y
+// el checkout igual valida stock y precio en el servidor antes de cobrar.
+export const revalidate = 86400
 
 // Sin esto Next.js trata /products/[slug] como dinámica aunque tenga
 // `revalidate`. Las fichas activas se generan en el build; un producto

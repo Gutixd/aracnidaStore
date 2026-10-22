@@ -31,7 +31,9 @@ const FAQS = [
 // uno. Un cambio de stock o una reseña nueva aparece en ≤5 min; el stock
 // real se vuelve a validar en el servidor al pagar, así que no se vende
 // nada que no exista.
-export const revalidate = 300
+// Se regenera solo cuando cambia stock, productos o reseñas
+// (lib/revalidate-store.ts); 24 h es la red de seguridad.
+export const revalidate = 86400
 
 /** Dato real del negocio, usado en la prueba social y en los datos estructurados. */
 export const STORE_FOUNDED_YEAR = 2025

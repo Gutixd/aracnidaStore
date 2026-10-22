@@ -13,6 +13,7 @@ import { CartItem } from '@/types'
 import { calcShippingCost } from '@/lib/shipping'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { checkCoupon } from '@/lib/coupons'
+import { revalidateProductsById } from '@/lib/revalidate-store'
 
 const LOW_STOCK_THRESHOLD = 3
 const MAX_QTY_PER_ITEM = 20
@@ -158,6 +159,7 @@ export async function createOrder(
       .eq('product_id', product.id)
     const productStock = (allVariants ?? []).reduce((s, v) => s + v.stock, 0)
     await supabase.from('products').update({ stock: productStock }).eq('id', product.id)
+    await revalidateProductsById(supabase, [product.id])
 
     await supabase.from('inventory_movements').insert({
       product_id: product.id,
@@ -242,6 +244,8 @@ async function recalcProductStock(
     .eq('product_id', productId)
   const productStock = (allVariants ?? []).reduce((s, v) => s + v.stock, 0)
   await supabase.from('products').update({ stock: productStock }).eq('id', productId)
+  // El stock cambió: la ficha y la portada (tarjetas "Últimas N") se regeneran
+  await revalidateProductsById(supabase, [productId])
   return productStock
 }
 

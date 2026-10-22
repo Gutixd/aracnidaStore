@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { refreshStorefront } from '@/lib/actions/storefront'
 
 interface Props {
   id: string
@@ -36,6 +37,7 @@ export function AdminToggleProduct({ id, active, name }: Props) {
     }
     setCurrentState(!currentState)
     setLoading(false)
+    await refreshStorefront([id])
     router.refresh()
   }
 

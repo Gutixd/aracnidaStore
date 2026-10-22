@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { slugify } from '@/lib/utils'
+import { refreshStorefront } from '@/lib/actions/storefront'
 import { Loader2, Save } from 'lucide-react'
 
 interface Props {
@@ -100,6 +101,7 @@ export function AdminProductForm({ product, categories }: Props) {
             ? { type: 'error', text: 'El producto se guardó, pero no se pudo actualizar el precio de sus tallas. Revisa la sección Tallas.' }
             : { type: 'success', text: 'Producto actualizado correctamente' }
         )
+        await refreshStorefront([product.id])
         router.refresh()
       }
     } else {
@@ -120,6 +122,7 @@ export function AdminProductForm({ product, categories }: Props) {
         await supabase.from('product_variants').insert({
           product_id: created.id, size: 'Única', stock, price: data.price, cost_price: data.cost_price, sku: sku + '-U',
         })
+        await refreshStorefront([created.id])
         setMessage({ type: 'success', text: 'Producto creado. Edítalo para gestionar tallas.' })
         setTimeout(() => router.push(`/admin/products/${created.id}`), 800)
       }

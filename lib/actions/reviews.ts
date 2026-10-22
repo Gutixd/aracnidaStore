@@ -3,6 +3,7 @@
 import { createAdminClient, createPublicClient } from '@/lib/supabase/server'
 import { isAdmin } from '@/lib/auth/admin'
 import { revalidatePath } from 'next/cache'
+import { revalidateProductsById } from '@/lib/revalidate-store'
 import { checkRateLimit } from '@/lib/rate-limit'
 
 export interface ReviewSummary {
@@ -120,13 +121,16 @@ export async function moderateReview(reviewId: string, approved: boolean) {
   if (!(await isAdmin())) return { error: 'No autorizado' }
 
   const supabase = await createAdminClient()
-  const { error } = await supabase
+  const { data: review, error } = await supabase
     .from('reviews')
     .update({ approved })
     .eq('id', reviewId)
+    .select('product_id')
+    .single()
 
   if (error) return { error: 'No se pudo actualizar la reseña' }
   revalidatePath('/admin/reviews')
+  await revalidateProductsById(supabase, [review?.product_id])
   return { ok: true }
 }
 
@@ -134,8 +138,10 @@ export async function deleteReview(reviewId: string) {
   if (!(await isAdmin())) return { error: 'No autorizado' }
 
   const supabase = await createAdminClient()
-  const { error } = await supabase.from('reviews').delete().eq('id', reviewId)
+  const { data: review, error } = await supabase
+    .from('reviews').delete().eq('id', reviewId).select('product_id').single()
   if (error) return { error: 'No se pudo eliminar la reseña' }
   revalidatePath('/admin/reviews')
+  await revalidateProductsById(supabase, [review?.product_id])
   return { ok: true }
 }

@@ -13,7 +13,8 @@ export default function StoreLayout({ children }: { children: React.ReactNode })
     // para que el menú se mantenga nítido y clickeable mientras la página
     // de destino carga.
     <NavigationProgressProvider>
-      <AnnouncementBar />
+      {/* eslint-disable-next-line react-hooks/purity -- hora del render en el servidor */}
+      <AnnouncementBar renderedAt={Date.now()} />
       <Navbar />
       <main className="min-h-screen">
         <PageTransitionOverlay>{children}</PageTransitionOverlay>
