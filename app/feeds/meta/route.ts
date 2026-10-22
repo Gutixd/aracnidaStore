@@ -1,6 +1,7 @@
 import { createPublicClient } from '@/lib/supabase/server'
 
-export const revalidate = 3600
+// Sin ISR (se cobra): la CDN guarda la respuesta 1 h con el Cache-Control de abajo.
+export const dynamic = 'force-dynamic'
 
 const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://aracnidastore.com'
 

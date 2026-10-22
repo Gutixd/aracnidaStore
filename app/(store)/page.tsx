@@ -27,14 +27,10 @@ const FAQS = [
   { q: '¿Cómo hago seguimiento de mi pedido?', a: 'Al confirmar tu compra recibes un correo con el comprobante y tu número de pedido. Puedes revisar el estado en la página del pedido o escribirnos por WhatsApp al +56 9 7882 9942.' },
 ]
 
-// La portada es igual para todos: se genera una vez y la CDN la sirve a
-// cada visitante durante 5 minutos, en vez de consultar Supabase por cada
-// uno. Un cambio de stock o una reseña nueva aparece en ≤5 min; el stock
-// real se vuelve a validar en el servidor al pagar, así que no se vende
-// nada que no exista.
-// Se regenera solo cuando cambia stock, productos o reseñas
-// (lib/revalidate-store.ts); 24 h es la red de seguridad.
-export const revalidate = 86400
+// La portada se renderiza en el servidor y la CDN de Vercel la guarda unos
+// minutos (cabecera Cache-Control en next.config.ts). No usa ISR: las
+// escrituras ISR se cobran y el plan Hobby se pasó de las 200.000.
+export const dynamic = 'force-dynamic'
 
 /** Dato real del negocio, usado en la prueba social y en los datos estructurados. */
 export const STORE_FOUNDED_YEAR = 2025

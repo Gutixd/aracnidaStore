@@ -2,7 +2,8 @@ import { createPublicClient } from '@/lib/supabase/server'
 import { FREE_SHIPPING_THRESHOLD, MIN_SHIPPING_COST } from '@/lib/shipping'
 import { PICKUP_PLACE } from '@/lib/pickup'
 
-export const revalidate = 3600
+// Sin ISR (se cobra): la CDN guarda la respuesta 1 h con el Cache-Control de abajo.
+export const dynamic = 'force-dynamic'
 
 const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://aracnidastore.com'
 const clp = (n: number) => `$${n.toLocaleString('es-CL')}`

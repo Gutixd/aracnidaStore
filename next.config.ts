@@ -62,6 +62,18 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       { source: '/:path*', headers: securityHeaders },
+      // Portada y fichas: renderizadas en el servidor, pero la CDN las guarda
+      // 2 min (y sirve la copia vieja hasta 1 h mientras se actualiza en
+      // segundo plano). Así no se paga ISR y casi todas las visitas ni
+      // llegan a la función. Un cambio de stock se ve en ≤2 min.
+      {
+        source: '/',
+        headers: [{ key: 'Cache-Control', value: 'public, s-maxage=120, stale-while-revalidate=3600' }],
+      },
+      {
+        source: '/products/:slug',
+        headers: [{ key: 'Cache-Control', value: 'public, s-maxage=120, stale-while-revalidate=3600' }],
+      },
       // Los archivos de /public salían con `max-age=0, must-revalidate`: el
       // navegador volvía a preguntar por el video en cada visita. Se cachean
       // 7 días; si se reemplaza un video, conviene cambiarle el nombre.

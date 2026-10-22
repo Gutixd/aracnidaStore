@@ -23,20 +23,13 @@ import type { Metadata } from 'next'
 
 const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://aracnidastore.com'
 
-// Cada ficha se sirve desde caché y se regenera SOLO cuando cambia algo
-// (venta, stock, producto, reseña, preventa): ver lib/revalidate-store.ts.
-// Antes era cada 60 s y cada visita o bot posterior reescribía la página
-// (escrituras ISR en Vercel). Las 24 h quedan solo como red de seguridad, y
-// el checkout igual valida stock y precio en el servidor antes de cobrar.
-export const revalidate = 86400
-
-// Sin esto Next.js trata /products/[slug] como dinámica aunque tenga
-// `revalidate`. Las fichas activas se generan en el build; un producto
-// creado después se genera en su primera visita y desde ahí queda cacheado.
-export async function generateStaticParams() {
-  const { data } = await createPublicClient().from('products').select('slug').eq('active', true)
-  return (data ?? []).map((p) => ({ slug: p.slug as string }))
-}
+// La ficha se renderiza en el servidor y la CDN de Vercel la guarda unos
+// minutos (cabecera Cache-Control en next.config.ts). NO usa ISR a propósito:
+// cada regeneración ISR (y cada deploy, que repuebla las 47 fichas) se cobra
+// como "escrituras ISR" y el plan Hobby se pasó de las 200.000. La caché de
+// la CDN no tiene ese cobro. El checkout igual valida stock y precio en el
+// servidor antes de cobrar.
+export const dynamic = 'force-dynamic'
 
 // cache() memoiza por request: generateMetadata() y la página llaman a
 // getProduct() con el mismo slug, y sin esto cada uno disparaba su propio
