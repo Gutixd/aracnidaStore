@@ -5,6 +5,7 @@ import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { Product, ProductVariant } from '@/types'
 import { ReservationForm } from '@/components/store/ReservationForm'
+import { toPublicProduct, toPublicVariant } from '@/lib/public-product'
 import { RESERVATION_MIN_DAYS } from '@/lib/reservations'
 import { ChevronRight, CalendarDays, PackageCheck } from 'lucide-react'
 import { getIncomingForProduct } from '@/lib/incoming'
@@ -120,8 +121,8 @@ export default async function ReservarPage({
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <ReservationForm
-          product={product}
-          variants={variants}
+          product={toPublicProduct(product)}
+          variants={variants.map(toPublicVariant)}
           incoming={isPreorder ? incoming : undefined}
           initialSize={sp.talla}
         />

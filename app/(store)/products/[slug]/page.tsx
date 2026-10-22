@@ -7,6 +7,7 @@ import { IncomingSection } from '@/components/store/IncomingSection'
 import { getIncomingForProduct } from '@/lib/incoming'
 import { SizeGuide } from '@/components/store/SizeGuide'
 import { ProductCard } from '@/components/store/ProductCard'
+import { toPublicProduct, toPublicVariant } from '@/lib/public-product'
 import { ProductGallery } from '@/components/store/ProductGallery'
 import { ScrollReveal } from '@/components/store/ScrollReveal'
 import Image from 'next/image'
@@ -354,7 +355,7 @@ export default async function ProductPage({
 
             {/* Compra: precio, tallas, cantidad y botón */}
             <div className="mt-6 pt-6" style={{ borderTop: '1px solid var(--gray-100)' }}>
-              <ProductPurchase product={product} variants={variants} allowReservation={!isOtros} />
+              <ProductPurchase product={toPublicProduct(product)} variants={variants.map(toPublicVariant)} allowReservation={!isOtros} />
             </div>
 
             {/* Trajes en camino: se reservan al precio normal */}
@@ -466,7 +467,7 @@ export default async function ProductPage({
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
               {related.map((p, i) => (
                 <ScrollReveal key={p.id} delay={i * 80}>
-                  <ProductCard product={p} />
+                  <ProductCard product={toPublicProduct(p)} />
                 </ScrollReveal>
               ))}
             </div>

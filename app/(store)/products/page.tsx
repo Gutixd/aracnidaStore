@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Product, Category } from '@/types'
 import { ProductCard } from '@/components/store/ProductCard'
+import { toPublicProduct } from '@/lib/public-product'
 import { ProductFilters } from '@/components/store/ProductFilters'
 import { ProductsGridSkeleton } from '@/components/store/ProductsGridSkeleton'
 import { Package, Store } from 'lucide-react'
@@ -202,7 +203,7 @@ async function ProductsContent({ params }: { params: SearchParams }) {
             {products.length > 0 ? (
               <div className="grid grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-5">
                 {products.map((product) => (
-                  <ProductCard key={product.id} product={product} filterSize={params.size} />
+                  <ProductCard key={product.id} product={toPublicProduct(product)} filterSize={params.size} />
                 ))}
               </div>
             ) : (
