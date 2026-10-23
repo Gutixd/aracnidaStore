@@ -1,4 +1,3 @@
-import type { NextConfig } from 'next'
 
 // Content Security Policy. Se permite 'unsafe-inline'/'unsafe-eval' porque
 // la app usa estilos en línea y Next.js los necesita en runtime; aun así se
@@ -40,7 +39,7 @@ const DUPLICATE_HOSTS = [
   'aracnida-store-git-master-gutixds-projects.vercel.app',
 ]
 
-const nextConfig: NextConfig = {
+const nextConfig = {
   poweredByHeader: false,
   // Por defecto Next.js limita el body de una Server Action a 1 MB. La
   // publicación de Instagram sube la imagen como base64 (pesa ~33% más que
@@ -89,7 +88,7 @@ const nextConfig: NextConfig = {
   async redirects() {
     return DUPLICATE_HOSTS.map((host) => ({
       source: '/:path*',
-      has: [{ type: 'host' as const, value: host }],
+      has: [{ type: 'host', value: host }],
       destination: 'https://aracnidastore.com/:path*',
       permanent: true,
     }))
