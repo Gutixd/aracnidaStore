@@ -33,8 +33,8 @@ const FAQS = [
 export const dynamic = 'force-dynamic'
 
 /** Dato real del negocio, usado en la prueba social y en los datos estructurados. */
-export const STORE_FOUNDED_YEAR = 2025
-export const CUSTOMERS_SERVED = 500
+const STORE_FOUNDED_YEAR = 2025
+const CUSTOMERS_SERVED = 500
 
 async function getLatestReviews() {
   const supabase = createPublicClient()
