@@ -202,6 +202,7 @@ export default async function AdminReservationsPage() {
                     currentStatus={r.status}
                     paymentStatus={r.payment_status}
                     paymentMethod={r.payment_method ?? null}
+                    items={(r.items ?? []).map((i) => ({ id: i.id, product_name: i.product_name, size: i.size }))}
                   />
                 </div>
               </div>

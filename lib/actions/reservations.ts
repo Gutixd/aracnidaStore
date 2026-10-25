@@ -283,3 +283,142 @@ export async function updateReservationStatus(reservationId: string, newStatus: 
   revalidatePath('/admin/reservations')
   return { ok: true }
 }
+
+export interface SizeChangeOption {
+  /** Talla nueva (variante del mismo producto). */
+  variant_id: string
+  size: string
+  price: number
+  /** Lote en camino al que pasaría; null si la reserva no es preventa. */
+  batch_id: string | null
+  arrives_from?: string
+  arrives_to?: string
+  /** Cupos libres del lote (null si no es preventa). */
+  available: number | null
+}
+
+/**
+ * Tallas a las que se puede cambiar una reserva. Una preventa solo puede
+ * pasar a tallas que también vengan en camino y tengan cupo libre; una
+ * reserva normal puede pasar a cualquier talla activa del mismo producto.
+ */
+export async function getSizeChangeOptions(itemId: string): Promise<{ options?: SizeChangeOption[]; currentSize?: string; error?: string }> {
+  if (!(await isAdmin())) return { error: 'No autorizado' }
+  const supabase = await createAdminClient()
+
+  const { data: item } = await supabase
+    .from('order_items')
+    .select('id, product_id, variant_id, size, quantity, incoming_batch_id')
+    .eq('id', itemId)
+    .single()
+  if (!item) return { error: 'No se encontró el producto de la reserva.' }
+
+  const { data: variants } = await supabase
+    .from('product_variants')
+    .select('id, size, price, active')
+    .eq('product_id', item.product_id)
+  const others = (variants ?? []).filter((v) => v.id !== item.variant_id && v.active !== false)
+
+  const options: SizeChangeOption[] = []
+  if (item.incoming_batch_id) {
+    const { data: batches } = await supabase
+      .from('incoming_batches')
+      .select('id, variant_id, quantity, arrives_from, arrives_to')
+      .eq('product_id', item.product_id)
+      .eq('status', 'en_camino')
+      .in('variant_id', others.map((v) => v.id))
+    const reserved = await reservedByBatch((batches ?? []).map((b) => b.id))
+    for (const b of batches ?? []) {
+      const v = others.find((o) => o.id === b.variant_id)
+      if (!v) continue
+      const libres = b.quantity - (reserved.get(b.id) ?? 0)
+      if (libres < item.quantity) continue
+      options.push({
+        variant_id: v.id, size: v.size, price: Number(v.price), batch_id: b.id,
+        arrives_from: b.arrives_from, arrives_to: b.arrives_to, available: libres,
+      })
+    }
+  } else {
+    for (const v of others) {
+      options.push({ variant_id: v.id, size: v.size, price: Number(v.price), batch_id: null, available: null })
+    }
+  }
+  options.sort((a, b) => (Number(a.size) || 9999) - (Number(b.size) || 9999))
+  return { options, currentSize: item.size }
+}
+
+/**
+ * Cambia la talla de una reserva (el cliente se equivocó al reservar).
+ * Mantiene lo ya cobrado: no recalcula montos. Si la preventa pasa a otro
+ * lote, libera el cupo del anterior y ocupa uno del nuevo.
+ */
+export async function changeReservationSize(input: { itemId: string; variantId: string; batchId: string | null }) {
+  if (!(await isAdmin())) return { error: 'No autorizado' }
+  const supabase = await createAdminClient()
+
+  const { data: item } = await supabase
+    .from('order_items')
+    .select('id, order_id, product_id, variant_id, size, quantity, incoming_batch_id, product_name')
+    .eq('id', input.itemId)
+    .single()
+  if (!item) return { error: 'No se encontró el producto de la reserva.' }
+
+  const { data: order } = await supabase
+    .from('orders')
+    .select('id, status, is_reservation, notes')
+    .eq('id', item.order_id)
+    .single()
+  if (!order?.is_reservation) return { error: 'Esto no es una reserva.' }
+  if (order.status === 'cancelado' || order.status === 'entregado') {
+    return { error: 'No se puede cambiar la talla de una reserva cancelada o entregada.' }
+  }
+
+  const { data: variant } = await supabase
+    .from('product_variants')
+    .select('id, size, price, cost_price, active, product_id')
+    .eq('id', input.variantId)
+    .single()
+  if (!variant || variant.active === false || variant.product_id !== item.product_id) {
+    return { error: 'Esa talla no está disponible.' }
+  }
+
+  let unitCost: number | null = null
+  if (item.incoming_batch_id) {
+    if (!input.batchId) return { error: 'Elige el lote en camino de la talla nueva.' }
+    const { data: b } = await supabase
+      .from('incoming_batches')
+      .select('id, variant_id, quantity, unit_cost, status')
+      .eq('id', input.batchId)
+      .single()
+    if (!b || b.status !== 'en_camino' || b.variant_id !== variant.id) {
+      return { error: 'Ese lote ya no está disponible. Actualiza la página.' }
+    }
+    const libres = b.quantity - ((await reservedByBatch([b.id])).get(b.id) ?? 0)
+    if (libres < item.quantity) return { error: 'Ya no quedan cupos en esa talla en camino.' }
+    unitCost = Number(b.unit_cost) > 0 ? Number(b.unit_cost) : Number(variant.cost_price)
+  } else {
+    unitCost = Number(variant.cost_price)
+  }
+
+  const update: Record<string, unknown> = {
+    variant_id: variant.id,
+    size: variant.size,
+    incoming_batch_id: item.incoming_batch_id ? input.batchId : null,
+  }
+  if (unitCost && unitCost > 0) update.unit_cost = unitCost
+
+  const { error } = await supabase.from('order_items').update(update).eq('id', item.id)
+  if (error) return { error: 'No se pudo cambiar la talla.' }
+
+  const hoy = new Date().toLocaleDateString('es-CL', { timeZone: 'America/Santiago' })
+  const nota = `Cambio de talla ${item.size} → ${variant.size} (${hoy})`
+  await supabase
+    .from('orders')
+    .update({ notes: order.notes ? `${order.notes} · ${nota}` : nota, updated_at: new Date().toISOString() })
+    .eq('id', order.id)
+
+  if (item.incoming_batch_id) await revalidateProductsById(supabase, [item.product_id as string])
+  revalidatePath('/admin/reservations')
+  revalidatePath('/admin/incoming')
+  return { ok: true }
+}
