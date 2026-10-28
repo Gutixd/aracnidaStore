@@ -6,6 +6,19 @@
 //
 // Reemplaza al cron de Vercel (vercel.json), que ya no corre en Hostinger.
 
+// Hostinger solo deja elegir "cada hora" con confiabilidad, así que este script
+// corre cada hora y SOLO actúa a la hora de Chile indicada (13:00 por defecto,
+// la misma franja que tenía en Vercel). Así no depende de la zona horaria del
+// servidor ni del cambio de horario de verano.
+const HORA_CHILE = Number(process.env.CRON_HORA_CHILE ?? 13)
+const horaActual = Number(
+  new Intl.DateTimeFormat('en-GB', { timeZone: 'America/Santiago', hour: '2-digit', hour12: false }).format(new Date())
+)
+if (horaActual !== HORA_CHILE) {
+  console.log(`[cron] ${horaActual}:00 en Chile; solo se publica a las ${HORA_CHILE}:00. Nada que hacer.`)
+  process.exit(0)
+}
+
 const base = (process.env.NEXT_PUBLIC_APP_URL || 'https://aracnidastore.com').replace(/\/$/, '')
 const secret = process.env.CRON_SECRET
 
