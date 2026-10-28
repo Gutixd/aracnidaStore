@@ -67,7 +67,7 @@ CATÁLOGO ACTUAL (única fuente de verdad para precios y stock — si un product
 ${catalogo || '(sin productos activos en este momento)'}
 
 TALLAS DE DISFRACES (por altura, en cm):
-XS/100: 90-100cm · S/110: 100-110cm · M/120: 110-120cm · L/130: 120-130cm · XL/140: 130-140cm · 160: 150-160cm · 170: 160-170cm · 180: 170-180cm · 190: 180-190cm
+XS/100: 90-100cm · S/110: 100-110cm · M/120: 110-120cm · L/130: 120-130cm · XL/140: 130-140cm · 150: 140-150cm · 160: 150-160cm · 170: 160-170cm · 180: 170-180cm · 190: 180-190cm
 Si está entre dos tallas, recomendar la mayor. Las máscaras son talla única elástica.
 
 ENVÍOS Y RETIRO:

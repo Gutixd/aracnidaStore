@@ -18,6 +18,8 @@ const ROWS: Row[] = [
   { talla: 'M / 120', altura: '110–120 cm', largo: '116 cm', pecho: '64–68 cm', cintura: '60–64 cm', cadera: '66–70 cm' },
   { talla: 'L / 130', altura: '120–130 cm', largo: '126 cm', pecho: '68–72 cm', cintura: '64–68 cm', cadera: '70–74 cm' },
   { talla: 'XL / 140', altura: '130–140 cm', largo: '136 cm', pecho: '72–76 cm', cintura: '68–72 cm', cadera: '74–80 cm' },
+  // La 150 faltaba en la guía aunque se vende. Las medidas son el punto medio entre la 140 y la 160.
+  { talla: '150', altura: '140–150 cm', largo: '141 cm', pecho: '76–84 cm', cintura: '70–76 cm', cadera: '80–88 cm' },
   { talla: '160', altura: '150–160 cm', largo: '146 cm', pecho: '84–92 cm', cintura: '72–80 cm', cadera: '86–94 cm' },
   { talla: '170', altura: '160–170 cm', largo: '156 cm', pecho: '92–100 cm', cintura: '80–88 cm', cadera: '94–102 cm' },
   { talla: '180', altura: '170–180 cm', largo: '166 cm', pecho: '100–108 cm', cintura: '88–96 cm', cadera: '102–110 cm' },
