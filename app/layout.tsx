@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from 'next'
 import { Geist } from 'next/font/google'
 import './globals.css'
 import { safeJsonLd } from '@/lib/jsonld'
-import { Analytics } from '@vercel/analytics/next'
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -117,7 +116,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {children}
         {/* Sin cookies, sin datos personales — coherente con lo que promete
             la Política de Privacidad. Mide visitas y páginas, no personas. */}
-        <Analytics />
       </body>
     </html>
   )

@@ -28,11 +28,24 @@ export function calcReservation(unitPrice: number, quantity: number): Reservatio
   return { normal, discount, final }
 }
 
-/** Primera fecha válida para reservar (hoy + los días mínimos), en YYYY-MM-DD. */
+/**
+ * Fecha de hoy en Chile (YYYY-MM-DD), sin importar la zona horaria del
+ * servidor ni del navegador. Antes se usaba la hora local de cada lado: el
+ * servidor (UTC) y el celular del cliente (Chile) podían estar en días
+ * distintos de noche, y eso rompía la hidratación de la página de reserva
+ * (error #418) y dejaba al servidor validando contra otro día.
+ */
+export function todayInChile(from = new Date()): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Santiago', year: 'numeric', month: '2-digit', day: '2-digit',
+  }).format(from)
+}
+
+/** Primera fecha válida para reservar (hoy en Chile + los días mínimos), en YYYY-MM-DD. */
 export function minReservationDate(from = new Date()): string {
-  const d = new Date(from)
-  d.setDate(d.getDate() + RESERVATION_MIN_DAYS)
-  return toISODate(d)
+  const [y, m, day] = todayInChile(from).split('-').map(Number)
+  const d = new Date(Date.UTC(y, m - 1, day + RESERVATION_MIN_DAYS))
+  return d.toISOString().slice(0, 10)
 }
 
 /**
