@@ -3,8 +3,9 @@ import { PICKUP_PLACE, PICKUP_LEAD_HOURS } from '@/lib/pickup'
 import { MIN_SHIPPING_COST } from '@/lib/shipping'
 import { RESERVATION_MIN_DAYS } from '@/lib/reservations'
 import { formatArrival } from '@/lib/incoming-format'
+import { SITE_URL } from '@/lib/site'
 
-const SITE = 'https://aracnidastore.com'
+const SITE = SITE_URL
 const clp = (n: number) => `$${Number(n).toLocaleString('es-CL')}`
 
 /**

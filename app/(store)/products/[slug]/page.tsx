@@ -20,8 +20,8 @@ import { safeJsonLd } from '@/lib/jsonld'
 import { MIN_SHIPPING_COST } from '@/lib/shipping'
 import { formatPrice } from '@/lib/utils'
 import type { Metadata } from 'next'
+import { SITE_URL } from '@/lib/site'
 
-const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://aracnidastore.com'
 
 // La ficha se renderiza en el servidor y la CDN de Vercel la guarda unos
 // minutos (cabecera Cache-Control en next.config.ts). NO usa ISR a propósito:

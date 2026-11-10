@@ -27,17 +27,24 @@ const securityHeaders = [
   { key: 'X-DNS-Prefetch-Control', value: 'on' },
 ]
 
-// Todo dominio que NO sea el canónico redirige 301 hacia aracnidastore.com.
-// Sin esto, Google ve el mismo sitio en 5 URLs distintas (contenido
-// duplicado) y reparte las señales de posicionamiento entre todas en vez
-// de concentrarlas en el dominio real — el canonical tag por sí solo no
-// alcanza si esos otros dominios siguen respondiendo 200 en vez de redirigir.
-const DUPLICATE_HOSTS = [
+// Todo dominio que NO sea el canónico redirige 301 hacia el canónico. Sin esto,
+// Google ve el mismo sitio en varias URLs (contenido duplicado) y reparte las
+// señales de posicionamiento. El canónico sale de NEXT_PUBLIC_APP_URL: para
+// pasar de aracnidastore.com a aracnidastore.cl solo se cambia esa variable
+// (y se vuelve a publicar); el dominio viejo queda redirigiendo al nuevo, así
+// no se rompen los links de Instagram, Google ni los correos ya enviados.
+const CANONICAL_URL = (process.env.NEXT_PUBLIC_APP_URL || 'https://aracnidastore.com').replace(/\/$/, '')
+const CANONICAL_HOST = CANONICAL_URL.replace(/^https?:\/\//, '')
+const KNOWN_HOSTS = [
+  'aracnidastore.com',
   'www.aracnidastore.com',
+  'aracnidastore.cl',
+  'www.aracnidastore.cl',
   'aracnida-store.vercel.app',
   'aracnida-store-gutixds-projects.vercel.app',
   'aracnida-store-git-master-gutixds-projects.vercel.app',
 ]
+const DUPLICATE_HOSTS = KNOWN_HOSTS.filter((h) => h !== CANONICAL_HOST)
 
 const nextConfig = {
   poweredByHeader: false,
@@ -89,7 +96,7 @@ const nextConfig = {
     return DUPLICATE_HOSTS.map((host) => ({
       source: '/:path*',
       has: [{ type: 'host', value: host }],
-      destination: 'https://aracnidastore.com/:path*',
+      destination: `${CANONICAL_URL}/:path*`,
       permanent: true,
     }))
   },

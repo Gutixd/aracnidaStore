@@ -3,12 +3,13 @@ import { Order } from '@/types'
 import { PICKUP_PLACE, PICKUP_SLOT_LABELS, formatPickupDate } from '@/lib/pickup'
 import { createAdminClient } from '@/lib/supabase/server'
 import { describeReservationDelivery } from '@/lib/reservations'
+import { SITE_URL } from '@/lib/site'
 
 const API_KEY = process.env.RESEND_API_KEY
 // Debe ser un dominio verificado en Resend. Mientras no lo esté, se puede usar
 // 'onboarding@resend.dev' (solo envía a la casilla del dueño de la cuenta).
 const FROM = process.env.RESEND_FROM || 'AracnidaStore <onboarding@resend.dev>'
-const STORE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://aracnidastore.com'
+const STORE_URL = SITE_URL
 const WHATSAPP = '56978829942'
 // Casilla del dueño, donde llegan los avisos de pedido nuevo.
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'chinitobnlokillo@gmail.com'

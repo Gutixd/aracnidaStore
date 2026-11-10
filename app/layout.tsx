@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Geist } from 'next/font/google'
 import './globals.css'
 import { safeJsonLd } from '@/lib/jsonld'
+import { SITE_URL } from '@/lib/site'
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -12,7 +13,6 @@ export const viewport: Viewport = {
 
 const geist = Geist({ subsets: ['latin'], variable: '--font-geist-sans' })
 
-const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://aracnidastore.com'
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
