@@ -5,12 +5,13 @@ import { AdminAssistantConfig } from '@/components/admin/AdminAssistantConfig'
 import { AdminConversationActions } from '@/components/admin/AdminConversationActions'
 import { CopyButton } from '@/components/admin/CopyButton'
 import { CheckCircle2, Circle, MessageCircle } from 'lucide-react'
+import { SITE_URL } from '@/lib/site'
 
 export const dynamic = 'force-dynamic'
 
 type Msg = { ig_user_id: string; author: 'cliente' | 'ia' | 'humano'; text: string; created_at: string }
 
-const WEBHOOK_URL = 'https://aracnidastore.com/api/instagram/webhook'
+const WEBHOOK_URL = `${SITE_URL}/api/instagram/webhook`
 
 function hora(iso: string) {
   return new Date(iso).toLocaleString('es-CL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'America/Santiago' })

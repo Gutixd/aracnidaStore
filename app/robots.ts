@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next'
+import { SITE_URL } from '@/lib/site'
 
-const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://aracnidastore.com'
 
 // Rastreadores de asistentes de IA y de búsqueda con IA. Se declaran de forma
 // explícita (aunque '*' ya los permite) para dejar clara la intención: queremos

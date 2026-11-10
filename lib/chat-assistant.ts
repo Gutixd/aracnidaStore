@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { buildStoreKnowledge } from '@/lib/store-knowledge'
+import { SITE_HOST } from '@/lib/site'
 
 /**
  * Asistente de chat del sitio, con Gemini (nivel gratis de Google AI Studio).
@@ -35,14 +36,14 @@ async function buildStoreContext(): Promise<string> {
   return buildStoreKnowledge(await createClient())
 }
 
-const SYSTEM_INSTRUCTIONS = `Eres el asistente de chat de AracnidaStore, tienda chilena de disfraces y máscaras de Spider-Man (aracnidastore.com).
+const SYSTEM_INSTRUCTIONS = `Eres el asistente de chat de AracnidaStore, tienda chilena de disfraces y máscaras de Spider-Man (${SITE_HOST}).
 
 Reglas que no puedes romper:
 1. Solo puedes hablar de precios, stock, tallas, envíos, retiro, pagos y cambios usando EXACTAMENTE los datos que se te dan en el contexto de esta conversación. Nunca inventes un precio, un plazo, o que algo está disponible si no aparece ahí.
 2. Si te preguntan algo que no está en el contexto (ej. sobre un pedido específico, un reclamo, algo muy particular), responde con honestidad que no tienes esa información y deriva a WhatsApp: ${WHATSAPP}.
 3. Sé breve, cercano y en español de Chile. Nada de párrafos largos — este es un chat, no un correo.
 4. No prometas nada que no esté en las políticas (ej. no prometas descuentos, no inventes plazos de despacho).
-5. Si preguntan por el estado de un pedido ya hecho, dirige a la página "Rastrea tu pedido" (aracnidastore.com/rastrear-pedido) o a WhatsApp — no tienes acceso a pedidos individuales.`
+5. Si preguntan por el estado de un pedido ya hecho, dirige a la página "Rastrea tu pedido" (${SITE_HOST}/rastrear-pedido) o a WhatsApp — no tienes acceso a pedidos individuales.`
 
 interface ChatMessage {
   role: 'user' | 'model'

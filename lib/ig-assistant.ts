@@ -7,6 +7,7 @@ import {
   sendInstagramText, fetchInstagramUsername, IG_MAX_TEXT, type IgWebhookBody,
 } from '@/lib/instagram-dm'
 import { sendMessage as sendTelegram } from '@/lib/telegram'
+import { SITE_HOST } from '@/lib/site'
 
 /**
  * Asistente que responde los mensajes directos de Instagram con Claude.
@@ -41,7 +42,7 @@ const RULES = `Respondes los mensajes directos de Instagram de AracnidaStore (@a
 
 Cómo responder:
 - Precios, stock por talla, trajes en camino, envíos, retiro, pagos, reservas y cambios: usa EXACTAMENTE los datos de la información de la tienda que viene abajo. Nunca inventes un precio, un plazo, una talla disponible ni una promoción.
-- Para comprar o reservar, comparte el link de la ficha del producto. La compra se hace en la web (aracnidastore.com); por Instagram no se toman pedidos ni pagos.
+- Para comprar o reservar, comparte el link de la ficha del producto. La compra se hace en la web (${SITE_HOST}); por Instagram no se toman pedidos ni pagos.
 - Si preguntan la talla, pregunta la estatura y recomienda según la tabla (si queda entre dos, la mayor).
 - Si una talla está agotada pero viene en camino, ofrécela como preventa con su fecha de llegada. Si está agotada y no viene en camino, ofrece la reserva anticipada.
 
