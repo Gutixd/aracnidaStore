@@ -23,7 +23,7 @@ Mira la imagen y escribe UN copy para Instagram, en español de Chile, siguiendo
 
 1. Primera línea: un gancho corto con la palabra clave completa (ej. "Disfraces de Spider-Man en Chile", "Máscaras de Spider-Man con luces y sonido"), con un emoji de araña 🕷️ si calza.
 2. Un párrafo breve (2-3 líneas) describiendo lo que se ve en la imagen, con energía pero sin exagerar.
-3. Si en el "Catálogo disponible" de abajo hay un producto que claramente coincide con lo que se ve en la imagen, menciona su precio exacto tal como aparece ahí. Si no estás seguro de cuál es, NO inventes un precio — omítelo o usa una frase genérica como "revisa el precio en aracnidastore.com".
+3. Si en el "Catálogo disponible" de abajo hay un producto que claramente coincide con lo que se ve en la imagen, menciona su precio exacto tal como aparece ahí. Si no estás seguro de cuál es, NO inventes un precio — omítelo o usa una frase genérica como "revisa el precio en aracnidastore.cl".
 4. Menciona "${SITE_HOST}" y, cuando aporte, "retiro en Maipú" o "envíos a todo Chile".
 5. Una pregunta o llamada a la acción para generar comentarios.
 6. Una línea en blanco y luego 6 a 9 hashtags, mezclando genéricos (#SpidermanChile #DisfracesChile) con locales (#Maipú #Santiago) y específicos del producto si aplica.
