@@ -80,7 +80,6 @@ const jsonLd = {
     addressCountry: 'CL',
   },
   telephone: '+56978829942',
-  email: 'contacto@aracnidastore.com',
   knowsLanguage: 'es-CL',
   // Vincula el sitio con las cuentas oficiales. Importa especialmente después
   // de cambiar de handle: sin esto, Google puede seguir asociando la tienda al

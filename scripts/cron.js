@@ -19,7 +19,7 @@ if (horaActual !== HORA_CHILE) {
   process.exit(0)
 }
 
-const base = (process.env.NEXT_PUBLIC_APP_URL || 'https://aracnidastore.com').replace(/\/$/, '')
+const base = (process.env.NEXT_PUBLIC_APP_URL || 'https://aracnidastore.cl').replace(/\/$/, '')
 const secret = process.env.CRON_SECRET
 
 if (!secret) {

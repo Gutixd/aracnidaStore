@@ -3,7 +3,7 @@
  * con cambiar la variable NEXT_PUBLIC_APP_URL (y volver a publicar), sin tocar
  * el código. Si la variable no existe, se usa el dominio actual.
  */
-export const DEFAULT_SITE_URL = 'https://aracnidastore.com'
+export const DEFAULT_SITE_URL = 'https://aracnidastore.cl'
 
 export const SITE_URL = (process.env.NEXT_PUBLIC_APP_URL || DEFAULT_SITE_URL).replace(/\/$/, '')
 

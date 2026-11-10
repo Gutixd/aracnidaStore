@@ -33,7 +33,7 @@ const securityHeaders = [
 // pasar de aracnidastore.com a aracnidastore.cl solo se cambia esa variable
 // (y se vuelve a publicar); el dominio viejo queda redirigiendo al nuevo, así
 // no se rompen los links de Instagram, Google ni los correos ya enviados.
-const CANONICAL_URL = (process.env.NEXT_PUBLIC_APP_URL || 'https://aracnidastore.com').replace(/\/$/, '')
+const CANONICAL_URL = (process.env.NEXT_PUBLIC_APP_URL || 'https://aracnidastore.cl').replace(/\/$/, '')
 const CANONICAL_HOST = CANONICAL_URL.replace(/^https?:\/\//, '')
 const KNOWN_HOSTS = [
   'aracnidastore.com',
