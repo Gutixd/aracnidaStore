@@ -6,6 +6,26 @@ import { MessageCircle, X, Send, Loader2 } from 'lucide-react'
 interface Message {
   role: 'user' | 'model'
   text: string
+  /** La IA derivó a una persona: se muestra el botón de WhatsApp. */
+  handoff?: boolean
+}
+
+const WHATSAPP_URL = 'https://wa.me/56978829942'
+
+const SUGGESTIONS = ['¿Qué talla le queda a mi hijo?', '¿Cuánto demora el envío?', '¿Dónde puedo retirar?', '¿Qué formas de pago tienen?']
+
+/** Identificador anónimo de la conversación (solo agrupa preguntas en el panel). */
+function chatSessionId(): string | null {
+  try {
+    let id = sessionStorage.getItem('chat-session')
+    if (!id) {
+      id = crypto.randomUUID()
+      sessionStorage.setItem('chat-session', id)
+    }
+    return id
+  } catch {
+    return null
+  }
 }
 
 const WELCOME: Message = {
@@ -25,8 +45,8 @@ export function ChatWidget() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, open])
 
-  async function send() {
-    const text = input.trim()
+  async function send(preset?: string) {
+    const text = (preset ?? input).trim()
     if (!text || loading) return
 
     const next = [...messages, { role: 'user' as const, text }]
@@ -40,7 +60,10 @@ export function ChatWidget() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         // No se manda el saludo inicial: es solo de bienvenida, no aporta contexto real.
-        body: JSON.stringify({ history: next.slice(1) }),
+        body: JSON.stringify({
+          history: next.slice(1).map(({ role, text }) => ({ role, text })),
+          sessionId: chatSessionId(),
+        }),
       })
       const data = await res.json()
 
@@ -49,7 +72,7 @@ export function ChatWidget() {
         return
       }
 
-      setMessages((prev) => [...prev, { role: 'model', text: data.reply }])
+      setMessages((prev) => [...prev, { role: 'model', text: data.reply, handoff: Boolean(data.needsHuman) }])
     } catch {
       setError('Sin conexión. Intenta de nuevo.')
     } finally {
@@ -89,9 +112,34 @@ export function ChatWidget() {
                   }
                 >
                   {m.text}
+                  {m.handoff && (
+                    <a
+                      href={WHATSAPP_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-2 flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold"
+                      style={{ background: '#25D366', color: '#fff' }}
+                    >
+                      Escribir por WhatsApp
+                    </a>
+                  )}
                 </div>
               </div>
             ))}
+            {messages.length === 1 && !loading && (
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                {SUGGESTIONS.map((q) => (
+                  <button
+                    key={q}
+                    onClick={() => send(q)}
+                    className="text-xs px-3 py-1.5 rounded-full font-semibold"
+                    style={{ background: '#fff', color: 'var(--text)', border: '1px solid var(--gray-200)' }}
+                  >
+                    {q}
+                  </button>
+                ))}
+              </div>
+            )}
             {loading && (
               <div className="flex justify-start">
                 <div className="px-3.5 py-2.5 rounded-2xl" style={{ background: '#fff', border: '1px solid var(--gray-100)' }}>
@@ -116,7 +164,7 @@ export function ChatWidget() {
               style={{ background: 'var(--gray-50)', color: 'var(--text)' }}
             />
             <button
-              onClick={send}
+              onClick={() => send()}
               disabled={loading || !input.trim()}
               aria-label="Enviar"
               className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 disabled:opacity-40"

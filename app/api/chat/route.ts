@@ -2,11 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getChatReply, isChatAssistantEnabled } from '@/lib/chat-assistant'
 import { checkRateLimit } from '@/lib/rate-limit'
 
-const MAX_MESSAGES_PER_TURN = 20 // tope de historial que se manda a Gemini
+const MAX_MESSAGES_PER_TURN = 20 // tope de historial que se manda a la IA
 const MAX_MESSAGE_LENGTH = 1000
 
-// El límite por defecto (10s en el plan Hobby) se queda corto para un modelo
-// con razonamiento interno como gemini-3.6-flash.
 export const maxDuration = 60
 
 export async function POST(request: NextRequest) {
@@ -15,7 +13,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Sin esto, cualquiera podría llamar este endpoint en bucle y agotar la
-  // cuota gratuita de Gemini para toda la tienda.
+  // cuota gratuita de la IA para toda la tienda.
   const limit = await checkRateLimit('chat', { max: 30, windowMinutes: 15 })
   if (!limit.allowed) {
     return NextResponse.json({ error: limit.error }, { status: 429 })
@@ -23,6 +21,7 @@ export async function POST(request: NextRequest) {
 
   const body = await request.json().catch(() => null)
   const history = body?.history
+  const sessionId = typeof body?.sessionId === 'string' ? body.sessionId.slice(0, 64) : null
 
   if (!Array.isArray(history) || history.length === 0) {
     return NextResponse.json({ error: 'Falta el mensaje' }, { status: 400 })
@@ -44,8 +43,8 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const reply = await getChatReply(history)
-    return NextResponse.json({ reply })
+    const { reply, needsHuman } = await getChatReply(history, sessionId)
+    return NextResponse.json({ reply, needsHuman })
   } catch (err) {
     console.error('[Chat] Error:', err)
     return NextResponse.json(
