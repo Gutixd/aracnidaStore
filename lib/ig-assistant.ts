@@ -21,8 +21,9 @@ import { TOPIC_KEYS } from '@/lib/chat-topics'
  */
 
 const CLAUDE_MODEL = 'claude-opus-5-5'
-// Llama de Meta servido por Groq (nivel gratis, API compatible con OpenAI).
-const GROQ_MODEL = 'llama-3.3-70b-versatile'
+// Modelo abierto servido por Groq (nivel gratis, API compatible con OpenAI).
+// Groq retiró Llama 3.3 de su catálogo; gpt-oss-120b es el más capaz que queda.
+const GROQ_MODEL = 'openai/gpt-oss-120b'
 const WHATSAPP = '+56 9 7882 9942'
 /** Si el dueño responde a mano desde Instagram, la IA se calla este tiempo. */
 const HUMAN_PAUSE_HOURS = 12
@@ -75,7 +76,7 @@ const anthropic = () => (client ??= new Anthropic())
 
 /**
  * Qué IA responde. Se elige por las claves que haya en el servidor:
- * GROQ_API_KEY → Llama (Meta, gratis en Groq); si no, ANTHROPIC_API_KEY → Claude.
+ * GROQ_API_KEY → gpt-oss-120b (gratis en Groq); si no, ANTHROPIC_API_KEY → Claude.
  * Se puede forzar con ASSISTANT_PROVIDER=groq|claude.
  */
 export function assistantProvider(): 'groq' | 'claude' | null {
@@ -303,7 +304,9 @@ FORMATO DE RESPUESTA: responde SOLO con un objeto JSON válido, sin texto antes 
         body: JSON.stringify({
           model: GROQ_MODEL,
           temperature: 0.3,
-          max_tokens: 600,
+          // Es un modelo que razona antes de responder: necesita margen.
+          max_tokens: 2000,
+          reasoning_effort: 'low',
           response_format: { type: 'json_object' },
           messages: [
             { role: 'system', content: instructions },

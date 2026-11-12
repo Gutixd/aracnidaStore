@@ -35,9 +35,9 @@ export default async function AdminAssistantPage() {
   const llm = isAssistantModelConfigured()
   const anyMessage = (convs ?? []).length > 0
   const steps = [
-    { ok: llm, label: llm ? `IA conectada: ${assistantProvider() === 'groq' ? 'Llama de Meta (Groq)' : 'Claude'}` : 'Clave de la IA en Vercel: GROQ_API_KEY (Llama de Meta, gratis)' },
-    { ok: env.appSecret, label: 'INSTAGRAM_APP_SECRET en Vercel' },
-    { ok: env.verifyToken, label: 'INSTAGRAM_WEBHOOK_VERIFY_TOKEN en Vercel' },
+    { ok: llm, label: llm ? `IA conectada: ${assistantProvider() === 'groq' ? 'gpt-oss-120b (Groq, gratis)' : 'Claude'}` : 'Clave de la IA en Hostinger: GROQ_API_KEY (Groq, gratis)' },
+    { ok: env.appSecret, label: 'INSTAGRAM_APP_SECRET en Hostinger' },
+    { ok: env.verifyToken, label: 'INSTAGRAM_WEBHOOK_VERIFY_TOKEN en Hostinger' },
     { ok: env.accessToken, label: 'INSTAGRAM_ACCESS_TOKEN con permiso de mensajes' },
     { ok: anyMessage, label: 'Webhook conectado en Meta (llegó al menos un mensaje)' },
   ]
