@@ -43,7 +43,9 @@ type Badges = { pending: number; lowStock: number; pendingReviews: number }
 
 function NavLinks({ pathname, badges }: { pathname: string; badges: Badges }) {
   return (
-  <nav className="flex-1 p-3 space-y-1">
+  // min-h-0 + overflow: con 19 secciones la lista no cabía en el celular y
+  // las de abajo quedaban cortadas sin forma de bajar.
+  <nav className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-3 space-y-1">
     {NAV_ITEMS.map((item) => {
       const isActive = item.exact ? pathname === item.href : pathname.startsWith(item.href)
       const badge = item.badgeKey ? badges[item.badgeKey] : 0
@@ -91,7 +93,7 @@ function Branding() {
 
 function SidebarFooter({ onLogout }: { onLogout: () => void }) {
   return (
-  <div className="p-3" style={{ borderTop: '1px solid var(--gray-100)' }}>
+  <div className="p-3 shrink-0" style={{ borderTop: '1px solid var(--gray-100)' }}>
     <Link href="/" target="_blank"
       className="flex items-center gap-2 text-xs mb-1 transition-colors px-3 py-2 rounded-lg"
       style={{ color: 'var(--gray-400)' }}>
@@ -117,6 +119,15 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   )
 
   // El drawer se cierra solo al navegar: queda abierto únicamente en la ruta donde se abrió
+
+  // Con el menú abierto en el celular, el dedo movía la página de atrás en
+  // vez del menú. Se bloquea el scroll del fondo mientras está abierto.
+  useEffect(() => {
+    if (!open) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = prev }
+  }, [open])
 
   // Contadores en vivo para la navegación
   useEffect(() => {
@@ -151,7 +162,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       {/* Sidebar — escritorio */}
       <aside className="hidden lg:flex w-64 flex-col min-h-screen shrink-0 sticky top-0 h-screen"
         style={{ background: '#fff', borderRight: '1px solid var(--gray-100)' }}>
-        <div className="p-5" style={{ borderBottom: '1px solid var(--gray-100)' }}><Branding /></div>
+        <div className="p-5 shrink-0" style={{ borderBottom: '1px solid var(--gray-100)' }}><Branding /></div>
         <NavLinks pathname={pathname} badges={badges} />
         <SidebarFooter onLogout={handleLogout} />
       </aside>
@@ -160,9 +171,11 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       {open && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,.4)' }} onClick={() => setOpen(false)} />
-          <aside className="absolute left-0 top-0 bottom-0 w-72 flex flex-col"
+          {/* h-[100dvh]: en el celular 100vh incluye la barra del navegador y
+              cortaba el final del menú. */}
+          <aside className="absolute left-0 top-0 h-[100dvh] w-72 max-w-[85vw] flex flex-col"
             style={{ background: '#fff', boxShadow: '0 0 40px rgba(0,0,0,.2)' }}>
-            <div className="p-5 flex items-center justify-between" style={{ borderBottom: '1px solid var(--gray-100)' }}>
+            <div className="p-5 shrink-0 flex items-center justify-between" style={{ borderBottom: '1px solid var(--gray-100)' }}>
               <Branding />
               <button onClick={() => setOpen(false)} style={{ color: 'var(--gray-400)' }} aria-label="Cerrar menú">
                 <X size={20} />
