@@ -34,7 +34,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'JSON inválido' }, { status: 400 })
   }
   const eventos = (body.entry ?? []).reduce((n, e) => n + (e.messaging?.length ?? 0), 0)
-  console.log(`[IG webhook] Aviso válido de Meta: object=${body.object}, mensajes=${eventos}`)
+  const tipos = (body.entry ?? []).flatMap((e) => (e.messaging ?? []).map((m) => Object.keys(m).join('+'))).join(' | ')
+  console.log(`[IG webhook] Aviso válido de Meta: object=${body.object}, eventos=${eventos} [${tipos}]`)
   if (body.object === 'instagram') after(() => handleInstagramWebhook(body))
   return NextResponse.json({ ok: true })
 }

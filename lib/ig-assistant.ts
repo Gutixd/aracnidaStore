@@ -119,7 +119,10 @@ async function handleEvent(
   ev: NonNullable<NonNullable<IgWebhookBody['entry']>[number]['messaging']>[number]
 ) {
   const msg = ev.message
-  if (!msg?.mid || msg.is_deleted) return
+  if (!msg?.mid || msg.is_deleted) {
+    console.log('[IG asistente] Evento ignorado: no es un mensaje nuevo')
+    return
+  }
   const db = await createAdminClient()
 
   // ── Mensaje enviado DESDE la cuenta de la tienda (eco) ──
@@ -157,11 +160,21 @@ async function handleEvent(
     ig_user_id: customer, mid: msg.mid, direction: 'in', author: 'cliente',
     text: text || (hasAttachment ? `[envió ${msg.attachments!.map((a) => a.type).join(', ')}]` : ''),
   })
-  if (dup) return
+  if (dup) {
+    console.warn('[IG asistente] No se guardó el mensaje (¿duplicado o error?):', dup.code, dup.message)
+    return
+  }
+  console.log(`[IG asistente] Mensaje guardado de ${customer}`)
 
   const { data: config } = await db.from('assistant_config').select('enabled, knowledge').eq('id', 1).single()
-  if (!config?.enabled || !isAssistantModelConfigured()) return
-  if (conv?.paused_until && new Date(conv.paused_until).getTime() > Date.now()) return
+  if (!config?.enabled || !isAssistantModelConfigured()) {
+    console.log('[IG asistente] IA apagada o sin clave: no se responde')
+    return
+  }
+  if (conv?.paused_until && new Date(conv.paused_until).getTime() > Date.now()) {
+    console.log('[IG asistente] Conversación en pausa: no se responde')
+    return
+  }
 
   // Espera por si el cliente sigue escribiendo; si llegó otro mensaje, ese responde todo.
   await new Promise((r) => setTimeout(r, DEBOUNCE_MS))
@@ -184,9 +197,13 @@ async function handleEvent(
     .order('created_at', { ascending: false }).limit(16)
 
   const result = await generateReply((history ?? []).reverse(), config.knowledge ?? '', db)
-  if (!result) return
+  if (!result) {
+    console.warn('[IG asistente] La IA no devolvió respuesta')
+    return
+  }
 
   const mid = await sendInstagramText(customer, result.reply)
+  console.log('[IG asistente] Respuesta enviada por Instagram')
   await db.from('ig_messages').insert({
     ig_user_id: customer, mid, direction: 'out', author: 'ia', text: result.reply.slice(0, IG_MAX_TEXT),
   })
