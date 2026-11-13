@@ -23,6 +23,8 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const raw = await request.text()
   if (!isValidSignature(raw, request.headers.get('x-hub-signature-256'))) {
+    // Sin esto, un secreto mal puesto rechazaba todo en silencio.
+    console.warn('[IG webhook] Aviso rechazado: firma inválida (¿INSTAGRAM_APP_SECRET correcto?)')
     return NextResponse.json({ error: 'Firma inválida' }, { status: 401 })
   }
   let body: IgWebhookBody
@@ -31,6 +33,8 @@ export async function POST(request: NextRequest) {
   } catch {
     return NextResponse.json({ error: 'JSON inválido' }, { status: 400 })
   }
+  const eventos = (body.entry ?? []).reduce((n, e) => n + (e.messaging?.length ?? 0), 0)
+  console.log(`[IG webhook] Aviso válido de Meta: object=${body.object}, mensajes=${eventos}`)
   if (body.object === 'instagram') after(() => handleInstagramWebhook(body))
   return NextResponse.json({ ok: true })
 }
